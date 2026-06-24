@@ -80,7 +80,6 @@ export default function TopPage() {
 
       <section className="relative z-10 mb-6">
         <GlassCard className="px-5 py-6">
-          <div className="divider-ornament mb-4 font-display-jp text-xs text-[#6b6378]">現在のガーデンの様子</div>
           <GardenStatsBar
             totalButterflies={placeholderStats.totalButterflies}
             totalMessages={placeholderStats.totalMessages}
