@@ -1,4 +1,3 @@
-cat > package.json << 'EOF'
 {
   "name": "butterfly-garden-for-mika",
   "version": "0.1.0",
@@ -28,5 +27,3 @@ cat > package.json << 'EOF'
     "eslint-config-next": "14.2.5"
   }
 }
-EOF
-cat package.json
