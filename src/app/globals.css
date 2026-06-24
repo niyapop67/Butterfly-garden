@@ -6,20 +6,66 @@
   --font-display: "Cormorant Garamond", serif;
   --font-display-jp: "Shippori Mincho", serif;
   --font-body: "Zen Maru Gothic", sans-serif;
+
+  /* Brand palette */
+  --color-pink-soft: #ffd9e8;
+  --color-pink: #ff9ec7;
+  --color-pink-deep: #ff6fa8;
+  --color-tiffany-soft: #cdf2ec;
+  --color-tiffany: #81d8d0;
+  --color-tiffany-deep: #4fb8ae;
+  --color-gold: #e8c170;
+  --color-purple: #c9a8e0;
+  --color-ink: #5a4f6e;
+  --color-ink-soft: #6b6378;
+
+  --shadow-glass-soft: 0 8px 32px rgba(255, 158, 199, 0.18), 0 2px 8px rgba(129, 216, 208, 0.12);
+  --shadow-glow-pink: 0 0 24px rgba(255, 111, 168, 0.45), 0 4px 14px rgba(255, 111, 168, 0.35);
+  --shadow-glow-tiffany: 0 0 20px rgba(129, 216, 208, 0.4);
 }
 
 html,
 body {
-  background: linear-gradient(
-    160deg,
-    #fffdf8 0%,
-    #fdf2f6 35%,
-    #f3fbf9 70%,
-    #fffdf8 100%
-  );
-  color: #4a4458;
+  background: radial-gradient(circle at 15% 0%, #fff0f6 0%, transparent 45%),
+    radial-gradient(circle at 85% 10%, #e3f9f5 0%, transparent 40%),
+    radial-gradient(circle at 50% 90%, #fdf2f8 0%, transparent 50%),
+    linear-gradient(160deg, #fff8fb 0%, #fdf2f8 35%, #f3fbf9 70%, #fff8fb 100%);
+  background-attachment: fixed;
+  color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(circle, rgba(255, 182, 213, 0.5) 1.5px, transparent 1.5px);
+  background-size: 28px 28px;
+}
+
+.divider-ornament {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  color: var(--color-pink-deep);
+}
+.divider-ornament::before,
+.divider-ornament::after {
+  content: "";
+  height: 1px;
+  width: 48px;
+  background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+.glow-text-gold {
+  text-shadow: 0 0 12px rgba(232, 193, 112, 0.5);
 }
 
 * {
