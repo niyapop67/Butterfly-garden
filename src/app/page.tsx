@@ -4,7 +4,6 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import CrystalIcon from "@/components/ui/CrystalIcon";
 import GardenStatsBar from "@/components/garden/GardenStatsBar";
 import EvolutionMilestoneTracker from "@/components/garden/EvolutionMilestoneTracker";
-import FloatingButterflyDecor from "@/components/butterfly/FloatingButterflyDecor";
 
 const placeholderStats = {
   totalButterflies: 47,
@@ -15,8 +14,6 @@ const placeholderStats = {
 export default function TopPage() {
   return (
     <main className="relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      <FloatingButterflyDecor />
-
       <header className="relative z-10 mb-10 flex items-center justify-between">
         <button
           type="button"
@@ -39,26 +36,9 @@ export default function TopPage() {
 
       <section className="relative z-10 mb-10 text-center">
         <div className="relative mx-auto max-w-xs pb-6 pt-4">
-          <span
-            aria-hidden
-            className="absolute -left-2 -top-2 h-8 w-8 border-l-2 border-t-2 rounded-tl-2xl"
-            style={{ borderColor: "rgba(232,193,112,0.55)" }}
-          />
-          <span
-            aria-hidden
-            className="absolute -right-2 -top-2 h-8 w-8 border-r-2 border-t-2 rounded-tr-2xl"
-            style={{ borderColor: "rgba(232,193,112,0.55)" }}
-          />
-          <span
-            aria-hidden
-            className="absolute -left-2 -bottom-2 h-8 w-8 border-l-2 border-b-2 rounded-bl-2xl"
-            style={{ borderColor: "rgba(232,193,112,0.55)" }}
-          />
-          <span
-            aria-hidden
-            className="absolute -right-2 -bottom-2 h-8 w-8 border-r-2 border-b-2 rounded-br-2xl"
-            style={{ borderColor: "rgba(232,193,112,0.55)" }}
-          />
+
+
+
 
           <h1
             className="font-display text-5xl italic leading-tight glow-text-gold"
