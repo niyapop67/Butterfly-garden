@@ -1,25 +1,64 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Shippori_Mincho, Zen_Maru_Gothic } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const displayFont = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-  style: ["normal", "italic"],
+const displayFont = localFont({
+  src: [
+    {
+      path: "../fonts/cormorant-garamond/CormorantGaramond-Variable.ttf",
+      weight: "400 600",
+      style: "normal",
+    },
+    {
+      path: "../fonts/cormorant-garamond/CormorantGaramond-Italic-Variable.ttf",
+      weight: "400 600",
+      style: "italic",
+    },
+  ],
   variable: "--font-display",
   display: "swap",
 });
 
-const displayFontJp = Shippori_Mincho({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
+const displayFontJp = localFont({
+  src: [
+    {
+      path: "../fonts/shippori-mincho/ShipporiMincho-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/shippori-mincho/ShipporiMincho-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/shippori-mincho/ShipporiMincho-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+  ],
   variable: "--font-display-jp",
   display: "swap",
 });
 
-const bodyFont = Zen_Maru_Gothic({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+const bodyFont = localFont({
+  src: [
+    {
+      path: "../fonts/zen-maru-gothic/ZenMaruGothic-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zen-maru-gothic/ZenMaruGothic-Medium.ttf",
+      weight: "500",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zen-maru-gothic/ZenMaruGothic-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+  ],
   variable: "--font-body",
   display: "swap",
 });
