@@ -59,6 +59,10 @@ export default function TopPage() {
           <br />
           MIKAのための特別なガーデンをつくります。
         </p>
+
+        <div className="divider-ornament mt-5">
+          <CrystalIcon size={14} />
+        </div>
       </section>
 
       <section className="relative z-10 mb-6">
@@ -88,7 +92,7 @@ export default function TopPage() {
       </section>
 
       <section className="relative z-10">
-        <GlassCard className="px-6 py-6 text-center">
+        <GlassCard className="frame-ornament px-6 py-6 text-center">
           <p className="mb-2 font-display-jp text-sm font-semibold text-[#5a4f6e]">このプロジェクトについて</p>
           <p className="font-body text-xs leading-relaxed text-[#6b6378]">
             ファンの皆さんのメッセージやボイスが蝶になり、MIKAだけの特別なガーデンに集まります。

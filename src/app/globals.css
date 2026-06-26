@@ -34,40 +34,48 @@ body {
 }
 
 /*
-  Top page (Day Garden) background — 3-layer structure per redesign spec v2.9 §4.1
-  Layer 1: base diagonal gradient Pearl White -> Baby Pink -> Tiffany Blue
-  Layer 2: faint background pattern PNG, low opacity (added later once material is ready)
-  Layer 3: corner flower/sakura decoration (placed by page-level components, not here)
+  Top page background — illustrated direction (2026-06-26 update).
 
-  NOTE: §4.4 — the fountain garden illustration (hero-bg.jpg) is reserved for the
-  Garden page (③) only and must never be used as the top page background.
+  Direction change: the mockup the user is targeting uses a full cherry-blossom
+  arch / fountain illustration as the top page background, not a flat
+  gradient. hero-bg.jpg (originally reserved for the Garden page only, per the
+  old §4.4 rule) is reused here as a stand-in until a dedicated top-page
+  illustration is generated. See chat log 2026-06-26 for the design-doc
+  diff this implies versus v2.9 §4.1/§4.4 — v2.9 needs an update to match.
+
+  Layer 1: hero-bg.jpg, cover-fit, fixed so it doesn't scroll away
+  Layer 2: soft pearl-white wash, gradient-shaped (lighter at top/bottom where
+           text sits, more transparent in the middle) so the illustration
+           shows through but body copy stays readable (§4.4 readability rule
+           is the one part of the old direction we are NOT dropping)
+  Layer 3: corner flower/sakura decoration (placed by page-level components)
 */
 .bg-day-garden {
   position: relative;
   background-color: #fffdf8;
-  background-image: linear-gradient(
-    135deg,
-    #fffdf8 0%,
-    #fffdf8 18%,
-    #ffe3f0 42%,
-    #ffcfe6 58%,
-    #e3f3fb 78%,
-    #cdebff 100%
-  );
+  background-image: url("/images/hero-bg.jpg");
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
 }
 
-/* Layer 2: faint pattern overlay. Hooked up to the ⑫background pattern PNG once
-   it is regenerated (see README_inventory.md). Until then this stays a no-op. */
+/* Layer 2: readability wash over the illustration. Stronger near the top
+   (title) and bottom (footer copy), lighter in the middle (stat cards already
+   have their own glass background so they don't need as much help). */
 .bg-day-garden::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.12;
-  background-image: var(--bg-pattern-image, none);
-  background-size: 360px;
-  background-repeat: repeat;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 253, 248, 0.78) 0%,
+    rgba(255, 253, 248, 0.55) 14%,
+    rgba(255, 253, 248, 0.4) 32%,
+    rgba(255, 253, 248, 0.5) 68%,
+    rgba(255, 253, 248, 0.72) 100%
+  );
 }
 
 .divider-ornament {
@@ -83,6 +91,35 @@ body {
   height: 1px;
   width: 48px;
   background: linear-gradient(90deg, transparent, var(--color-gold), transparent);
+}
+
+/* Ornamental corner flourishes for the "about this project" card, echoing the
+   reference mockup's filigree frame. Pure CSS so it scales cleanly with the
+   card and never fights the text for contrast. */
+.frame-ornament::before,
+.frame-ornament::after {
+  content: "";
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  pointer-events: none;
+  z-index: 5;
+}
+.frame-ornament::before {
+  top: 12px;
+  left: 12px;
+  border-top: 2px solid var(--color-gold);
+  border-left: 2px solid var(--color-gold);
+  border-top-left-radius: 10px;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
+}
+.frame-ornament::after {
+  bottom: 12px;
+  right: 12px;
+  border-bottom: 2px solid var(--color-gold);
+  border-right: 2px solid var(--color-gold);
+  border-bottom-right-radius: 10px;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.9));
 }
 
 .glow-text-gold {

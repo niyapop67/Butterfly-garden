@@ -8,9 +8,9 @@ import { motion } from "framer-motion";
  * 01_crystal_butterflies_3color_3size.png (see README_inventory.md).
  *
  * Replaces the placeholder CrystalButterflySVG per redesign spec v2.9 §4.4 /
- * §5 ("SVGの蝶をそのまま使い続けない"). Kept intentionally sparse (6 butterflies)
- * so the decoration stays "控えめ" (restrained) per §1.3 and doesn't fight the
- * stat cards / CTA for attention.
+ * §5 ("SVGの蝶をそのまま使い続けない"). Direction updated 2026-06-26: against
+ * an illustrated background the decoration reads better with more presence
+ * (closer to the reference mockup) than the earlier minimal version.
  */
 
 interface DecorButterfly {
@@ -32,6 +32,9 @@ const SOURCE_SIZE: Record<string, { w: number; h: number }> = {
   pink_large: { w: 344, h: 301 },
   pink_medium: { w: 249, h: 301 },
   pink_small: { w: 195, h: 301 },
+  pinkpurple_medium: { w: 245, h: 302 },
+  pinkpurple_small: { w: 177, h: 302 },
+  purple_medium: { w: 248, h: 288 },
   tiffany_large: { w: 355, h: 291 },
   tiffany_medium: { w: 242, h: 291 },
   tiffany_small: { w: 176, h: 291 },
@@ -43,11 +46,13 @@ function asset(name: keyof typeof SOURCE_SIZE) {
 }
 
 const BUTTERFLIES: DecorButterfly[] = [
-  { id: 0, ...asset("tiffany_small"), top: "2%", left: "78%", scale: 0.26, delay: 1.1, duration: 6.5, flip: true },
-  { id: 1, ...asset("pink_small"), top: "16%", left: "85%", scale: 0.22, delay: 2.4, duration: 8 },
-  { id: 2, ...asset("tiffany_small"), top: "42%", left: "2%", scale: 0.24, delay: 0.6, duration: 7, flip: true },
-  { id: 3, ...asset("pink_small"), top: "58%", left: "88%", scale: 0.2, delay: 3, duration: 6.8 },
-  { id: 4, ...asset("tiffany_small"), top: "74%", left: "4%", scale: 0.22, delay: 1.8, duration: 7.2, flip: true },
+  { id: 0, ...asset("tiffany_medium"), top: "2%", left: "76%", scale: 0.42, delay: 1.1, duration: 6.5, flip: true },
+  { id: 1, ...asset("pink_small"), top: "14%", left: "6%", scale: 0.4, delay: 2.4, duration: 8, flip: true },
+  { id: 2, ...asset("purple_medium"), top: "22%", left: "86%", scale: 0.36, delay: 0.6, duration: 7 },
+  { id: 3, ...asset("pinkpurple_small"), top: "38%", left: "2%", scale: 0.38, delay: 3, duration: 6.8 },
+  { id: 4, ...asset("tiffany_small"), top: "56%", left: "90%", scale: 0.32, delay: 1.8, duration: 7.2, flip: true },
+  { id: 5, ...asset("pink_small"), top: "70%", left: "8%", scale: 0.34, delay: 0.3, duration: 7.6 },
+  { id: 6, ...asset("pinkpurple_small"), top: "88%", left: "82%", scale: 0.3, delay: 2.1, duration: 6.2, flip: true },
 ];
 
 export default function TopPageButterflyDecor() {
