@@ -80,7 +80,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ja" className={`${displayFont.variable} ${displayFontJp.variable} ${bodyFont.variable}`}>
-      <body>{children}</body>
+      <body>
+        <div className="mobile-frame">{children}</div>
+      </body>
     </html>
   );
 }

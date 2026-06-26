@@ -5,7 +5,7 @@
 :root {
   --font-display: "Cormorant Garamond", serif;
   --font-display-jp: "Shippori Mincho", serif;
-  --font-body: "Zen Maru Gothic", sans-serif;
+  --font-body: "Zen Maru Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 
   /* Brand palette */
   --color-pink-soft: #ffd9e8;
@@ -31,6 +31,28 @@ body {
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   position: relative;
+}
+
+/*
+  This project is designed mobile-first only (spec v2.9 §1.2/§4.3) and is not
+  meant to reflow into a desktop layout. Rather than fight every component
+  into a responsive grid, every page is rendered inside a fixed phone-width
+  column at all viewport sizes; wider screens just see more margin on either
+  side, like viewing a phone mockup on a desk.
+*/
+.mobile-frame {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  background-color: #fffdf8;
+  box-shadow: 0 0 60px rgba(90, 79, 110, 0.08);
+}
+
+@media (min-width: 431px) {
+  body {
+    background-color: #f3edf5;
+  }
 }
 
 /*

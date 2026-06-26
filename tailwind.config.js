@@ -15,7 +15,7 @@ module.exports = {
       fontFamily: {
         display: ["var(--font-display)", "Cormorant Garamond", "serif"],
         "display-jp": ["var(--font-display-jp)", "Shippori Mincho", "serif"],
-        body: ["var(--font-body)", "Zen Maru Gothic", "sans-serif"],
+        body: ["var(--font-body)", "Zen Maru Gothic", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "sans-serif"],
       },
       borderRadius: {
         crystal: "24px",
