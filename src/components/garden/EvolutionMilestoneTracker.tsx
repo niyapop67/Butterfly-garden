@@ -4,11 +4,40 @@ interface Milestone {
   emoji: string;
 }
 
+import Image from "next/image";
+
+interface Milestone {
+  threshold: number;
+  label: string;
+  emoji: string;
+  /** Real illustrated icon, when material exists (see README_inventory.md).
+   *  Falls back to the emoji glyph otherwise. */
+  icon?: { src: string; width: number; height: number };
+}
+
 const MILESTONES: Milestone[] = [
-  { threshold: 30, label: "ガーデン誕生", emoji: "🌸" },
+  {
+    threshold: 30,
+    label: "ガーデン誕生",
+    emoji: "🌸",
+    icon: { src: "/images/icons/stage_flower.png", width: 319, height: 328 },
+  },
   { threshold: 50, label: "花が咲き始める", emoji: "🌺" },
-  { threshold: 80, label: "噴水が起動", emoji: "⛲" },
-  { threshold: 100, label: "クリスタル覚醒", emoji: "💎" },
+  {
+    threshold: 80,
+    label: "噴水が起動",
+    emoji: "⛲",
+    icon: { src: "/images/icons/stage_fountain.png", width: 340, height: 328 },
+  },
+  {
+    threshold: 100,
+    label: "クリスタル覚醒",
+    emoji: "💎",
+    icon: { src: "/images/icons/stage_crystal.png", width: 253, height: 328 },
+  },
+  // 150 / 200 use the emoji fallback until their dedicated illustrations are
+  // generated (see README_inventory.md "次のアクション" - 4段階のうち1点要確認,
+  // and the two new tiers added when the milestone list grew to 6 stages).
   { threshold: 150, label: "オーロラ降臨", emoji: "🌌" },
   { threshold: 200, label: "ガーデン満開", emoji: "✨" },
 ];
@@ -35,13 +64,23 @@ export default function EvolutionMilestoneTracker({
             return (
               <div key={m.threshold} className="flex shrink-0 basis-[17%] flex-col items-center gap-1">
                 <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border text-lg transition-all
+                  className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all
                     ${reached
                       ? "border-baby-pink/70 bg-white/70 shadow-glow-pink animate-gentle-float"
                       : "border-crystal-silver/60 bg-white/20 opacity-50"}`}
                   title={m.label}
                 >
-                  {m.emoji}
+                  {m.icon ? (
+                    <Image
+                      src={m.icon.src}
+                      alt=""
+                      width={m.icon.width}
+                      height={m.icon.height}
+                      className="h-7 w-7 object-contain"
+                    />
+                  ) : (
+                    <span className="text-lg">{m.emoji}</span>
+                  )}
                 </div>
                 <span className="font-body text-[10px] text-[#8b8398]">{m.threshold}匹</span>
               </div>
