@@ -1,9 +1,3 @@
-interface Milestone {
-  threshold: number;
-  label: string;
-  emoji: string;
-}
-
 import Image from "next/image";
 
 interface Milestone {
@@ -16,6 +10,7 @@ interface Milestone {
 }
 
 const MILESTONES: Milestone[] = [
+  { threshold: 15, label: "最初のつぼみ", emoji: "🌱" },
   {
     threshold: 30,
     label: "ガーデン誕生",
@@ -35,11 +30,6 @@ const MILESTONES: Milestone[] = [
     emoji: "💎",
     icon: { src: "/images/icons/stage_crystal.png", width: 253, height: 328 },
   },
-  // 150 / 200 use the emoji fallback until their dedicated illustrations are
-  // generated (see README_inventory.md "次のアクション" - 4段階のうち1点要確認,
-  // and the two new tiers added when the milestone list grew to 6 stages).
-  { threshold: 150, label: "オーロラ降臨", emoji: "🌌" },
-  { threshold: 200, label: "ガーデン満開", emoji: "✨" },
 ];
 
 interface EvolutionMilestoneTrackerProps {
@@ -57,42 +47,34 @@ export default function EvolutionMilestoneTracker({
       <p className="mb-3 text-center font-body text-[11px] text-[#a89fb3]">
         みんなの想いでガーデンが進化していきます
       </p>
-      <div className="relative">
-        <div className="flex gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {MILESTONES.map((m) => {
-            const reached = totalButterflies >= m.threshold;
-            return (
-              <div key={m.threshold} className="flex shrink-0 basis-[17%] flex-col items-center gap-1">
-                <div
-                  className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all
-                    ${reached
-                      ? "border-baby-pink/70 bg-white/70 shadow-glow-pink animate-gentle-float"
-                      : "border-crystal-silver/60 bg-white/20 opacity-50"}`}
-                  title={m.label}
-                >
-                  {m.icon ? (
-                    <Image
-                      src={m.icon.src}
-                      alt=""
-                      width={m.icon.width}
-                      height={m.icon.height}
-                      className="h-7 w-7 object-contain"
-                    />
-                  ) : (
-                    <span className="text-lg">{m.emoji}</span>
-                  )}
-                </div>
-                <span className="font-body text-[10px] text-[#8b8398]">{m.threshold}匹</span>
+      <div className="flex items-center justify-between gap-1.5">
+        {MILESTONES.map((m) => {
+          const reached = totalButterflies >= m.threshold;
+          return (
+            <div key={m.threshold} className="flex flex-1 flex-col items-center gap-1">
+              <div
+                className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all
+                  ${reached
+                    ? "border-baby-pink/70 bg-white/70 shadow-glow-pink animate-gentle-float"
+                    : "border-crystal-silver/60 bg-white/20 opacity-50"}`}
+                title={m.label}
+              >
+                {m.icon ? (
+                  <Image
+                    src={m.icon.src}
+                    alt=""
+                    width={m.icon.width}
+                    height={m.icon.height}
+                    className="h-7 w-7 object-contain"
+                  />
+                ) : (
+                  <span className="text-lg">{m.emoji}</span>
+                )}
               </div>
-            );
-          })}
-        </div>
-        {/* right-edge fade hints that the row scrolls further */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-y-0 right-0 w-8"
-          style={{ background: "linear-gradient(to right, transparent, rgba(255,255,255,0.55))" }}
-        />
+              <span className="font-body text-[10px] text-[#8b8398]">{m.threshold}匹</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
