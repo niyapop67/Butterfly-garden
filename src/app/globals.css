@@ -26,35 +26,48 @@
 
 html,
 body {
-  background-color: #fff8fb;
-  background-image: linear-gradient(
-      to bottom,
-      rgba(255, 248, 251, 0.15) 0%,
-      rgba(255, 248, 251, 0.05) 30%,
-      rgba(255, 248, 251, 0.2) 70%,
-      rgba(255, 248, 251, 0.55) 100%
-    ),
-    url("/images/hero-bg.jpg");
-  background-size: cover;
-  background-position: top center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
+  background-color: #fffdf8;
   color: var(--color-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   position: relative;
 }
 
-body::before {
+/*
+  Top page (Day Garden) background — 3-layer structure per redesign spec v2.9 §4.1
+  Layer 1: base diagonal gradient Pearl White -> Baby Pink -> Tiffany Blue
+  Layer 2: faint background pattern PNG, low opacity (added later once material is ready)
+  Layer 3: corner flower/sakura decoration (placed by page-level components, not here)
+
+  NOTE: §4.4 — the fountain garden illustration (hero-bg.jpg) is reserved for the
+  Garden page (③) only and must never be used as the top page background.
+*/
+.bg-day-garden {
+  position: relative;
+  background-color: #fffdf8;
+  background-image: linear-gradient(
+    135deg,
+    #fffdf8 0%,
+    #fffdf8 18%,
+    #ffe3f0 42%,
+    #ffcfe6 58%,
+    #e3f3fb 78%,
+    #cdebff 100%
+  );
+}
+
+/* Layer 2: faint pattern overlay. Hooked up to the ⑫background pattern PNG once
+   it is regenerated (see README_inventory.md). Until then this stays a no-op. */
+.bg-day-garden::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  opacity: 0.5;
-  background-image:
-    radial-gradient(circle, rgba(255, 182, 213, 0.5) 1.5px, transparent 1.5px);
-  background-size: 28px 28px;
+  opacity: 0.12;
+  background-image: var(--bg-pattern-image, none);
+  background-size: 360px;
+  background-repeat: repeat;
 }
 
 .divider-ornament {

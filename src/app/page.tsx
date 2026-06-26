@@ -4,6 +4,8 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import CrystalIcon from "@/components/ui/CrystalIcon";
 import GardenStatsBar from "@/components/garden/GardenStatsBar";
 import EvolutionMilestoneTracker from "@/components/garden/EvolutionMilestoneTracker";
+import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
+import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 
 const placeholderStats = {
   totalButterflies: 47,
@@ -13,7 +15,12 @@ const placeholderStats = {
 
 export default function TopPage() {
   return (
-    <main className="relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
+    <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
+      {/* Layer 2 (texture) + Layer 3 (corner flowers) + butterfly decor all sit
+          above the Layer 1 gradient but behind the real content (z-10). */}
+      <TopPageCornerFlowers />
+      <TopPageButterflyDecor />
+
       <header className="relative z-10 mb-10 flex items-center justify-between">
         <button
           type="button"
@@ -36,10 +43,6 @@ export default function TopPage() {
 
       <section className="relative z-10 mb-10 text-center">
         <div className="relative mx-auto max-w-xs pb-6 pt-4">
-
-
-
-
           <h1
             className="font-display text-5xl italic leading-tight glow-text-gold"
             style={{ color: "#5a4f6e" }}
