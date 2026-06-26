@@ -45,7 +45,7 @@ export default function GardenStatsBar({
       <p className="mb-3 text-center font-body text-xs tracking-wider text-[#8b8398]">
         ── 現在のガーデンの様子 ──
       </p>
-      <div className="flex items-stretch justify-between gap-2 rounded-2xl bg-white/35 px-4 py-4">
+      <div className="flex items-stretch justify-between gap-2 rounded-2xl bg-white/25 px-4 py-4">
         <StatItem
           iconSrc="/images/icons/icon_butterfly.png"
           iconWidth={301}

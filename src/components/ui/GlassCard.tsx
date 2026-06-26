@@ -8,7 +8,7 @@ interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
 export default function GlassCard({ children, className = "", ...rest }: GlassCardProps) {
   return (
     <div
-      className={`relative overflow-hidden rounded-[28px] border border-white/80 bg-white/60 backdrop-blur-2xl ${className}`}
+      className={`relative overflow-hidden rounded-[28px] border border-white/60 bg-white/25 backdrop-blur-md ${className}`}
       style={{ boxShadow: "var(--shadow-glass-soft)" }}
       {...rest}
     >
@@ -17,7 +17,7 @@ export default function GlassCard({ children, className = "", ...rest }: GlassCa
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "linear-gradient(135deg, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.15) 35%, transparent 60%)",
+            "linear-gradient(135deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0.08) 35%, transparent 60%)",
         }}
       />
       <div
