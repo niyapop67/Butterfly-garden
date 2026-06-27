@@ -26,6 +26,11 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: VoiceRec
   const chunksRef = useRef<Blob[]>([]);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  // recorder.onstop is a closure created back when startRecording() ran, so
+  // it would otherwise always see elapsedSeconds as it was at that moment
+  // (0) rather than the latest tick from setInterval. Mirror the latest
+  // value into a ref so onstop can read it without going stale.
+  const elapsedSecondsRef = useRef(0);
 
   useEffect(() => {
     if (typeof window !== "undefined" && !window.MediaRecorder) {
@@ -70,16 +75,18 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: VoiceRec
         const url = URL.createObjectURL(blob);
         setPreviewUrl(url);
         setState("recorded");
-        onRecorded(blob, elapsedSeconds);
+        onRecorded(blob, elapsedSecondsRef.current);
       };
 
       recorder.start();
       setState("recording");
       setElapsedSeconds(0);
+      elapsedSecondsRef.current = 0;
 
       intervalRef.current = setInterval(() => {
         setElapsedSeconds((prev) => {
           const next = prev + 1;
+          elapsedSecondsRef.current = next;
           if (next >= VOICE_MAX_SECONDS) {
             stopRecording();
           }
@@ -95,6 +102,7 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: VoiceRec
     if (previewUrl) URL.revokeObjectURL(previewUrl);
     setPreviewUrl(null);
     setElapsedSeconds(0);
+    elapsedSecondsRef.current = 0;
     setState("idle");
     onRecorded(null, null);
   }
