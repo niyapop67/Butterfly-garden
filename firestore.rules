@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /submissions/{submissionId} {
+      // Read: open to everyone. The garden page needs this for the
+      // butterfly count and nickname-only tap reveal (GATE 1 territory).
+      // True protection of message text / voice URLs (GATE 2) is enforced
+      // in the UI layer, not here — see docs/firebase-security-rules-draft.md
+      // for why, and what a stricter future setup would look like.
+      allow read: if true;
+
+      // Create only — no edits after submission (spec v2.9 §1.10 step 4 /
+      // "送信後の編集はできません").
+      allow create: if request.resource.data.keys().hasOnly(
+                        ['nickname', 'message', 'butterflyType', 'voiceUrl',
+                         'voiceDurationSeconds', 'createdAt']
+                      )
+                    && request.resource.data.nickname is string
+                    && request.resource.data.nickname.size() > 0
+                    && request.resource.data.nickname.size() <= 40
+                    && request.resource.data.message is string
+                    && request.resource.data.message.size() > 0
+                    && request.resource.data.message.size() <= 500
+                    && request.resource.data.butterflyType in
+                        ['pink-heart', 'tiffany-sky', 'crystal-white', 'aurora-dream',
+                         'emerald-garden', 'golden-sunshine', 'twinkle-premium'];
+
+      allow update, delete: if false;
+    }
+  }
+}
