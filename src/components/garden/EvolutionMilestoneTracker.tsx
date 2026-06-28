@@ -3,33 +3,19 @@ import Image from "next/image";
 interface Milestone {
   threshold: number;
   label: string;
-  emoji: string;
-  /** Real illustrated icon, when material exists (see README_inventory.md).
-   *  Falls back to the emoji glyph otherwise. */
-  icon?: { src: string; width: number; height: number };
+  /** Rose medallion badge (2026-06-28 asset drop) — self-contained
+   *  illustration that already bakes in the circular frame, ribbon, and
+   *  "X匹" count text, so no separate icon/emoji + label scheme is needed
+   *  anymore. See public/images/icons/stage_rose_*.png. */
+  icon: { src: string; width: number; height: number };
 }
 
 const MILESTONES: Milestone[] = [
-  { threshold: 15, label: "最初のつぼみ", emoji: "🌱" },
-  {
-    threshold: 30,
-    label: "ガーデン誕生",
-    emoji: "🌸",
-    icon: { src: "/images/icons/stage_flower.png", width: 319, height: 328 },
-  },
-  { threshold: 50, label: "花が咲き始める", emoji: "🌺" },
-  {
-    threshold: 80,
-    label: "噴水が起動",
-    emoji: "⛲",
-    icon: { src: "/images/icons/stage_fountain.png", width: 340, height: 328 },
-  },
-  {
-    threshold: 100,
-    label: "クリスタル覚醒",
-    emoji: "💎",
-    icon: { src: "/images/icons/stage_crystal.png", width: 253, height: 328 },
-  },
+  { threshold: 15, label: "最初のつぼみ", icon: { src: "/images/icons/stage_rose_15.png", width: 405, height: 454 } },
+  { threshold: 30, label: "ガーデン誕生", icon: { src: "/images/icons/stage_rose_30.png", width: 405, height: 456 } },
+  { threshold: 50, label: "花が咲き始める", icon: { src: "/images/icons/stage_rose_50.png", width: 404, height: 457 } },
+  { threshold: 80, label: "噴水が起動", icon: { src: "/images/icons/stage_rose_80.png", width: 404, height: 460 } },
+  { threshold: 100, label: "クリスタル覚醒", icon: { src: "/images/icons/stage_rose_100.png", width: 402, height: 457 } },
 ];
 
 interface EvolutionMilestoneTrackerProps {
@@ -47,34 +33,31 @@ export default function EvolutionMilestoneTracker({
       <p className="mb-3 text-center font-body text-[11px] text-[#a89fb3]">
         みんなの想いでガーデンが進化していきます
       </p>
-      <div className="flex items-center justify-between gap-1.5">
-        {MILESTONES.map((m) => {
-          const reached = totalButterflies >= m.threshold;
-          return (
-            <div key={m.threshold} className="flex flex-1 flex-col items-center gap-1">
+      <div className="-mx-1 overflow-x-auto px-1">
+        <div className="flex w-max items-end gap-3 pb-1">
+          {MILESTONES.map((m) => {
+            const reached = totalButterflies >= m.threshold;
+            return (
               <div
-                className={`flex h-12 w-12 items-center justify-center rounded-full border transition-all
-                  ${reached
-                    ? "border-baby-pink/70 bg-white/70 shadow-glow-pink animate-gentle-float"
-                    : "border-crystal-silver/60 bg-white/20 opacity-50"}`}
+                key={m.threshold}
                 title={m.label}
+                className={`flex-shrink-0 transition-all duration-500 ${
+                  reached ? "animate-gentle-float drop-shadow-[0_0_14px_rgba(255,182,217,0.55)]" : "opacity-35 grayscale"
+                }`}
+                style={{ width: 72 }}
               >
-                {m.icon ? (
-                  <Image
-                    src={m.icon.src}
-                    alt=""
-                    width={m.icon.width}
-                    height={m.icon.height}
-                    className="h-7 w-7 object-contain"
-                  />
-                ) : (
-                  <span className="text-lg">{m.emoji}</span>
-                )}
+                <Image
+                  src={m.icon.src}
+                  alt={`${m.threshold}匹で${m.label}`}
+                  width={m.icon.width}
+                  height={m.icon.height}
+                  sizes="72px"
+                  className="h-auto w-full object-contain"
+                />
               </div>
-              <span className="font-body text-[10px] text-[#8b8398]">{m.threshold}匹</span>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

@@ -1,19 +1,44 @@
 import Link from "next/link";
+import CrystalIcon from "@/components/ui/CrystalIcon";
 import GlassCard from "@/components/ui/GlassCard";
 import CrystalButton from "@/components/ui/CrystalButton";
-import CrystalIcon from "@/components/ui/CrystalIcon";
-import GardenStatsBar from "@/components/garden/GardenStatsBar";
-import EvolutionMilestoneTracker from "@/components/garden/EvolutionMilestoneTracker";
+import SiteMenu from "@/components/ui/SiteMenu";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
+import TopPageLiveContent from "@/components/top/TopPageLiveContent";
 
-const placeholderStats = {
-  totalButterflies: 47,
-  totalMessages: 47,
-  totalVoices: 41,
-};
+/**
+ * Birthday reveal date, mirrored from src/app/birthday/page.tsx — see that
+ * file's REVEAL_DATE comment. Duplicated rather than imported because that
+ * file is a Client Component ("use client") and this constant needs to be
+ * evaluated server-side here.
+ */
+const REVEAL_DATE = new Date("2026-08-23T00:00:00+09:00");
 
-export default function TopPage() {
+/**
+ * v2.8 spec §1.11.1 — Niya-only preview mode: visiting the top page with
+ * ?preview=<NIYA_PREVIEW_KEY> forces the central evolution display to 100%
+ * ahead of the real date, without a separate page or any client-visible
+ * secret. The comparison happens here, in a Server Component, specifically
+ * so the key never reaches client JS — only the resulting boolean does.
+ */
+function isForcedComplete(searchParams: { [key: string]: string | string[] | undefined }): boolean {
+  if (new Date() >= REVEAL_DATE) return true;
+
+  const previewKey = process.env.NIYA_PREVIEW_KEY;
+  const provided = searchParams.preview;
+  if (!previewKey || !provided) return false;
+
+  return provided === previewKey;
+}
+
+export default function TopPage({
+  searchParams,
+}: {
+  searchParams: { [key: string]: string | string[] | undefined };
+}) {
+  const forcedComplete = isForcedComplete(searchParams);
+
   return (
     <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
       {/* Layer 2 (texture) + Layer 3 (corner flowers) + butterfly decor all sit
@@ -22,16 +47,7 @@ export default function TopPage() {
       <TopPageButterflyDecor />
 
       <header className="relative z-10 mb-10 flex items-center justify-between">
-        <button
-          type="button"
-          aria-label="メニューを開く"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/50 backdrop-blur-md shadow-glass-soft"
-        >
-          <span className="sr-only">メニュー</span>
-          <svg width="20" height="14" viewBox="0 0 20 14" fill="none" aria-hidden>
-            <path d="M0 1H20M0 7H20M0 13H20" stroke="#a78bdb" strokeWidth="1.5" strokeLinecap="round" />
-          </svg>
-        </button>
+        <SiteMenu />
 
         <Link
           href="/garden"
@@ -65,21 +81,7 @@ export default function TopPage() {
         </div>
       </section>
 
-      <section className="relative z-10 mb-6">
-        <GlassCard className="px-5 py-6">
-          <GardenStatsBar
-            totalButterflies={placeholderStats.totalButterflies}
-            totalMessages={placeholderStats.totalMessages}
-            totalVoices={placeholderStats.totalVoices}
-          />
-        </GlassCard>
-      </section>
-
-      <section className="relative z-10 mb-8">
-        <GlassCard className="px-5 py-6">
-          <EvolutionMilestoneTracker totalButterflies={placeholderStats.totalButterflies} />
-        </GlassCard>
-      </section>
+      <TopPageLiveContent forcedComplete={forcedComplete} />
 
       <section className="relative z-10 mb-8 flex justify-center">
         <Link href="/submit" className="w-full max-w-xs">

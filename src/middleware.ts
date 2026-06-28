@@ -41,6 +41,8 @@ const SITE_GATE_PUBLIC_PATHS = [
   "/api/private-gate",
   "/_next",
   "/favicon.ico",
+  "/icon.svg",
+  "/robots.txt",
   "/images",
   "/fonts",
 ];

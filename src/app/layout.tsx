@@ -67,9 +67,18 @@ export const metadata: Metadata = {
   title: "Butterfly Garden for MIKA",
   description:
     "みんなの想いが蝶になって、MIKAのための特別なガーデンをつくります。ファンが届けるバースデーギフト企画です。",
+  // 検索エンジンには載せない（合言葉ゲートの裏側にサプライズ企画があること自体を
+  // 検索結果に出さないため。コンテンツはミドルウェアで保護済みだが、タイトル・
+  // descriptionだけでも検索結果に出るとMIKA本人が見つけてしまうリスクがある）
   robots: {
-    index: true,
-    follow: true,
+    index: false,
+    follow: false,
+  },
+  openGraph: {
+    title: "Butterfly Garden for MIKA",
+    description: "みんなの想いが蝶になって、MIKAのための特別なガーデンをつくります。",
+    locale: "ja_JP",
+    type: "website",
   },
 };
 

@@ -56,16 +56,19 @@ body {
 }
 
 /*
-  Top page background — illustrated direction (2026-06-26 update).
+  Top page / Submit page background — illustrated direction (2026-06-27 update).
 
-  Direction change: the mockup the user is targeting uses a full cherry-blossom
-  arch / fountain illustration as the top page background, not a flat
-  gradient. hero-bg.jpg (originally reserved for the Garden page only, per the
-  old §4.4 rule) is reused here as a stand-in until a dedicated top-page
-  illustration is generated. See chat log 2026-06-26 for the design-doc
-  diff this implies versus v2.9 §4.1/§4.4 — v2.9 needs an update to match.
+  Direction history: originally a flat gradient (v2.9 §4.1), then briefly
+  hero-bg.jpg (the fountain illustration meant for the Garden page, reused
+  here as a stand-in — see git history / 2026-06-26 notes). As of 2026-06-27,
+  replaced with a dedicated illustration (top-bg.jpg: rose-and-wisteria
+  colonnade leading to a gazebo) generated specifically for this background
+  slot, landscape-cropped and reframed to cover-fit the mobile column.
+  hero-bg.jpg itself is no longer referenced by any page — see .bg-garden-page
+  below for its replacement, garden-bg.jpg, which is now the Garden page's
+  own dedicated (portrait-cropped) illustration.
 
-  Layer 1: hero-bg.jpg, cover-fit, fixed so it doesn't scroll away
+  Layer 1: top-bg.jpg, cover-fit, fixed so it doesn't scroll away
   Layer 2: soft pearl-white wash, gradient-shaped (lighter at top/bottom where
            text sits, more transparent in the middle) so the illustration
            shows through but body copy stays readable (§4.4 readability rule
@@ -75,7 +78,7 @@ body {
 .bg-day-garden {
   position: relative;
   background-color: #fffdf8;
-  background-image: url("/images/hero-bg.jpg");
+  background-image: url("/images/top-bg.jpg");
   background-size: cover;
   background-position: top center;
   background-repeat: no-repeat;
@@ -97,6 +100,40 @@ body {
     rgba(255, 253, 248, 0.4) 32%,
     rgba(255, 253, 248, 0.5) 68%,
     rgba(255, 253, 248, 0.72) 100%
+  );
+}
+
+/*
+  Garden page (③) background — dedicated portrait illustration (2026-06-27).
+  garden-bg.jpg is cropped tall (≈0.45 aspect, close to the 390×844 mobile
+  frame) so cover-fit shows the full colonnade-to-fountain composition on
+  most phones rather than just a cropped slice. Same two-layer pattern as
+  .bg-day-garden: illustration + readability wash, kept as a separate class
+  (not a recolour of .bg-day-garden) since the Garden page's own butterfly
+  tiles/filter chips need slightly different wash strength than the top page.
+*/
+.bg-garden-page {
+  position: relative;
+  background-color: #fffdf8;
+  background-image: url("/images/garden-bg.jpg");
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+}
+
+.bg-garden-page::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 253, 248, 0.8) 0%,
+    rgba(255, 253, 248, 0.5) 16%,
+    rgba(255, 253, 248, 0.38) 40%,
+    rgba(255, 253, 248, 0.55) 75%,
+    rgba(255, 253, 248, 0.8) 100%
   );
 }
 
@@ -146,6 +183,31 @@ body {
 
 .glow-text-gold {
   text-shadow: 0 0 12px rgba(232, 193, 112, 0.5);
+}
+
+/*
+  Birthday page (④) revealed-state background — "Night Garden" per the
+  original redesign spec's 3-pattern background system (Day Garden / Sunset
+  Garden / Night Garden = Moonlight + Aurora Glow + Crystal Reflections).
+  No dedicated night-sky illustration exists yet, so this is built entirely
+  from CSS gradients + the existing sparkle/float keyframes — same
+  "ship the structure, swap in art later" approach as butterflyAssets.ts.
+
+  Base is a deep indigo-violet, NOT pure black (background rule §1.3:
+  "純粋な黒背景は禁止"). Aurora ribbons are soft, low-opacity radial
+  gradients in the existing Aurora Lavender / Tiffany / Pink tokens so they
+  read as a continuation of the site's palette rather than a new one.
+*/
+.bg-night-garden {
+  position: relative;
+  background-color: #221c3d;
+  background-image:
+    radial-gradient(ellipse 70% 40% at 20% 15%, rgba(201, 168, 224, 0.35), transparent 60%),
+    radial-gradient(ellipse 60% 35% at 85% 10%, rgba(129, 216, 208, 0.28), transparent 60%),
+    radial-gradient(ellipse 80% 50% at 50% 100%, rgba(255, 111, 168, 0.22), transparent 65%),
+    linear-gradient(160deg, #2c2350 0%, #221c3d 45%, #1a1630 100%);
+  background-repeat: no-repeat;
+  overflow: hidden;
 }
 
 * {

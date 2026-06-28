@@ -86,6 +86,7 @@ export default function TopPageButterflyDecor() {
             alt=""
             width={b.width}
             height={b.height}
+            sizes={`${Math.round(b.width * b.scale)}px`}
             className="h-full w-full object-contain"
             style={{ filter: "drop-shadow(0 4px 10px rgba(255, 158, 199, 0.25))" }}
             priority={false}

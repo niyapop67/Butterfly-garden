@@ -34,6 +34,7 @@ export default function ButterflyImage({
       alt=""
       width={asset.width}
       height={asset.height}
+      sizes={`${displayWidth}px`}
       style={{ width: displayWidth, height: displayHeight }}
       className={`object-contain ${className}`}
     />

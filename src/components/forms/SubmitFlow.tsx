@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import GlassCard from "@/components/ui/GlassCard";
 import CrystalButton from "@/components/ui/CrystalButton";
+import CrystalIcon from "@/components/ui/CrystalIcon";
 import ButterflySelector from "@/components/forms/ButterflySelector";
 import VoiceRecorder from "@/components/forms/VoiceRecorder";
 import ButterflyImage from "@/components/butterfly/ButterflyImage";
@@ -264,7 +266,7 @@ function ButterflyStep({
         蝶を選んでください
       </h2>
       <p className="font-body text-xs mb-4" style={{ color: "var(--color-ink-soft)" }}>
-        一度選択すると、変更できません
+        送信後は変更できません
       </p>
       <ButterflySelector value={value} onChange={onChange} />
     </div>
@@ -340,11 +342,18 @@ function ThankYouScreen({
       <h1 className="font-display text-3xl italic" style={{ color: "var(--color-ink)" }}>
         Thank you!
       </h1>
-      <p className="font-display-jp text-sm" style={{ color: "var(--color-ink-soft)" }}>
+      <p className="font-body text-sm" style={{ color: "var(--color-ink-soft)" }}>
         あなたの蝶が、ガーデンに舞い込みました。
         <br />
         MIKAへの想いを届けてくれてありがとう。
       </p>
+
+      <Link href="/garden" className="w-full max-w-xs">
+        <CrystalButton className="w-full">
+          <CrystalIcon size={18} />
+          ガーデンを見る
+        </CrystalButton>
+      </Link>
     </div>
   );
 }

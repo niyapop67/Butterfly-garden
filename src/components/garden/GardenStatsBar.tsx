@@ -17,6 +17,7 @@ function StatItem({ iconSrc, iconWidth, iconHeight, label, value, colorClass }: 
         alt=""
         width={iconWidth}
         height={iconHeight}
+        sizes="24px"
         aria-hidden
         className="h-6 w-6 object-contain"
       />

@@ -11,9 +11,12 @@ import {
 interface ButterflySelectorProps {
   value: ButterflyType | null;
   onChange: (type: ButterflyType) => void;
-  /** Once a real submission has been locked in, selection can't change
-   * (spec v2.9 §1.10 step 4 — "一度選択すると変更できません"). The
-   * confirm step passes disabled=true here. */
+  /** Disables tap interaction while a submission is in flight (passed from
+   * SubmitFlow during handleSubmit). Selection itself stays freely
+   * changeable up until the moment of final submission — see chat decision
+   * 2026-06-28: "送信前は何回でも選び直してOK" — only the *submitted* choice
+   * is permanent (there's no edit-after-submit feature anywhere in the app,
+   * which is the real meaning of "送信後は変更できません"). */
   disabled?: boolean;
 }
 

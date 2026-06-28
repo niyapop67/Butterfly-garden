@@ -21,6 +21,7 @@ export default function TopPageCornerFlowers() {
           alt=""
           width={367}
           height={331}
+          sizes="150px"
           className="h-full w-full object-contain"
         />
       </div>
@@ -35,6 +36,7 @@ export default function TopPageCornerFlowers() {
           alt=""
           width={298}
           height={331}
+          sizes="128px"
           className="h-full w-full object-contain"
         />
       </div>
@@ -46,6 +48,7 @@ export default function TopPageCornerFlowers() {
           alt=""
           width={298}
           height={331}
+          sizes="132px"
           className="h-full w-full object-contain"
         />
       </div>
@@ -60,6 +63,7 @@ export default function TopPageCornerFlowers() {
           alt=""
           width={367}
           height={331}
+          sizes="150px"
           className="h-full w-full object-contain"
         />
       </div>

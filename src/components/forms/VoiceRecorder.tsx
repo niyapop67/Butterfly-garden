@@ -168,9 +168,19 @@ export default function VoiceRecorder({ onRecorded, disabled = false }: VoiceRec
       )}
 
       {state === "permission-denied" && (
-        <p className="font-body text-sm text-rose-500">
-          マイクへのアクセスが許可されませんでした。設定を確認するか、ボイスなしで進んでください。
-        </p>
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-center font-body text-sm text-rose-500">
+            マイクへのアクセスが許可されませんでした。設定を確認するか、ボイスなしで進んでください。
+          </p>
+          <button
+            type="button"
+            onClick={() => setState("idle")}
+            className="font-body text-xs underline"
+            style={{ color: "var(--color-ink-soft)" }}
+          >
+            もう一度試す
+          </button>
+        </div>
       )}
     </div>
   );
