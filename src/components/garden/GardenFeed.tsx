@@ -119,7 +119,7 @@ export default function GardenFeed() {
       )}
 
       <section className="relative z-10 mb-8">
-        <GlassCard className="px-4 py-6">
+        <GlassCard className="px-4 py-6 !bg-white/10 !border-white/40" texture={false}>
           {loading ? (
             <div className="grid grid-cols-4 gap-x-1 gap-y-5">
               {Array.from({ length: 8 }).map((_, i) => (
