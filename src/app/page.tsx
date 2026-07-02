@@ -1,6 +1,5 @@
 import Link from "next/link";
 import CrystalIcon from "@/components/ui/CrystalIcon";
-import GlassCard from "@/components/ui/GlassCard";
 import CrystalButton from "@/components/ui/CrystalButton";
 import SiteMenu from "@/components/ui/SiteMenu";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
@@ -76,9 +75,6 @@ export default function TopPage({
           MIKAのための特別なガーデンをつくります。
         </p>
 
-        <div className="divider-ornament mt-5">
-          <CrystalIcon size={14} />
-        </div>
       </section>
 
       <TopPageLiveContent forcedComplete={forcedComplete} />
@@ -88,20 +84,11 @@ export default function TopPage({
           <CrystalButton className="w-full">
             <CrystalIcon size={20} />
             蝶を届ける
-            <span className="block text-[11px] font-normal opacity-90">メッセージを送る</span>
           </CrystalButton>
         </Link>
       </section>
 
-      <section className="relative z-10">
-        <GlassCard className="frame-ornament px-6 py-6 text-center">
-          <p className="mb-2 font-display-jp text-sm font-semibold text-[#5a4f6e]">このプロジェクトについて</p>
-          <p className="font-body text-xs leading-relaxed text-[#6b6378]">
-            ファンの皆さんのメッセージやボイスが蝶になり、MIKAだけの特別なガーデンに集まります。
-            誕生日当日、蝶たちはひとつになり、最高のサプライズをお届けします。
-          </p>
-        </GlassCard>
-      </section>
+
     </main>
   );
 }
