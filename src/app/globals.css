@@ -82,6 +82,8 @@ body {
   background-size: cover;
   background-position: top center;
   background-repeat: no-repeat;
+  filter: var(--time-bg-filter, none);
+  transition: filter 3s ease;
 }
 
 /* Layer 2: readability wash over the illustration. Stronger near the top
@@ -119,6 +121,8 @@ body {
   background-size: cover;
   background-position: top center;
   background-repeat: no-repeat;
+  filter: var(--time-bg-filter, none);
+  transition: filter 3s ease;
 }
 
 .bg-garden-page::before {
@@ -129,11 +133,11 @@ body {
   z-index: 0;
   background: linear-gradient(
     to bottom,
-    rgba(255, 253, 248, 0.58) 0%,
-    rgba(255, 253, 248, 0.3) 16%,
-    rgba(255, 253, 248, 0.18) 40%,
-    rgba(255, 253, 248, 0.32) 75%,
-    rgba(255, 253, 248, 0.58) 100%
+    rgba(255, 253, 248, 0.45) 0%,
+    rgba(255, 253, 248, 0.2) 16%,
+    rgba(255, 253, 248, 0.1) 40%,
+    rgba(255, 253, 248, 0.2) 75%,
+    rgba(255, 253, 248, 0.45) 100%
   );
 }
 

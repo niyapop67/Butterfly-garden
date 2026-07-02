@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useGardenFeed } from "@/lib/useGardenFeed";
+import { useTimeOfDay } from "@/lib/useTimeOfDay";
 import GlassCard from "@/components/ui/GlassCard";
 import GardenStatsBar from "@/components/garden/GardenStatsBar";
 import EvolutionMilestoneTracker from "@/components/garden/EvolutionMilestoneTracker";
@@ -22,6 +24,13 @@ export default function TopPageLiveContent({ forcedComplete }: TopPageLiveConten
   const { entries, loading } = useGardenFeed();
   const total = entries.length;
   const totalVoices = entries.filter((e) => e.hasVoice).length;
+  const time = useTimeOfDay();
+
+  useEffect(() => {
+    const main = document.querySelector("main");
+    if (!main) return;
+    main.style.setProperty("--time-bg-filter", time.bgFilter);
+  }, [time]);
 
   return (
     <>
