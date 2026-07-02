@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useGardenFeed } from "@/lib/useGardenFeed";
 import { useTimeOfDay } from "@/lib/useTimeOfDay";
+import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
 import FreeFlyingGarden from "@/components/garden/FreeFlyingGarden";
 import CrystalIcon from "@/components/ui/CrystalIcon";
 import CrystalButton from "@/components/ui/CrystalButton";
@@ -21,6 +22,14 @@ export default function GardenPage() {
         "--time-ambient-opacity": String(time.ambientOpacity),
       } as CSSProperties}
     >
+      {/* Time-of-day photo layer — replaces the static garden-bg.jpg fallback
+          whenever this component renders. z-index: -1, see globals.css. */}
+      <div
+        aria-hidden
+        className="bg-photo-layer"
+        style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})`, filter: time.bgFilter }}
+      />
+
       {/* Ambient lighting overlay */}
       <div
         aria-hidden

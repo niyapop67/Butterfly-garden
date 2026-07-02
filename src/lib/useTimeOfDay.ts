@@ -56,7 +56,7 @@ export const TIME_CONFIGS: Record<TimeOfDay, TimeConfig> = {
   },
 };
 
-function getTimeOfDay(): TimeOfDay {
+export function getTimeOfDay(): TimeOfDay {
   const h = new Date().getHours();
   if (h >= 5 && h < 11) return "morning";
   if (h >= 11 && h < 17) return "day";

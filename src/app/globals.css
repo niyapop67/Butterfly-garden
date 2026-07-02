@@ -84,6 +84,30 @@ body {
   background-repeat: no-repeat;
 }
 
+/*
+  Time-of-day photo layer (2026-07-03 update).
+
+  Sits between the .bg-day-garden / .bg-garden-page element's own static
+  background-image (bottom-most paint layer, kept as a graceful-degradation
+  fallback for pages that don't render this div — e.g. birthday/page.tsx
+  pre-reveal) and the ::before readability wash (z-index 0, painted after
+  z-index: -1 content). z-index: -1 guarantees it never covers the wash or
+  real content regardless of DOM order.
+
+  backgroundImage and filter are set inline per-page from useTimeOfDay /
+  timeBackgrounds.ts, so this class only carries layout + transition.
+*/
+.bg-photo-layer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-size: cover;
+  background-position: top center;
+  background-repeat: no-repeat;
+  transition: filter 1.2s ease;
+}
+
 /* Layer 2: readability wash over the illustration. Stronger near the top
    (title) and bottom (footer copy), lighter in the middle (stat cards already
    have their own glass background so they don't need as much help). */
