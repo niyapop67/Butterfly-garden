@@ -1,7 +1,6 @@
 import Link from "next/link";
 import CrystalIcon from "@/components/ui/CrystalIcon";
 import CrystalButton from "@/components/ui/CrystalButton";
-import SiteMenu from "@/components/ui/SiteMenu";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 import TopPageLiveContent from "@/components/top/TopPageLiveContent";
@@ -45,12 +44,11 @@ export default function TopPage({
       <TopPageCornerFlowers />
       <TopPageButterflyDecor />
 
-      <header className="relative z-10 mb-10 flex items-center justify-between">
-        <SiteMenu />
-
+      <header className="relative z-10 mb-10 flex items-center justify-end">
         <Link
           href="/garden"
-          className="flex items-center gap-1.5 rounded-full bg-white/60 px-4 py-2 font-body text-xs font-bold text-[#5cb8af] shadow-glass-soft backdrop-blur-md"
+          className="flex items-center gap-1.5 rounded-full bg-white/30 px-4 py-2 font-body text-xs font-bold text-[#5cb8af] backdrop-blur-md transition-all hover:bg-white/40"
+          style={{ border: "1px solid rgba(232,193,112,0.3)" }}
         >
           ガーデンを見る <CrystalIcon size={16} />
         </Link>
