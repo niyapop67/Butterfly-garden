@@ -12,21 +12,21 @@ interface StatCounterProps {
 function StatItem({ iconSrc, iconWidth, iconHeight, label, value, colorClass }: StatCounterProps) {
   return (
     <div className="flex flex-1 flex-col items-center gap-1.5">
-      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 shadow-sm">
+      <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/85 shadow-sm">
         <Image
           src={iconSrc}
           alt=""
           width={iconWidth}
           height={iconHeight}
-          sizes="26px"
+          sizes="36px"
           aria-hidden
-          className="h-[26px] w-[26px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+          className="h-9 w-9 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
         />
       </div>
       <span className="font-body text-xs text-[#8b8398]">{label}</span>
-      <span className={`font-display-jp text-2xl font-semibold ${colorClass}`}>
+      <span className={`font-display-jp text-lg font-semibold ${colorClass}`}>
         {value}
-        <span className="ml-0.5 text-sm font-body">{label === "Voices" ? "件" : "匹"}</span>
+        <span className="ml-0.5 text-xs font-body">{label === "Voices" ? "件" : "匹"}</span>
       </span>
     </div>
   );

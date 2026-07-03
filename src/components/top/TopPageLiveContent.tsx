@@ -1,7 +1,6 @@
 "use client";
 
 import { useGardenFeed } from "@/lib/useGardenFeed";
-import CentralButterflyEvolution from "@/components/top/CentralButterflyEvolution";
 import GardenStatsBar from "@/components/garden/GardenStatsBar";
 import EvolutionMilestoneTracker from "@/components/garden/EvolutionMilestoneTracker";
 import GlassCard from "@/components/ui/GlassCard";
@@ -16,18 +15,12 @@ export default function TopPageLiveContent({ forcedComplete }: TopPageLiveConten
   const totalVoices = entries.filter((e) => e.hasVoice).length;
 
   return (
-    <>
-      <section className="relative z-10 mb-8 flex justify-center">
-        <CentralButterflyEvolution totalButterflies={total} forcedComplete={forcedComplete} />
-      </section>
-
-      <section className="relative z-10 mb-8">
-        <GlassCard className="px-4 py-5">
-          <GardenStatsBar totalButterflies={total} totalMessages={total} totalVoices={totalVoices} />
-          <div className="my-4 h-px bg-white/50" aria-hidden />
-          <EvolutionMilestoneTracker totalButterflies={total} forcedComplete={forcedComplete} />
-        </GlassCard>
-      </section>
-    </>
+    <section className="relative z-10 mb-8">
+      <GlassCard className="px-4 py-5">
+        <GardenStatsBar totalButterflies={total} totalMessages={total} totalVoices={totalVoices} />
+        <div className="my-4 h-px bg-white/50" aria-hidden />
+        <EvolutionMilestoneTracker totalButterflies={total} forcedComplete={forcedComplete} />
+      </GlassCard>
+    </section>
   );
 }

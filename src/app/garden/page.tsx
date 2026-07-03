@@ -45,11 +45,20 @@ export default function GardenPage() {
       } as CSSProperties}
     >
       {/* Time-of-day photo layer — replaces the static garden-bg.jpg fallback
-          whenever this component renders. z-index: -1, see globals.css. */}
+          whenever this component renders. z-index: -1, see globals.css.
+          2026-07-03: no longer applies time.bgFilter here. bgFilter (with
+          its hue-rotate(200deg) for moon-garden) was designed for the old
+          single-photo system, where one neutral image got colour-graded via
+          CSS to fake 4 different times of day. Now each time has its own
+          already-correctly-lit photo (see timeBackgrounds.ts), so applying
+          bgFilter on top double-processes it — hue-rotate on an
+          already-blue night photo shifted it into an unintended pink/lavender
+          cast instead of deepening the night mood. The ambient rgba overlay
+          below is a much gentler tint and is kept. */}
       <div
         aria-hidden
         className="bg-photo-layer"
-        style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})`, filter: time.bgFilter }}
+        style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})` }}
       />
 
       {/* Ambient lighting overlay */}
@@ -78,10 +87,16 @@ export default function GardenPage() {
         </Link>
 
         <div className="text-center">
-          <h1 className="font-display italic text-lg leading-none" style={{ color: "var(--color-ink)" }}>
+          <h1
+            className="font-display italic text-lg leading-none"
+            style={{ color: "#4a4058", textShadow: "0 1px 8px rgba(255,255,255,0.75)" }}
+          >
             Butterfly Garden
           </h1>
-          <p className="font-body text-[10px] tracking-widest opacity-50 mt-0.5" style={{ color: "var(--color-ink)" }}>
+          <p
+            className="font-body text-[10px] tracking-widest mt-0.5"
+            style={{ color: "#4a4058", opacity: 0.75, textShadow: "0 1px 6px rgba(255,255,255,0.75)" }}
+          >
             {time.labelJa}
           </p>
         </div>
@@ -108,54 +123,54 @@ export default function GardenPage() {
         )}
       </div>
 
-      {/* Butterfly-type filter chips — narrows which butterflies fly on
-          screen (does not affect the total count above, or maxOnScreen).
-          "すべての蝶" always resets to the full, unfiltered set. */}
-      <div className="relative z-30 mt-3 -mx-1 overflow-x-auto px-1">
-        <div className="flex w-max items-center gap-2 px-4 pb-1">
-          <button
-            type="button"
-            onClick={() => setFilter("all")}
-            className={`flex-shrink-0 rounded-full border px-3 py-1.5 font-body text-[11px] transition-all ${
-              filter === "all"
-                ? "border-transparent bg-[var(--color-tiffany)] text-white shadow-sm"
-                : "border-white/50 bg-white/25 text-[color:var(--color-ink)] backdrop-blur-sm"
-            }`}
-          >
-            すべての蝶
-          </button>
-          {FILTER_TYPES.map((t) => {
-            const asset = getButterflyAsset(t, "small");
-            const active = filter === t;
-            return (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setFilter(active ? "all" : t)}
-                aria-label={t}
-                aria-pressed={active}
-                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-all ${
-                  active
-                    ? "border-transparent bg-white shadow-md scale-110"
-                    : "border-white/50 bg-white/25 backdrop-blur-sm"
-                }`}
-              >
-                <Image
-                  src={asset.src}
-                  alt={t}
-                  width={asset.width}
-                  height={asset.height}
-                  className="h-5 w-5 object-contain"
-                  unoptimized
-                />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Bottom CTA only */}
+      {/* Bottom cluster: filter chips + CTA, both fixed above the fold */}
       <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 max-w-[430px] mx-auto">
+        {/* Butterfly-type filter chips — narrows which butterflies fly on
+            screen (does not affect the total count above, or maxOnScreen).
+            "すべての蝶" always resets to the full, unfiltered set. */}
+        <div className="mb-3 -mx-1 overflow-x-auto px-1">
+          <div className="flex w-max items-center gap-2 px-1 pb-1">
+            <button
+              type="button"
+              onClick={() => setFilter("all")}
+              className={`flex-shrink-0 rounded-full border px-3 py-1.5 font-body text-[11px] transition-all ${
+                filter === "all"
+                  ? "border-transparent bg-[var(--color-tiffany)] text-white shadow-sm"
+                  : "border-white/50 bg-white/60 text-[color:var(--color-ink)] backdrop-blur-sm"
+              }`}
+            >
+              すべての蝶
+            </button>
+            {FILTER_TYPES.map((t) => {
+              const asset = getButterflyAsset(t, "small");
+              const active = filter === t;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setFilter(active ? "all" : t)}
+                  aria-label={t}
+                  aria-pressed={active}
+                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-all ${
+                    active
+                      ? "border-transparent bg-white shadow-md scale-110"
+                      : "border-white/50 bg-white/60 backdrop-blur-sm"
+                  }`}
+                >
+                  <Image
+                    src={asset.src}
+                    alt={t}
+                    width={asset.width}
+                    height={asset.height}
+                    className="h-5 w-5 object-contain"
+                    unoptimized
+                  />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
         <Link href="/submit" className="w-full">
           <CrystalButton className="w-full">
             <CrystalIcon size={18} />
