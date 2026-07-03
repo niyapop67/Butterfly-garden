@@ -68,17 +68,20 @@ export default function TopPage({
       <section className="relative z-10 mb-10 text-center">
         <div className="relative mx-auto max-w-xs pb-6 pt-4">
           <h1
-            className="font-display text-5xl italic leading-tight glow-text-gold"
-            style={{ color: "#5a4f6e" }}
+            className="font-display text-5xl italic leading-tight"
+            style={{ color: "#ff6fa8", textShadow: "0 2px 16px rgba(255,255,255,0.9), 0 1px 3px rgba(255,255,255,0.9)" }}
           >
             Butterfly Garden
           </h1>
-          <p className="mt-1 font-display text-2xl italic" style={{ color: "#ff6fa8" }}>
+          <p className="mt-1 font-display text-2xl italic" style={{ color: "#c9709a", textShadow: "0 1px 10px rgba(255,255,255,0.85)" }}>
             for MIKA
           </p>
         </div>
 
-        <p className="mx-auto mt-2 max-w-xs font-display-jp text-sm leading-relaxed text-[#6b6378]">
+        <p
+          className="mx-auto mt-2 max-w-xs rounded-2xl bg-white/40 px-4 py-3 font-display-jp text-base font-medium leading-relaxed backdrop-blur-sm"
+          style={{ color: "#4a4058" }}
+        >
           みんなの想いが蝶になって、
           <br />
           MIKAのための特別なガーデンをつくります。
@@ -97,6 +100,19 @@ export default function TopPage({
         </Link>
       </section>
 
+      <section className="relative z-10 mx-auto mb-4 max-w-xs">
+        <div className="divider-ornament mb-3 text-xs">
+          <span className="h-px flex-1 bg-current opacity-40" />
+          <span>このプロジェクトについて</span>
+          <span className="h-px flex-1 bg-current opacity-40" />
+        </div>
+        <p
+          className="rounded-2xl bg-white/35 px-4 py-3 text-center font-body text-[13px] leading-relaxed backdrop-blur-sm"
+          style={{ color: "#4a4058" }}
+        >
+          ファンの皆さんのメッセージやボイスが蝶となり、MIKAだけの特別なガーデンに集まります。誕生日当日、蝶たちはひとつになり、最高のサプライズをお届けします。
+        </p>
+      </section>
 
     </main>
   );

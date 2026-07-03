@@ -85,7 +85,7 @@ body {
 }
 
 /*
-  Time-of-day photo layer (2026-07-03 update).
+  Time-of-day photo layer (2026-07-03 update, revised same day).
 
   Sits between the .bg-day-garden / .bg-garden-page element's own static
   background-image (bottom-most paint layer, kept as a graceful-degradation
@@ -94,12 +94,28 @@ body {
   z-index: -1 content). z-index: -1 guarantees it never covers the wash or
   real content regardless of DOM order.
 
+  Height is capped to one viewport (100dvh) rather than inset:0/100%. The
+  TOP and SUBMIT pages are long, scrolling documents — if this layer stretched
+  to the full scrollable height, background-size:cover would scale the image
+  against that full height (often 2–3x taller than the screen), blowing the
+  photo up into an unrecognisable, hazy close-up instead of the intended
+  fountain-centered composition. Capping to 100dvh means cover-fit sizes
+  against one screen's worth of height, matching what the crop was actually
+  designed for; the rest of the (long) page below just shows the plain
+  background-color once the photo layer's box ends. The Garden page's own
+  container is already min-h-screen with overflow-hidden (no scroll), so
+  100dvh there is equivalent to the old inset:0 behavior — no regression.
+
   backgroundImage and filter are set inline per-page from useTimeOfDay /
   timeBackgrounds.ts, so this class only carries layout + transition.
 */
 .bg-photo-layer {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100dvh;
   z-index: -1;
   pointer-events: none;
   background-size: cover;

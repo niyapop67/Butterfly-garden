@@ -7,16 +7,6 @@ import { getButterflyAsset } from "@/lib/butterflyAssets";
 import type { ButterflyType } from "@/types/submission";
 import type { GardenEntry } from "@/lib/useGardenFeed";
 
-const BUTTERFLY_TYPES: ButterflyType[] = [
-  "pink-heart",
-  "tiffany-sky",
-  "aurora-dream",
-  "twinkle-premium",
-  "crystal-white",
-  "emerald-garden",
-  "golden-sunshine",
-];
-
 /** A single butterfly that flies freely across the screen */
 function FreeButterfly({
   type,
@@ -191,16 +181,23 @@ function FreeButterfly({
 
 interface FreeFlyingGardenProps {
   entries: GardenEntry[];
-  /** Max butterflies on screen (for perf) */
+  /** Max butterflies on screen at once — once real submissions pass this,
+   *  only the most recent N fly (older ones still count toward the totals
+   *  shown elsewhere, they just don't all render at once so the background
+   *  illustration stays visible instead of getting crowded out). */
   maxOnScreen?: number;
 }
 
-export default function FreeFlyingGarden({ entries, maxOnScreen = 18 }: FreeFlyingGardenProps) {
+export default function FreeFlyingGarden({ entries, maxOnScreen = 30 }: FreeFlyingGardenProps) {
   const [revealedId, setRevealedId] = useState<string | null>(null);
 
-  // Fill up to maxOnScreen: real entries first, then ambient butterflies
+  // One butterfly per real submission, capped at maxOnScreen — no ambient
+  // filler butterflies. Below the cap, the number flying always matches the
+  // actual message count (2026-07-03: previously topped up to a fixed 18
+  // with fake "ambient" butterflies regardless of real count, which made a
+  // single submission look like ~18).
   const butterflies = useMemo(() => {
-    const real = entries.slice(0, maxOnScreen).map((e, i) => ({
+    return entries.slice(0, maxOnScreen).map((e, i) => ({
       id: e.id,
       type: e.butterflyType,
       seed: i * 1000 + e.id.charCodeAt(0) * 17,
@@ -208,17 +205,6 @@ export default function FreeFlyingGarden({ entries, maxOnScreen = 18 }: FreeFlyi
       hasVoice: e.hasVoice,
       isReal: true,
     }));
-
-    const ambient = Array.from({ length: Math.max(0, maxOnScreen - real.length) }, (_, i) => ({
-      id: `ambient-${i}`,
-      type: BUTTERFLY_TYPES[i % BUTTERFLY_TYPES.length],
-      seed: 99999 + i * 1337,
-      nickname: undefined,
-      hasVoice: false,
-      isReal: false,
-    }));
-
-    return [...real, ...ambient];
   }, [entries, maxOnScreen]);
 
   return (
