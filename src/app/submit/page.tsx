@@ -1,6 +1,6 @@
 import Link from "next/link";
 import SubmitFlow from "@/components/forms/SubmitFlow";
-import { getTimeOfDay, TIME_CONFIGS } from "@/lib/useTimeOfDay";
+import { getTimeOfDay, TIME_CONFIGS } from "@/lib/timeOfDayConfig";
 import { TOP_BG_IMAGES } from "@/lib/timeBackgrounds";
 
 /**

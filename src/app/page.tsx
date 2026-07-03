@@ -4,7 +4,7 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 import TopPageLiveContent from "@/components/top/TopPageLiveContent";
-import { getTimeOfDay, TIME_CONFIGS } from "@/lib/useTimeOfDay";
+import { getTimeOfDay, TIME_CONFIGS } from "@/lib/timeOfDayConfig";
 import { TOP_BG_IMAGES } from "@/lib/timeBackgrounds";
 
 /**
