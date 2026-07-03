@@ -1,17 +1,39 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useGardenFeed } from "@/lib/useGardenFeed";
 import { useTimeOfDay } from "@/lib/useTimeOfDay";
 import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
+import { getButterflyAsset } from "@/lib/butterflyAssets";
 import FreeFlyingGarden from "@/components/garden/FreeFlyingGarden";
 import CrystalIcon from "@/components/ui/CrystalIcon";
 import CrystalButton from "@/components/ui/CrystalButton";
+import type { ButterflyType } from "@/types/submission";
+
+const FILTER_TYPES: ButterflyType[] = [
+  "pink-heart",
+  "tiffany-sky",
+  "aurora-dream",
+  "twinkle-premium",
+  "crystal-white",
+  "emerald-garden",
+  "golden-sunshine",
+];
 
 export default function GardenPage() {
   const { entries, loading } = useGardenFeed();
   const time = useTimeOfDay();
+  const [filter, setFilter] = useState<ButterflyType | "all">("all");
+
+  // The header count always reflects the true total (matches the TOP
+  // page's stats card); only which butterflies actually render is
+  // affected by the filter chips below.
+  const filteredEntries = useMemo(
+    () => (filter === "all" ? entries : entries.filter((e) => e.butterflyType === filter)),
+    [entries, filter]
+  );
 
   return (
     <main
@@ -39,7 +61,7 @@ export default function GardenPage() {
 
       {/* Free-flying butterflies */}
       <div className="fixed inset-0 z-10 pointer-events-none">
-        <FreeFlyingGarden entries={entries} maxOnScreen={30} />
+        <FreeFlyingGarden entries={filteredEntries} maxOnScreen={30} />
       </div>
 
       {/* Header */}
@@ -84,6 +106,52 @@ export default function GardenPage() {
             <span className="ml-1 opacity-75">匹の蝶がガーデンに集まっています</span>
           </p>
         )}
+      </div>
+
+      {/* Butterfly-type filter chips — narrows which butterflies fly on
+          screen (does not affect the total count above, or maxOnScreen).
+          "すべての蝶" always resets to the full, unfiltered set. */}
+      <div className="relative z-30 mt-3 -mx-1 overflow-x-auto px-1">
+        <div className="flex w-max items-center gap-2 px-4 pb-1">
+          <button
+            type="button"
+            onClick={() => setFilter("all")}
+            className={`flex-shrink-0 rounded-full border px-3 py-1.5 font-body text-[11px] transition-all ${
+              filter === "all"
+                ? "border-transparent bg-[var(--color-tiffany)] text-white shadow-sm"
+                : "border-white/50 bg-white/25 text-[color:var(--color-ink)] backdrop-blur-sm"
+            }`}
+          >
+            すべての蝶
+          </button>
+          {FILTER_TYPES.map((t) => {
+            const asset = getButterflyAsset(t, "small");
+            const active = filter === t;
+            return (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setFilter(active ? "all" : t)}
+                aria-label={t}
+                aria-pressed={active}
+                className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-all ${
+                  active
+                    ? "border-transparent bg-white shadow-md scale-110"
+                    : "border-white/50 bg-white/25 backdrop-blur-sm"
+                }`}
+              >
+                <Image
+                  src={asset.src}
+                  alt={t}
+                  width={asset.width}
+                  height={asset.height}
+                  className="h-5 w-5 object-contain"
+                  unoptimized
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {/* Bottom CTA only */}
