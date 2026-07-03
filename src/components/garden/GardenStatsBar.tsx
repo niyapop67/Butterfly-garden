@@ -11,20 +11,22 @@ interface StatCounterProps {
 
 function StatItem({ iconSrc, iconWidth, iconHeight, label, value, colorClass }: StatCounterProps) {
   return (
-    <div className="flex flex-1 flex-col items-center gap-1">
-      <Image
-        src={iconSrc}
-        alt=""
-        width={iconWidth}
-        height={iconHeight}
-        sizes="24px"
-        aria-hidden
-        className="h-6 w-6 object-contain"
-      />
+    <div className="flex flex-1 flex-col items-center gap-1.5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/80 shadow-sm">
+        <Image
+          src={iconSrc}
+          alt=""
+          width={iconWidth}
+          height={iconHeight}
+          sizes="26px"
+          aria-hidden
+          className="h-[26px] w-[26px] object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+        />
+      </div>
       <span className="font-body text-xs text-[#8b8398]">{label}</span>
-      <span className={`font-display-jp text-3xl font-semibold ${colorClass}`}>
+      <span className={`font-display-jp text-2xl font-semibold ${colorClass}`}>
         {value}
-        <span className="ml-0.5 text-base font-body">{label === "Voices" ? "件" : "匹"}</span>
+        <span className="ml-0.5 text-sm font-body">{label === "Voices" ? "件" : "匹"}</span>
       </span>
     </div>
   );
@@ -46,7 +48,7 @@ export default function GardenStatsBar({
       <p className="mb-3 text-center font-body text-xs tracking-wider text-[#8b8398]">
         ── 現在のガーデンの様子 ──
       </p>
-      <div className="flex items-stretch justify-between gap-2 rounded-2xl bg-white/25 px-4 py-4">
+      <div className="flex items-stretch justify-between gap-2 rounded-2xl bg-white/40 px-4 py-4 shadow-sm">
         <StatItem
           iconSrc="/images/icons/icon_butterfly.png"
           iconWidth={301}
