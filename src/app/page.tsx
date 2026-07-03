@@ -4,8 +4,6 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 import TopPageLiveContent from "@/components/top/TopPageLiveContent";
-import { getTimeOfDay, TIME_CONFIGS } from "@/lib/timeOfDayConfig";
-import { TOP_BG_IMAGES } from "@/lib/timeBackgrounds";
 
 /**
  * Birthday reveal date, mirrored from src/app/birthday/page.tsx — see that
@@ -38,17 +36,16 @@ export default function TopPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const forcedComplete = isForcedComplete(searchParams);
-  const time = TIME_CONFIGS[getTimeOfDay()];
 
   return (
     <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      {/* Time-of-day photo layer — sits below the Layer 1 gradient wash.
-          Computed server-side from the current hour on each request. */}
-      <div
-        aria-hidden
-        className="bg-photo-layer"
-        style={{ backgroundImage: `url(${TOP_BG_IMAGES[time.id]})`, filter: time.bgFilter }}
-      />
+      {/* Static hero background (2026-07-03: replaced the time-of-day photo
+          layer here — Niya provided a dedicated portrait illustration
+          (public/images/top-bg.jpg, fountain pre-centered in the crop) and
+          asked for a single fixed image on TOP/SUBMIT rather than the
+          morning/day/golden-hour/moon-garden rotation. That rotation now
+          lives on the Garden page only — see src/app/garden/page.tsx. */}
+      <div aria-hidden className="bg-photo-layer" style={{ backgroundImage: "url(/images/top-bg.jpg)" }} />
 
       {/* Layer 2 (texture) + Layer 3 (corner flowers) + butterfly decor all sit
           above the Layer 1 gradient but behind the real content (z-10). */}

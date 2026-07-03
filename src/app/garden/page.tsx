@@ -39,7 +39,7 @@ export default function GardenPage() {
 
       {/* Free-flying butterflies */}
       <div className="fixed inset-0 z-10 pointer-events-none">
-        <FreeFlyingGarden entries={entries} maxOnScreen={16} />
+        <FreeFlyingGarden entries={entries} maxOnScreen={30} />
       </div>
 
       {/* Header */}

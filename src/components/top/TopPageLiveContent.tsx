@@ -25,7 +25,7 @@ export default function TopPageLiveContent({ forcedComplete }: TopPageLiveConten
         <GlassCard className="px-4 py-5">
           <GardenStatsBar totalButterflies={total} totalMessages={total} totalVoices={totalVoices} />
           <div className="my-4 h-px bg-white/50" aria-hidden />
-          <EvolutionMilestoneTracker totalButterflies={total} />
+          <EvolutionMilestoneTracker totalButterflies={total} forcedComplete={forcedComplete} />
         </GlassCard>
       </section>
     </>

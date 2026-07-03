@@ -1,63 +1,71 @@
-import Image from "next/image";
+"use client";
 
-interface Milestone {
-  threshold: number;
-  label: string;
-  /** Rose medallion badge (2026-06-28 asset drop) — self-contained
-   *  illustration that already bakes in the circular frame, ribbon, and
-   *  "X匹" count text, so no separate icon/emoji + label scheme is needed
-   *  anymore. See public/images/icons/stage_rose_*.png. */
-  icon: { src: string; width: number; height: number };
-}
+/**
+ * Rose growth visual (2026-07-03 rewrite).
+ *
+ * Previously this rendered 5 pre-made medallion PNGs (stage_rose_15/30/50/
+ * 80/100.png) that bake the "X匹" count directly into the artwork. Niya
+ * asked to drop the numeric counts entirely now that the site's audience is
+ * a small, known fandom rather than the general public — only the rose's
+ * bloom state should show, no numbers anywhere in this section.
+ *
+ * The old assets can't be relabeled in code (the numbers are pixels, not
+ * text), and the new thresholds (5/10/15/20/30) don't match the old ones
+ * (15/30/50/80/100) anyway, so this is a fresh, code-drawn visual instead of
+ * new artwork: a row of five rose glyphs that bloom in color/scale as each
+ * threshold is reached, finishing as a small bouquet. No external image
+ * assets, so it ships without waiting on a new ChatGPT art drop — swap in
+ * real illustrations later if/when those exist.
+ *
+ * `forcedComplete`: on/after the reveal date (2026-08-23 JST) — or with the
+ * Niya-only ?preview= key — every stage shows fully bloomed regardless of
+ * the real submission count, so the birthday view always reads as "complete"
+ * even if the 30-threshold wasn't actually reached.
+ */
 
-const MILESTONES: Milestone[] = [
-  { threshold: 15, label: "最初のつぼみ", icon: { src: "/images/icons/stage_rose_15.png", width: 405, height: 454 } },
-  { threshold: 30, label: "ガーデン誕生", icon: { src: "/images/icons/stage_rose_30.png", width: 405, height: 456 } },
-  { threshold: 50, label: "花が咲き始める", icon: { src: "/images/icons/stage_rose_50.png", width: 404, height: 457 } },
-  { threshold: 80, label: "噴水が起動", icon: { src: "/images/icons/stage_rose_80.png", width: 404, height: 460 } },
-  { threshold: 100, label: "クリスタル覚醒", icon: { src: "/images/icons/stage_rose_100.png", width: 402, height: 457 } },
-];
+const STAGES = [
+  { threshold: 5, label: "つぼみ" },
+  { threshold: 10, label: "ひらき始め" },
+  { threshold: 15, label: "満開へ" },
+  { threshold: 20, label: "咲きほこる" },
+  { threshold: 30, label: "花束完成" },
+] as const;
 
 interface EvolutionMilestoneTrackerProps {
   totalButterflies: number;
+  forcedComplete?: boolean;
 }
 
 export default function EvolutionMilestoneTracker({
   totalButterflies,
+  forcedComplete = false,
 }: EvolutionMilestoneTrackerProps) {
   return (
     <div className="w-full">
-      <p className="mb-1 text-center font-body text-xs tracking-wider text-[#8b8398]">
-        ── ガーデンの成長 ──
+      <p className="mb-3 text-center font-body text-xs tracking-wider text-[#8b8398]">
+        ── 薔薇の成長 ──
       </p>
-      <p className="mb-3 text-center font-body text-[11px] text-[#a89fb3]">
-        みんなの想いでガーデンが進化していきます
-      </p>
-      <div className="-mx-1 overflow-x-auto px-1">
-        <div className="flex w-max items-end gap-3 pb-1">
-          {MILESTONES.map((m) => {
-            const reached = totalButterflies >= m.threshold;
-            return (
+      <div className="flex items-end justify-between gap-1.5 px-1">
+        {STAGES.map((s, i) => {
+          const reached = forcedComplete || totalButterflies >= s.threshold;
+          const isFinal = i === STAGES.length - 1;
+          const scale = 0.62 + i * 0.1;
+          return (
+            <div key={s.threshold} className="flex flex-1 flex-col items-center gap-1">
               <div
-                key={m.threshold}
-                title={m.label}
-                className={`flex-shrink-0 transition-all duration-500 ${
-                  reached ? "animate-gentle-float drop-shadow-[0_0_14px_rgba(255,182,217,0.55)]" : "opacity-35 grayscale"
-                }`}
-                style={{ width: 72 }}
+                className={`transition-all duration-500 ${reached ? "drop-shadow-[0_0_10px_rgba(255,182,217,0.6)]" : "grayscale opacity-30"}`}
+                style={{ fontSize: `${scale * 1.6}rem`, lineHeight: 1 }}
               >
-                <Image
-                  src={m.icon.src}
-                  alt={`${m.threshold}匹で${m.label}`}
-                  width={m.icon.width}
-                  height={m.icon.height}
-                  sizes="72px"
-                  className="h-auto w-full object-contain"
-                />
+                {isFinal ? "💐" : "🌹"}
               </div>
-            );
-          })}
-        </div>
+              <span
+                className={`text-center font-body text-[10px] leading-tight ${reached ? "text-[#c9709a]" : "text-[#b9b2c4]"}`}
+              >
+                {s.label}
+              </span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
