@@ -44,6 +44,10 @@ const SOURCE_SIZE: Record<string, AssetDims> = {
   tiffany_large: { w: 355, h: 291 },
   tiffany_medium: { w: 242, h: 291 },
   tiffany_small: { w: 176, h: 291 },
+  // 2026-07-05: first of the 3 pending real assets landed.
+  crystal_large: { w: 350, h: 380 },
+  crystal_medium: { w: 250, h: 271 },
+  crystal_small: { w: 180, h: 195 },
 };
 
 /**
@@ -64,7 +68,7 @@ const BUTTERFLY_ASSET_MAP: Record<ButterflyType, ButterflyAssetEntry> = {
   "twinkle-premium": { stem: "pinkpurple", isPlaceholder: false },
 
   // Pending real assets (spec v2.9 §1.8 / chat log 2026-06-26 §5):
-  "crystal-white": { stem: "tiffany", isPlaceholder: true },
+  "crystal-white": { stem: "crystal", isPlaceholder: false }, // 2026-07-05: real art landed
   "emerald-garden": { stem: "purple", isPlaceholder: true },
   "golden-sunshine": { stem: "pink", isPlaceholder: true },
 };

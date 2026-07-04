@@ -163,16 +163,37 @@ function FreeButterfly({
         />
       </motion.div>
 
-      {/* Nickname tooltip on tap */}
+      {/* Nickname tooltip on tap. Positioned via bottom: calc(100% + Npx)
+          only — previously ALSO animated y: -size-8 on top of that
+          bottom:100%, which double-stacked the offset and pushed the
+          tooltip far above the butterfly, making it hard to tell which
+          butterfly a name belonged to once several were on screen. Small
+          speech-bubble tail added so the association stays clear even with
+          multiple butterflies close together. */}
       {isRevealed && nickname && (
         <motion.div
-          initial={{ opacity: 0, y: -6, scale: 0.85 }}
-          animate={{ opacity: 1, y: -size - 8, scale: 1 }}
-          className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/70 bg-white/90 px-3 py-1 text-[11px] shadow-md backdrop-blur-sm"
-          style={{ color: "var(--color-ink)", bottom: "100%" }}
+          initial={{ opacity: 0, y: 4, scale: 0.85 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          className="absolute left-1/2 -translate-x-1/2 whitespace-nowrap"
+          style={{ bottom: "calc(100% + 10px)" }}
         >
-          {nickname}
-          {hasVoice && " 🎙️"}
+          <div
+            className="rounded-full border border-white/70 bg-white/95 px-3 py-1 text-[11px] shadow-md backdrop-blur-sm"
+            style={{ color: "var(--color-ink)" }}
+          >
+            {nickname}
+            {hasVoice && " 🎙️"}
+          </div>
+          {/* Speech-bubble tail pointing down at the butterfly */}
+          <div
+            className="absolute left-1/2 -translate-x-1/2 h-0 w-0"
+            style={{
+              top: "100%",
+              borderLeft: "5px solid transparent",
+              borderRight: "5px solid transparent",
+              borderTop: "6px solid rgba(255,255,255,0.95)",
+            }}
+          />
         </motion.div>
       )}
     </motion.div>
