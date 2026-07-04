@@ -142,7 +142,7 @@ function FreeButterfly({
   return (
     <motion.div
       animate={controls}
-      className="fixed z-20 cursor-pointer select-none"
+      className="fixed z-20 cursor-pointer select-none pointer-events-auto"
       style={{ willChange: "transform" }}
       onClick={onTap}
       whileTap={{ scale: 1.2 }}

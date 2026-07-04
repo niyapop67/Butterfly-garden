@@ -74,7 +74,7 @@ export default function TopPage({
           >
             Butterfly Garden
           </h1>
-          <p className="mt-1 font-display text-2xl italic md:text-4xl" style={{ color: "#5fae94", textShadow: "0 1px 10px rgba(255,255,255,0.85)" }}>
+          <p className="mt-1 font-display text-2xl italic md:text-4xl" style={{ color: "#ff6fa8", textShadow: "0 1px 10px rgba(255,255,255,0.85)" }}>
             for MIKA
           </p>
         </div>

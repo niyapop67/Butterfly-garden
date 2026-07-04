@@ -124,11 +124,11 @@ export default function GardenPage() {
       </div>
 
       {/* Bottom cluster: filter chips + CTA, both fixed above the fold */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 mx-auto" style={{ maxWidth: "var(--frame-width)" }}>
+      <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 mx-auto pointer-events-none" style={{ maxWidth: "var(--frame-width)" }}>
         {/* Butterfly-type filter chips — narrows which butterflies fly on
             screen (does not affect the total count above, or maxOnScreen).
             "すべての蝶" always resets to the full, unfiltered set. */}
-        <div className="mb-3 -mx-1 overflow-x-auto px-1">
+        <div className="mb-3 -mx-1 overflow-x-auto px-1 pointer-events-auto">
           <div className="flex w-max items-center gap-2 px-1 pb-1">
             <button
               type="button"
@@ -171,7 +171,7 @@ export default function GardenPage() {
           </div>
         </div>
 
-        <Link href="/submit" className="w-full">
+        <Link href="/submit" className="w-full pointer-events-auto">
           <CrystalButton className="w-full">
             <CrystalIcon size={18} />
             <span>蝶を届ける</span>
