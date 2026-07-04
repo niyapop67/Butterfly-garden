@@ -65,8 +65,8 @@ export default function TopPageButterflyDecor() {
           style={{
             top: b.top,
             left: b.left,
-            width: b.width * b.scale,
-            height: b.height * b.scale,
+            width: `calc(${b.width * b.scale}px * var(--decor-scale, 1))`,
+            height: `calc(${b.height * b.scale}px * var(--decor-scale, 1))`,
             transform: b.flip ? "scaleX(-1)" : undefined,
           }}
           animate={{

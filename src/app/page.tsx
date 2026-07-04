@@ -4,6 +4,8 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 import TopPageLiveContent from "@/components/top/TopPageLiveContent";
+import { getTimeOfDay, TIME_CONFIGS } from "@/lib/timeOfDayConfig";
+import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
 
 /**
  * Birthday reveal date, mirrored from src/app/birthday/page.tsx — see that
@@ -36,16 +38,18 @@ export default function TopPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const forcedComplete = isForcedComplete(searchParams);
+  const time = TIME_CONFIGS[getTimeOfDay()];
 
   return (
     <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      {/* Static hero background (2026-07-03: replaced the time-of-day photo
-          layer here — Niya provided a dedicated portrait illustration
-          (public/images/top-bg.jpg, fountain pre-centered in the crop) and
-          asked for a single fixed image on TOP/SUBMIT rather than the
-          morning/day/golden-hour/moon-garden rotation. That rotation now
-          lives on the Garden page only — see src/app/garden/page.tsx. */}
-      <div aria-hidden className="bg-photo-layer" style={{ backgroundImage: "url(/images/top-bg.jpg)" }} />
+      {/* Time-of-day photo layer (2026-07-04: back to the same rotation as
+          the Garden page — the single fixed hero-bg.jpg tried on 2026-07-03
+          didn't read well here, so TOP now reuses GARDEN_BG_IMAGES rather
+          than a separate TOP-only set. No bgFilter: each image is already
+          correctly colour-graded per time of day, see the note in
+          src/app/garden/page.tsx for why stacking a CSS filter on top of
+          that was actively harmful. */}
+      <div aria-hidden className="bg-photo-layer" style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})` }} />
 
       {/* Layer 2 (texture) + Layer 3 (corner flowers) + butterfly decor all sit
           above the Layer 1 gradient but behind the real content (z-10). */}
@@ -63,20 +67,20 @@ export default function TopPage({
       </header>
 
       <section className="relative z-10 mb-10 text-center">
-        <div className="relative mx-auto max-w-xs pb-6 pt-4">
+        <div className="relative mx-auto max-w-xs pb-6 pt-4 md:max-w-md">
           <h1
-            className="font-display text-5xl italic leading-tight"
-            style={{ color: "#ff6fa8", textShadow: "0 2px 16px rgba(255,255,255,0.9), 0 1px 3px rgba(255,255,255,0.9)" }}
+            className="font-display text-5xl italic leading-tight md:text-7xl"
+            style={{ color: "#3f9c82", textShadow: "0 2px 16px rgba(255,255,255,0.9), 0 1px 3px rgba(255,255,255,0.9)" }}
           >
             Butterfly Garden
           </h1>
-          <p className="mt-1 font-display text-2xl italic" style={{ color: "#c9709a", textShadow: "0 1px 10px rgba(255,255,255,0.85)" }}>
+          <p className="mt-1 font-display text-2xl italic md:text-4xl" style={{ color: "#5fae94", textShadow: "0 1px 10px rgba(255,255,255,0.85)" }}>
             for MIKA
           </p>
         </div>
 
         <p
-          className="mx-auto mt-2 max-w-xs rounded-2xl bg-white/40 px-4 py-3 font-display-jp text-base font-medium leading-relaxed backdrop-blur-sm"
+          className="mx-auto mt-2 max-w-xs rounded-2xl bg-white/40 px-4 py-3 font-display-jp text-base font-medium leading-relaxed backdrop-blur-sm md:max-w-md md:text-lg"
           style={{ color: "#4a4058" }}
         >
           みんなの想いが蝶になって、

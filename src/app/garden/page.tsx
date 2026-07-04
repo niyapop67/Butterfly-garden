@@ -124,7 +124,7 @@ export default function GardenPage() {
       </div>
 
       {/* Bottom cluster: filter chips + CTA, both fixed above the fold */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 max-w-[430px] mx-auto">
+      <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 mx-auto" style={{ maxWidth: "var(--frame-width)" }}>
         {/* Butterfly-type filter chips — narrows which butterflies fly on
             screen (does not affect the total count above, or maxOnScreen).
             "すべての蝶" always resets to the full, unfiltered set. */}

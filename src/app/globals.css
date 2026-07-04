@@ -22,6 +22,32 @@
   --shadow-glass-soft: 0 8px 32px rgba(255, 158, 199, 0.18), 0 2px 8px rgba(129, 216, 208, 0.12);
   --shadow-glow-pink: 0 0 24px rgba(255, 111, 168, 0.45), 0 4px 14px rgba(255, 111, 168, 0.35);
   --shadow-glow-tiffany: 0 0 20px rgba(129, 216, 208, 0.4);
+
+  /*
+    2026-07-04: PC display was too small — the whole site sat in a narrow
+    430px column with large grey margins on a desktop monitor. Real phones
+    top out well under 768px wide, so bump the frame width only above that
+    breakpoint; actual phone viewports are untouched. Used by .mobile-frame
+    below AND by any fixed-position element that needs to match its width
+    (e.g. the bottom CTA/filter cluster on the Garden page) — those should
+    reference var(--frame-width) rather than a hardcoded px value so the two
+    never drift apart.
+  */
+  --frame-width: 430px;
+  --decor-scale: 1;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --frame-width: 640px;
+    /* Decorative butterflies/corner flowers use fixed px sizes positioned
+       with % top/left, so they reposition fine as --frame-width grows but
+       don't grow themselves — on the wider PC frame they end up looking
+       sparse/undersized relative to the canvas. Scale them up too, though
+       not by the full 640/430 ≈ 1.49 frame ratio (that reads as oversized
+       against the title/cards, which keep their own responsive sizing). */
+    --decor-scale: 1.35;
+  }
 }
 
 html,
@@ -34,14 +60,14 @@ body {
 }
 
 /*
-  This project is designed mobile-first only (spec v2.9 §1.2/§4.3) and is not
-  meant to reflow into a desktop layout. Rather than fight every component
-  into a responsive grid, every page is rendered inside a fixed phone-width
-  column at all viewport sizes; wider screens just see more margin on either
-  side, like viewing a phone mockup on a desk.
+  This project is designed mobile-first (spec v2.9 §1.2/§4.3): every page
+  renders inside a fixed-width phone column. 2026-07-04: that column now
+  widens on desktop (see --frame-width above) instead of staying pinned to
+  430px everywhere — components using relative/flex sizing reflow to fill
+  the wider column reasonably well without needing per-component rework.
 */
 .mobile-frame {
-  max-width: 430px;
+  max-width: var(--frame-width);
   margin: 0 auto;
   min-height: 100vh;
   position: relative;

@@ -14,7 +14,7 @@ export default function TopPageCornerFlowers() {
       {/* top-left: crystal + rose cluster, mirrored to point into the corner */}
       <div
         className="absolute -left-6 -top-6 opacity-80"
-        style={{ width: 150, height: 135, transform: "scaleX(-1) scaleY(-1)" }}
+        style={{ width: "calc(150px * var(--decor-scale, 1))", height: "calc(135px * var(--decor-scale, 1))", transform: "scaleX(-1) scaleY(-1)" }}
       >
         <Image
           src="/images/decor/corner_flower_crystal_rose.png"
@@ -29,7 +29,7 @@ export default function TopPageCornerFlowers() {
       {/* top-right: sakura branch, mirrored vertically to drape down from the top */}
       <div
         className="absolute -right-4 -top-4 opacity-80"
-        style={{ width: 128, height: 142, transform: "scaleY(-1)" }}
+        style={{ width: "calc(128px * var(--decor-scale, 1))", height: "calc(142px * var(--decor-scale, 1))", transform: "scaleY(-1)" }}
       >
         <Image
           src="/images/decor/corner_flower_sakura.png"
@@ -42,7 +42,7 @@ export default function TopPageCornerFlowers() {
       </div>
 
       {/* bottom-left: sakura branch, natural orientation */}
-      <div className="absolute -bottom-6 -left-4 opacity-70" style={{ width: 132, height: 146 }}>
+      <div className="absolute -bottom-6 -left-4 opacity-70" style={{ width: "calc(132px * var(--decor-scale, 1))", height: "calc(146px * var(--decor-scale, 1))" }}>
         <Image
           src="/images/decor/corner_flower_sakura.png"
           alt=""
@@ -56,7 +56,7 @@ export default function TopPageCornerFlowers() {
       {/* bottom-right: crystal + rose cluster, mirrored horizontally only */}
       <div
         className="absolute -bottom-6 -right-6 opacity-70"
-        style={{ width: 150, height: 135, transform: "scaleX(-1)" }}
+        style={{ width: "calc(150px * var(--decor-scale, 1))", height: "calc(135px * var(--decor-scale, 1))", transform: "scaleX(-1)" }}
       >
         <Image
           src="/images/decor/corner_flower_crystal_rose.png"
