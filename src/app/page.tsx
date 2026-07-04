@@ -4,8 +4,6 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 import TopPageLiveContent from "@/components/top/TopPageLiveContent";
-import { getTimeOfDay, TIME_CONFIGS } from "@/lib/timeOfDayConfig";
-import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
 
 /**
  * Birthday reveal date, mirrored from src/app/birthday/page.tsx — see that
@@ -38,18 +36,27 @@ export default function TopPage({
   searchParams: { [key: string]: string | string[] | undefined };
 }) {
   const forcedComplete = isForcedComplete(searchParams);
-  const time = TIME_CONFIGS[getTimeOfDay()];
 
   return (
     <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      {/* Time-of-day photo layer (2026-07-04: back to the same rotation as
-          the Garden page — the single fixed hero-bg.jpg tried on 2026-07-03
-          didn't read well here, so TOP now reuses GARDEN_BG_IMAGES rather
-          than a separate TOP-only set. No bgFilter: each image is already
-          correctly colour-graded per time of day, see the note in
-          src/app/garden/page.tsx for why stacking a CSS filter on top of
-          that was actively harmful. */}
-      <div aria-hidden className="bg-photo-layer" style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})` }} />
+      {/* Static background (2026-07-05): Niya provided two dedicated
+          illustrations instead of reusing the Garden page's time-of-day
+          rotation here — a portrait crop for mobile (fountain further down
+          the path) and a separate wide landscape crop for desktop, which
+          goes full-bleed edge-to-edge instead of being confined to the
+          phone-frame column (see the @media block on .bg-photo-layer in
+          globals.css). Applies to TOP and SUBMIT only; Garden keeps its own
+          morning/day/golden-hour/moon-garden rotation. */}
+      <div
+        aria-hidden
+        className="bg-photo-layer md:hidden"
+        style={{ backgroundImage: "url(/images/topsubmit-bg-mobile.jpg)" }}
+      />
+      <div
+        aria-hidden
+        className="bg-photo-layer hidden md:block"
+        style={{ backgroundImage: "url(/images/topsubmit-bg-desktop.jpg)" }}
+      />
 
       {/* Layer 2 (texture) + Layer 3 (corner flowers) + butterfly decor all sit
           above the Layer 1 gradient but behind the real content (z-10). */}

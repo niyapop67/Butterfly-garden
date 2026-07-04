@@ -151,6 +151,26 @@ body {
   transition: filter 1.2s ease;
 }
 
+/*
+  2026-07-05: on desktop, stop confining the background to the narrow
+  phone-frame column ("phone mockup on a desk" look) — let it fill the
+  whole browser viewport instead, with the centered content column sitting
+  on top. position: fixed here escapes the (already narrower) .mobile-frame
+  entirely and sizes against the real viewport, regardless of how wide
+  .mobile-frame itself is at this breakpoint. It still respects the
+  z-index: -1 stacking rules established on .bg-day-garden/.bg-garden-page
+  (see the 2026-07-04 stacking-context fix above), so it stays correctly
+  layered behind real content and above each page's own native fallback
+  background-image.
+*/
+@media (min-width: 768px) {
+  .bg-photo-layer {
+    position: fixed;
+    inset: 0;
+    height: 100vh;
+  }
+}
+
 /* Layer 2: readability wash over the illustration. Stronger near the top
    (title) and bottom (footer copy), lighter in the middle (stat cards already
    have their own glass background so they don't need as much help). */

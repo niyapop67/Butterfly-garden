@@ -53,7 +53,9 @@ export default function ButterflySelector({
               boxShadow: isSelected ? "var(--shadow-glow-pink)" : "var(--shadow-glass-soft)",
             }}
           >
-            <ButterflyImage type={type} size="small" displayWidth={56} />
+            <div className="flex h-16 w-16 items-center justify-center">
+              <ButterflyImage type={type} size="small" displayWidth={56} displayHeight={64} />
+            </div>
             <span className="font-display-jp text-xs" style={{ color: "var(--color-ink)" }}>
               {theme.labelJa}
             </span>

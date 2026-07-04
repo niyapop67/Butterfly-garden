@@ -8,8 +8,20 @@ interface ButterflyImageProps {
   type: ButterflyType;
   size?: ButterflySize;
   className?: string;
-  /** Pixel width to render at. Height is derived from the source aspect ratio. */
+  /** Pixel width to render at. */
   displayWidth?: number;
+  /**
+   * Optional fixed pixel height. When omitted, height is derived from the
+   * source image's own aspect ratio (fine for single-butterfly hero shots).
+   * When rendering multiple types side by side — e.g. the 7-type picker
+   * grid — pass the same displayHeight for every icon instead: the source
+   * PNGs have noticeably different aspect ratios per colour (pink ~1.54,
+   * purple ~1.16, tiffany ~1.65), so deriving height from each one's own
+   * ratio made the 7 icons visibly different sizes next to each other even
+   * at the same displayWidth. object-contain letterboxes within the fixed
+   * box instead, so every icon occupies the same footprint.
+   */
+  displayHeight?: number;
 }
 
 /**
@@ -24,9 +36,10 @@ export default function ButterflyImage({
   size = "medium",
   className = "",
   displayWidth = 80,
+  displayHeight,
 }: ButterflyImageProps) {
   const asset = getButterflyAsset(type, size);
-  const displayHeight = displayWidth * (asset.height / asset.width);
+  const resolvedHeight = displayHeight ?? displayWidth * (asset.height / asset.width);
 
   return (
     <Image
@@ -35,7 +48,7 @@ export default function ButterflyImage({
       width={asset.width}
       height={asset.height}
       sizes={`${displayWidth}px`}
-      style={{ width: displayWidth, height: displayHeight }}
+      style={{ width: displayWidth, height: resolvedHeight }}
       className={`object-contain ${className}`}
     />
   );

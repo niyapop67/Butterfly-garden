@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import GlassCard from "@/components/ui/GlassCard";
 import CrystalButton from "@/components/ui/CrystalButton";
@@ -70,7 +71,7 @@ export default function SubmitFlow() {
   }
 
   if (isDone) {
-    return <ThankYouScreen butterflyType={draft.butterflyType} />;
+    return <ThankYouScreen />;
   }
 
   return (
@@ -316,37 +317,29 @@ function ConfirmStep({ draft }: { draft: SubmissionDraft }) {
   );
 }
 
-function ThankYouScreen({
-  butterflyType,
-}: {
-  butterflyType: SubmissionDraft["butterflyType"];
-}) {
+function ThankYouScreen() {
   return (
-    <div className="relative z-10 mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-6 px-6 py-24 text-center">
+    <div className="relative z-10 mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-6 px-6 py-12 text-center">
       <motion.div
-        initial={{ opacity: 0, scale: 0.7 }}
+        initial={{ opacity: 0, scale: 0.92 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.6 }}
+        className="w-full max-w-xs overflow-hidden rounded-3xl"
+        style={{ boxShadow: "var(--shadow-glass-soft)" }}
       >
-        {butterflyType && (
-          <motion.div
-            animate={{ y: [0, -8, 0] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
-            style={{ filter: "drop-shadow(0 0 14px rgba(255,158,199,0.55))" }}
-          >
-            <ButterflyImage type={butterflyType} size="large" displayWidth={140} />
-          </motion.div>
-        )}
+        {/* 2026-07-05: replaced the small bouncing butterfly emblem + plain
+            "Thank you!" text with Niya's illustrated thank-you card — it
+            already bakes in the title and message, so we don't repeat them
+            below (would read as redundant). */}
+        <Image
+          src="/images/thank-you-card.jpg"
+          alt="Thank you! あなたの想いは蝶になってガーデンに届きました"
+          width={1023}
+          height={1537}
+          className="w-full h-auto object-contain"
+          priority
+        />
       </motion.div>
-
-      <h1 className="font-display text-3xl italic" style={{ color: "var(--color-ink)" }}>
-        Thank you!
-      </h1>
-      <p className="font-body text-sm" style={{ color: "var(--color-ink-soft)" }}>
-        あなたの蝶が、ガーデンに舞い込みました。
-        <br />
-        MIKAへの想いを届けてくれてありがとう。
-      </p>
 
       <Link href="/garden" className="w-full max-w-xs">
         <CrystalButton className="w-full">

@@ -1,7 +1,5 @@
 import Link from "next/link";
 import SubmitFlow from "@/components/forms/SubmitFlow";
-import { getTimeOfDay, TIME_CONFIGS } from "@/lib/timeOfDayConfig";
-import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
 
 /**
  * ② Message submission page (spec v2.9 §2.2). Background/header follow the
@@ -10,11 +8,18 @@ import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
  * inventing a new background.
  */
 export default function SubmitPage() {
-  const time = TIME_CONFIGS[getTimeOfDay()];
-
   return (
     <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      <div aria-hidden className="bg-photo-layer" style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})` }} />
+      <div
+        aria-hidden
+        className="bg-photo-layer md:hidden"
+        style={{ backgroundImage: "url(/images/topsubmit-bg-mobile.jpg)" }}
+      />
+      <div
+        aria-hidden
+        className="bg-photo-layer hidden md:block"
+        style={{ backgroundImage: "url(/images/topsubmit-bg-desktop.jpg)" }}
+      />
 
       <header className="relative z-10 mb-8 flex items-center gap-3">
         <Link
