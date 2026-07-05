@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import GlassCard from "@/components/ui/GlassCard";
+import CrystalButton from "@/components/ui/CrystalButton";
 import ButterflyImage from "@/components/butterfly/ButterflyImage";
 import { BUTTERFLY_THEMES } from "@/types/submission";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
@@ -27,6 +28,24 @@ import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
 export default function PrivateListPage() {
   const { entries, loading, error } = usePrivateFeed();
   const [query, setQuery] = useState("");
+  const [archiving, setArchiving] = useState(false);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [archiveResult, setArchiveResult] = useState<string | null>(null);
+
+  async function handleDownloadOffline() {
+    setArchiving(true);
+    setArchiveError(null);
+    setArchiveResult(null);
+    try {
+      const { downloadOfflineArchive } = await import("@/lib/downloadOfflineArchive");
+      const { voiceCount } = await downloadOfflineArchive(entries);
+      setArchiveResult(`書き出し完了（ボイス${voiceCount}件）。ZIPを展開してindex.htmlを開くと、ネットなしでも見られます。`);
+    } catch {
+      setArchiveError("書き出しに失敗しました。もう一度お試しください。");
+    } finally {
+      setArchiving(false);
+    }
+  }
 
   const sorted = useMemo(
     () => [...entries].sort((a, b) => a.nickname.localeCompare(b.nickname, "ja")),
@@ -65,6 +84,23 @@ export default function PrivateListPage() {
           className="w-full rounded-full border border-white/40 bg-white/85 px-4 py-2.5 font-body text-sm outline-none placeholder:text-[#b3a6c9]"
           style={{ color: "var(--color-ink)" }}
         />
+      </section>
+
+      <section className="relative z-10 mb-5">
+        <GlassCard className="px-4 py-4">
+          <p className="mb-2 font-body text-[11px] leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
+            バースデームービーと同じく、ダウンロードしておけばネット環境がなくてもオフラインで開けます。
+          </p>
+          <CrystalButton className="w-full" onClick={handleDownloadOffline} disabled={loading || archiving || entries.length === 0}>
+            {archiving ? "書き出し中…" : "オフライン閲覧用にダウンロード"}
+          </CrystalButton>
+          {archiveResult && (
+            <p className="mt-2 font-body text-[11px]" style={{ color: "var(--color-ink-soft)" }}>
+              {archiveResult}
+            </p>
+          )}
+          {archiveError && <p className="mt-2 font-body text-[11px] text-rose-500">{archiveError}</p>}
+        </GlassCard>
       </section>
 
       {error && (

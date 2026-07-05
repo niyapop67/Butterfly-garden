@@ -6,7 +6,9 @@
  * docs/spec-v2.9-diff-2026-06-26.md for the full list of changes.
  */
 
-/** The 7 official butterfly types. Order matches v2.9 §1.8. */
+/** The 6 official butterfly types (2026-07-05: reduced from 7 — see
+ *  src/lib/butterflyAssets.ts for why twinkle-premium was folded into
+ *  crystal-white). Order matches v2.9 §1.8 minus that entry. */
 export const BUTTERFLY_TYPES = [
   "pink-heart",
   "tiffany-sky",
@@ -14,7 +16,6 @@ export const BUTTERFLY_TYPES = [
   "aurora-dream",
   "emerald-garden",
   "golden-sunshine",
-  "twinkle-premium",
 ] as const;
 
 export type ButterflyType = (typeof BUTTERFLY_TYPES)[number];
@@ -63,12 +64,6 @@ export const BUTTERFLY_THEMES: Record<ButterflyType, ButterflyThemeInfo> = {
     labelEn: "Golden Sunshine / Smile",
     labelJa: "ゴールデンサンシャイン",
     themeJa: "元気・幸運",
-  },
-  "twinkle-premium": {
-    type: "twinkle-premium",
-    labelEn: "Twinkle Premium / Special",
-    labelJa: "トゥインクルプレミアム",
-    themeJa: "特別・全部入り（レア枠）",
   },
 };
 

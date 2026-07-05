@@ -16,7 +16,6 @@ const FILTER_TYPES: ButterflyType[] = [
   "pink-heart",
   "tiffany-sky",
   "aurora-dream",
-  "twinkle-premium",
   "crystal-white",
   "emerald-garden",
   "golden-sunshine",

@@ -37,7 +37,6 @@ export default function GardenFeed() {
       "aurora-dream": 0,
       "emerald-garden": 0,
       "golden-sunshine": 0,
-      "twinkle-premium": 0,
     };
     for (const e of entries) {
       counts[e.butterflyType] = (counts[e.butterflyType] ?? 0) + 1;

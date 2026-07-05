@@ -21,10 +21,11 @@ interface ButterflySelectorProps {
 }
 
 /**
- * 7-type butterfly picker for the submit flow (spec v2.9 §1.8 / §2.2).
- * Renders via ButterflyImage, so placeholder colours for Crystal White /
- * Emerald Garden / Golden Sunshine show up automatically until their real
- * assets land (see src/lib/butterflyAssets.ts).
+ * 6-type butterfly picker for the submit flow (spec v2.9 §1.8 / §2.2,
+ * reduced from 7 on 2026-07-05 — twinkle-premium folded into crystal-white,
+ * see src/lib/butterflyAssets.ts). Renders via ButterflyImage, so the
+ * placeholder colour for Aurora Dream shows up automatically until its
+ * real asset lands.
  */
 export default function ButterflySelector({
   value,

@@ -23,7 +23,7 @@ service cloud.firestore {
                     && request.resource.data.message.size() <= 500
                     && request.resource.data.butterflyType in
                         ['pink-heart', 'tiffany-sky', 'crystal-white', 'aurora-dream',
-                         'emerald-garden', 'golden-sunshine', 'twinkle-premium'];
+                         'emerald-garden', 'golden-sunshine'];
 
       allow update, delete: if false;
     }
