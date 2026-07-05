@@ -171,6 +171,24 @@ body {
   }
 }
 
+/*
+  2026-07-06: Garden page only — on desktop, garden-bg photos are portrait-
+  cropped (≈0.45 aspect, designed for a phone screen). Cover-fit against a
+  wide landscape viewport blows the image up and shows only a thin vertical
+  slice, cropping out most of the composition. Switch to contain so the full
+  illustration is always visible, letterboxed with the page's own cream
+  background color (matches .bg-garden-page's background-color) rather than
+  a hard crop. Scoped to .bg-garden-page so TOP/SUBMIT (landscape-cropped,
+  already cover-fit correctly) are unaffected.
+*/
+@media (min-width: 768px) {
+  .bg-garden-page .bg-photo-layer {
+    background-size: contain;
+    background-position: center;
+    background-color: #fffdf8;
+  }
+}
+
 /* Layer 2: readability wash over the illustration. Stronger near the top
    (title) and bottom (footer copy), lighter in the middle (stat cards already
    have their own glass background so they don't need as much help). */
