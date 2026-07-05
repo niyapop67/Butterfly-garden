@@ -23,7 +23,7 @@ const FILTER_TYPES: ButterflyType[] = [
 ];
 
 export default function GardenPage() {
-  const { entries, loading } = useGardenFeed();
+  const { entries } = useGardenFeed();
   const time = useTimeOfDay();
   const [filter, setFilter] = useState<ButterflyType | "all">("all");
 
@@ -111,18 +111,6 @@ export default function GardenPage() {
         </Link>
       </header>
 
-      {/* Butterfly count — minimal, floating */}
-      <div className="relative z-30 text-center mt-4">
-        {!loading && (
-          <p className="font-display-jp text-sm drop-shadow-sm" style={{ color: "var(--color-ink)" }}>
-            <span className="text-3xl font-semibold" style={{ color: "var(--color-pink-deep)" }}>
-              {entries.length}
-            </span>
-            <span className="ml-1 opacity-75">匹の蝶がガーデンに集まっています</span>
-          </p>
-        )}
-      </div>
-
       {/* Bottom cluster: filter chips + CTA, both fixed above the fold */}
       <div className="fixed bottom-0 left-0 right-0 z-30 px-5 pb-8 mx-auto pointer-events-none" style={{ maxWidth: "var(--frame-width)" }}>
         {/* Butterfly-type filter chips — narrows which butterflies fly on
@@ -136,7 +124,7 @@ export default function GardenPage() {
               className={`flex-shrink-0 rounded-full border px-3 py-1.5 font-body text-[11px] transition-all ${
                 filter === "all"
                   ? "border-transparent bg-[var(--color-tiffany)] text-white shadow-sm"
-                  : "border-white/50 bg-white/60 text-[color:var(--color-ink)] backdrop-blur-sm"
+                  : "border-white/70 bg-white/85 text-[color:var(--color-ink)] shadow-sm"
               }`}
             >
               すべての蝶
@@ -151,10 +139,10 @@ export default function GardenPage() {
                   onClick={() => setFilter(active ? "all" : t)}
                   aria-label={t}
                   aria-pressed={active}
-                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border transition-all ${
+                  className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full border transition-all ${
                     active
                       ? "border-transparent bg-white shadow-md scale-110"
-                      : "border-white/50 bg-white/60 backdrop-blur-sm"
+                      : "border-white/70 bg-white/85 shadow-sm"
                   }`}
                 >
                   <Image
@@ -162,7 +150,7 @@ export default function GardenPage() {
                     alt={t}
                     width={asset.width}
                     height={asset.height}
-                    className="h-5 w-5 object-contain"
+                    className="h-8 w-8 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.2)]"
                     unoptimized
                   />
                 </button>

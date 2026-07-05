@@ -2,10 +2,14 @@
  * Butterfly asset mapping: ButterflyType -> actual PNG files on disk.
  *
  * WHY THIS FILE EXISTS:
- * Spec v2.9 §1.8 defines 7 official butterfly types, but as of 2026-06-26
- * only 4 colour assets exist in public/images/butterflies/ (pink,
- * pinkpurple, purple, tiffany — see README_inventory.md). Crystal White,
- * Emerald Garden, and Golden Sunshine PNGs are still being generated.
+ * Spec v2.9 §1.8 defines 7 official butterfly types. As of 2026-07-05, all
+ * 7 are being redone in a single consistent "crystal/gem" illustration
+ * style (see docs prompts) rather than mixing the earlier assorted styles.
+ * 4 are done (pink-heart, tiffany-sky, crystal-white, emerald-garden,
+ * golden-sunshine — 5, actually) in the new style; aurora-dream and
+ * twinkle-premium are still pending (aurora-dream's first attempt came out
+ * visually identical to pink-heart and needs a redo emphasizing shifting
+ * multi-colour/holographic hues; twinkle-premium hasn't been generated yet).
  *
  * Rather than block the submit-page build on missing art, every component
  * that renders a butterfly (ButterflyImage, ButterflySelector, garden tiles,
@@ -13,7 +17,7 @@
  * `getButterflyAsset()` below. To swap in the final art once it's ready:
  *
  *   1. Drop the new PNGs into public/images/butterflies/
- *      (e.g. crystal_large.png, crystal_medium.png, crystal_small.png)
+ *      (e.g. aurora_large.png, aurora_medium.png, aurora_small.png)
  *   2. Add their pixel dimensions to SOURCE_SIZE
  *   3. Change the `file` value for that type in BUTTERFLY_ASSET_MAP
  *
@@ -32,29 +36,42 @@ interface AssetDims {
 
 /** Natural pixel dimensions of each cropped source file, keyed by file stem. */
 const SOURCE_SIZE: Record<string, AssetDims> = {
-  pink_large: { w: 344, h: 301 },
-  pink_medium: { w: 249, h: 301 },
-  pink_small: { w: 195, h: 301 },
-  pinkpurple_large: { w: 245, h: 302 }, // no dedicated _large source yet; reuses medium dims
-  pinkpurple_medium: { w: 245, h: 302 },
-  pinkpurple_small: { w: 177, h: 302 },
-  purple_large: { w: 248, h: 288 }, // no dedicated _large source yet; reuses medium dims
-  purple_medium: { w: 248, h: 288 },
-  purple_small: { w: 248, h: 288 }, // no dedicated _small source yet; reuses medium dims
-  tiffany_large: { w: 355, h: 291 },
-  tiffany_medium: { w: 242, h: 291 },
-  tiffany_small: { w: 176, h: 291 },
-  // 2026-07-05: first of the 3 pending real assets landed.
+  // 2026-07-05: redone in the new crystal/gem style (replaces the earlier
+  // pink_*/tiffany_* art).
+  pink_large: { w: 350, h: 358 },
+  pink_medium: { w: 250, h: 256 },
+  pink_small: { w: 180, h: 184 },
+  tiffany_large: { w: 350, h: 366 },
+  tiffany_medium: { w: 250, h: 261 },
+  tiffany_small: { w: 180, h: 188 },
+  emerald_large: { w: 350, h: 414 },
+  emerald_medium: { w: 250, h: 295 },
+  emerald_small: { w: 180, h: 213 },
+  golden_large: { w: 350, h: 406 },
+  golden_medium: { w: 250, h: 290 },
+  golden_small: { w: 180, h: 209 },
   crystal_large: { w: 350, h: 380 },
   crystal_medium: { w: 250, h: 271 },
   crystal_small: { w: 180, h: 195 },
+
+  // Still on the OLD (pre-2026-07-05) style — pending redo in the new
+  // crystal/gem style. aurora-dream's first redo attempt was visually
+  // identical to pink-heart and needs another pass; twinkle-premium hasn't
+  // been attempted yet.
+  purple_large: { w: 248, h: 288 }, // no dedicated _large source yet; reuses medium dims
+  purple_medium: { w: 248, h: 288 },
+  purple_small: { w: 248, h: 288 }, // no dedicated _small source yet; reuses medium dims
+  pinkpurple_large: { w: 245, h: 302 }, // no dedicated _large source yet; reuses medium dims
+  pinkpurple_medium: { w: 245, h: 302 },
+  pinkpurple_small: { w: 177, h: 302 },
 };
 
 /**
  * Which file stem each of the 7 official types currently points to.
  *
- * `isPlaceholder: true` means this is borrowing another colour's art
- * temporarily — swap the `stem` once the real asset for that type lands.
+ * `isPlaceholder: true` means this is still on the old mixed-style art (or
+ * borrowing another colour's art temporarily) — swap the `stem` once the
+ * new crystal-style asset for that type lands.
  */
 interface ButterflyAssetEntry {
   stem: string;
@@ -62,15 +79,15 @@ interface ButterflyAssetEntry {
 }
 
 const BUTTERFLY_ASSET_MAP: Record<ButterflyType, ButterflyAssetEntry> = {
-  "pink-heart": { stem: "pink", isPlaceholder: false },
-  "tiffany-sky": { stem: "tiffany", isPlaceholder: false },
-  "aurora-dream": { stem: "purple", isPlaceholder: false },
-  "twinkle-premium": { stem: "pinkpurple", isPlaceholder: false },
+  "pink-heart": { stem: "pink", isPlaceholder: false }, // 2026-07-05: redone
+  "tiffany-sky": { stem: "tiffany", isPlaceholder: false }, // 2026-07-05: redone
+  "crystal-white": { stem: "crystal", isPlaceholder: false }, // 2026-07-05: new
+  "emerald-garden": { stem: "emerald", isPlaceholder: false }, // 2026-07-05: new
+  "golden-sunshine": { stem: "golden", isPlaceholder: false }, // 2026-07-05: new
 
-  // Pending real assets (spec v2.9 §1.8 / chat log 2026-06-26 §5):
-  "crystal-white": { stem: "crystal", isPlaceholder: false }, // 2026-07-05: real art landed
-  "emerald-garden": { stem: "purple", isPlaceholder: true },
-  "golden-sunshine": { stem: "pink", isPlaceholder: true },
+  // Pending redo in the new crystal style:
+  "aurora-dream": { stem: "purple", isPlaceholder: true }, // redo needed: first attempt looked identical to pink-heart
+  "twinkle-premium": { stem: "pinkpurple", isPlaceholder: true }, // not yet generated
 };
 
 export interface ButterflyAsset {
