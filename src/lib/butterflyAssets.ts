@@ -49,24 +49,28 @@ const SOURCE_SIZE: Record<string, AssetDims> = {
   tiffany_large: { w: 350, h: 366 },
   tiffany_medium: { w: 250, h: 261 },
   tiffany_small: { w: 180, h: 188 },
-  emerald_large: { w: 350, h: 414 },
-  emerald_medium: { w: 250, h: 295 },
-  emerald_small: { w: 180, h: 213 },
-  golden_large: { w: 350, h: 406 },
-  golden_medium: { w: 250, h: 290 },
-  golden_small: { w: 180, h: 209 },
+  emerald_large: { w: 350, h: 356 },
+  emerald_medium: { w: 250, h: 254 },
+  emerald_small: { w: 180, h: 183 },
+  golden_large: { w: 350, h: 324 },
+  golden_medium: { w: 250, h: 231 },
+  golden_small: { w: 180, h: 167 },
   // 2026-07-05: replaced (was a paler, less distinct crop — see the
   // twinkle-premium note at the top of this file).
   crystal_large: { w: 350, h: 377 },
   crystal_medium: { w: 250, h: 269 },
   crystal_small: { w: 180, h: 194 },
+  // 2026-07-05: aurora-dream's redo, going the "rainbow butterfly"
+  // direction instead of another pale/holographic attempt.
+  rainbow_large: { w: 350, h: 339 },
+  rainbow_medium: { w: 250, h: 242 },
+  rainbow_small: { w: 180, h: 175 },
 
-  // Still on the OLD (pre-2026-07-05) style — pending redo in the new
-  // crystal/gem style. aurora-dream's first redo attempt was visually
-  // identical to pink-heart and needs another pass (rainbow direction).
-  purple_large: { w: 248, h: 288 }, // no dedicated _large source yet; reuses medium dims
+  // No longer referenced by any type as of 2026-07-05 (aurora-dream now
+  // points at rainbow_*) — left here in case of a future revert.
+  purple_large: { w: 248, h: 288 },
   purple_medium: { w: 248, h: 288 },
-  purple_small: { w: 248, h: 288 }, // no dedicated _small source yet; reuses medium dims
+  purple_small: { w: 248, h: 288 },
 };
 
 /**
@@ -87,9 +91,7 @@ const BUTTERFLY_ASSET_MAP: Record<ButterflyType, ButterflyAssetEntry> = {
   "crystal-white": { stem: "crystal", isPlaceholder: false }, // 2026-07-05: new
   "emerald-garden": { stem: "emerald", isPlaceholder: false }, // 2026-07-05: new
   "golden-sunshine": { stem: "golden", isPlaceholder: false }, // 2026-07-05: new
-
-  // Pending redo in the new crystal style:
-  "aurora-dream": { stem: "purple", isPlaceholder: true }, // redo needed: first attempt looked identical to pink-heart
+  "aurora-dream": { stem: "rainbow", isPlaceholder: false }, // 2026-07-05: redone as "rainbow butterfly"
 };
 
 export interface ButterflyAsset {

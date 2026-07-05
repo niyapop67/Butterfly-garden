@@ -49,8 +49,8 @@ export const BUTTERFLY_THEMES: Record<ButterflyType, ButterflyThemeInfo> = {
   },
   "aurora-dream": {
     type: "aurora-dream",
-    labelEn: "Aurora Dream / Fantasy",
-    labelJa: "オーロラドリーム",
+    labelEn: "Rainbow Butterfly / Fantasy",
+    labelJa: "レインボーバタフライ",
     themeJa: "神秘・ときめき",
   },
   "emerald-garden": {
