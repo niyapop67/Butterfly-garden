@@ -87,12 +87,14 @@ export default function TopPage({
         </div>
 
         <p
-          className="mx-auto mt-2 max-w-xs rounded-2xl bg-white/40 px-4 py-3 font-display-jp text-base font-medium leading-relaxed backdrop-blur-sm md:max-w-md md:text-lg"
+          className="mx-auto mt-2 max-w-xs rounded-2xl bg-white/40 px-4 py-3 text-center font-display-jp text-base font-medium leading-relaxed backdrop-blur-sm md:max-w-md md:text-lg"
           style={{ color: "#4a4058" }}
         >
-          みんなの想いが蝶になって、
+          みんなの想いが蝶になって
           <br />
-          MIKAのための特別なガーデンをつくります。
+          MIKAのための
+          <br />
+          特別なガーデンをつくります
         </p>
 
       </section>
@@ -106,20 +108,6 @@ export default function TopPage({
             蝶を届ける
           </CrystalButton>
         </Link>
-      </section>
-
-      <section className="relative z-10 mx-auto mb-4 max-w-xs">
-        <div className="divider-ornament mb-3 text-xs">
-          <span className="h-px flex-1 bg-current opacity-40" />
-          <span>このプロジェクトについて</span>
-          <span className="h-px flex-1 bg-current opacity-40" />
-        </div>
-        <p
-          className="rounded-2xl bg-white/35 px-4 py-3 text-center font-body text-[13px] leading-relaxed backdrop-blur-sm"
-          style={{ color: "#4a4058" }}
-        >
-          ファンの皆さんのメッセージやボイスが蝶となり、MIKAだけの特別なガーデンに集まります。誕生日当日、蝶たちはひとつになり、最高のサプライズをお届けします。
-        </p>
       </section>
 
     </main>
