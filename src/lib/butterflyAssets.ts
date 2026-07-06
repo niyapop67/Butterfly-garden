@@ -83,15 +83,31 @@ const SOURCE_SIZE: Record<string, AssetDims> = {
 interface ButterflyAssetEntry {
   stem: string;
   isPlaceholder: boolean;
+  /**
+   * 2026-07-06: correction factor for how much of each type's PNG canvas
+   * the actual (solid, non-glow) wing artwork fills. All six were generated
+   * separately, and while their canvases are similar width, the crystal/
+   * emerald/golden/rainbow set has noticeably more empty vertical margin
+   * around the wings than pink/tiffany (measured via alpha-channel bounding
+   * box, threshold 128): the wings themselves occupy roughly 76-83% of
+   * canvas width-equivalent height for crystal/emerald/golden/rainbow vs.
+   * ~92-100% for pink/tiffany. Free-flying butterflies (FreeFlyingGarden)
+   * render at a fixed CSS width with height:auto (so they can't crop to a
+   * fixed box the way the fixed-size selector grid does — see
+   * ButterflyImage's displayHeight), which let that margin difference read
+   * as an actual size difference between types. This multiplies the base
+   * render size per type to even that back out. 1.0 = no correction.
+   */
+  visualScale: number;
 }
 
 const BUTTERFLY_ASSET_MAP: Record<ButterflyType, ButterflyAssetEntry> = {
-  "pink-heart": { stem: "pink", isPlaceholder: false }, // 2026-07-05: redone
-  "tiffany-sky": { stem: "tiffany", isPlaceholder: false }, // 2026-07-05: redone
-  "crystal-white": { stem: "crystal", isPlaceholder: false }, // 2026-07-05: new
-  "emerald-garden": { stem: "emerald", isPlaceholder: false }, // 2026-07-05: new
-  "golden-sunshine": { stem: "golden", isPlaceholder: false }, // 2026-07-05: new
-  "aurora-dream": { stem: "rainbow", isPlaceholder: false }, // 2026-07-05: redone as "rainbow butterfly"
+  "pink-heart": { stem: "pink", isPlaceholder: false, visualScale: 0.9 }, // 2026-07-05: redone
+  "tiffany-sky": { stem: "tiffany", isPlaceholder: false, visualScale: 0.85 }, // 2026-07-05: redone
+  "crystal-white": { stem: "crystal", isPlaceholder: false, visualScale: 1.03 }, // 2026-07-05: new
+  "emerald-garden": { stem: "emerald", isPlaceholder: false, visualScale: 1.07 }, // 2026-07-05: new
+  "golden-sunshine": { stem: "golden", isPlaceholder: false, visualScale: 1.05 }, // 2026-07-05: new
+  "aurora-dream": { stem: "rainbow", isPlaceholder: false, visualScale: 1.11 }, // 2026-07-05: redone as "rainbow butterfly"
 };
 
 export interface ButterflyAsset {
@@ -100,6 +116,8 @@ export interface ButterflyAsset {
   height: number;
   /** True if this is a stand-in for art that hasn't been generated yet. */
   isPlaceholder: boolean;
+  /** See ButterflyAssetEntry.visualScale above. */
+  visualScale: number;
 }
 
 /**
@@ -125,6 +143,7 @@ export function getButterflyAsset(
         width: dims.w,
         height: dims.h,
         isPlaceholder: entry.isPlaceholder,
+        visualScale: entry.visualScale,
       };
     }
   }
@@ -137,6 +156,7 @@ export function getButterflyAsset(
     width: fallback.w,
     height: fallback.h,
     isPlaceholder: true,
+    visualScale: 1,
   };
 }
 

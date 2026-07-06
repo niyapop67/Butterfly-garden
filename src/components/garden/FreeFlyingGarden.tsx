@@ -36,7 +36,7 @@ function FreeButterfly({
     return Math.abs(h % 1000) / 1000;
   };
 
-  const size = 36 + r(1) * 28; // 36–64px
+  const size = (36 + r(1) * 28) * asset.visualScale; // 36–64px, corrected per type
   const flipX = r(2) > 0.5;
   const baseDelay = r(3) * 4; // stagger launch
 
@@ -157,7 +157,11 @@ function FreeButterfly({
           alt={nickname ?? "蝶"}
           width={asset.width}
           height={asset.height}
-          style={{ width: size, height: "auto", filter: "drop-shadow(0 2px 6px rgba(255,158,199,0.5))" }}
+          style={{
+            width: size,
+            height: "auto",
+            filter: "saturate(1.4) contrast(1.12) drop-shadow(0 2px 6px rgba(255,158,199,0.5))",
+          }}
           priority={false}
           unoptimized
         />
