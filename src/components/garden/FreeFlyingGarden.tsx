@@ -79,7 +79,7 @@ function FreeButterfly({
       await controls.start({
         x: firstX,
         y: firstY,
-        opacity: 0.85,
+        opacity: 1,
         transition: { duration: flightSpeed * 0.4, ease: "easeInOut" },
       });
       if (!mountedRef.current) return;
