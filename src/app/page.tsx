@@ -4,6 +4,7 @@ import CrystalButton from "@/components/ui/CrystalButton";
 import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
 import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 import TopPageLiveContent from "@/components/top/TopPageLiveContent";
+import TopPageMobileScrollBackground from "@/components/top/TopPageMobileScrollBackground";
 
 /**
  * Birthday reveal date, mirrored from src/app/birthday/page.tsx — see that
@@ -46,12 +47,12 @@ export default function TopPage({
           goes full-bleed edge-to-edge instead of being confined to the
           phone-frame column (see the @media block on .bg-photo-layer in
           globals.css). Applies to TOP and SUBMIT only; Garden keeps its own
-          morning/day/golden-hour/moon-garden rotation. */}
-      <div
-        aria-hidden
-        className="bg-photo-layer md:hidden"
-        style={{ backgroundImage: "url(/images/topsubmit-bg-mobile.jpg)" }}
-      />
+          morning/day/golden-hour/moon-garden rotation.
+          2026-07-06: mobile now uses TopPageMobileScrollBackground (full
+          landscape image, horizontally scrollable) instead of the portrait
+          crop below, for the same "don't crop the illustration" reason as
+          the Garden page fix — see that component. Desktop is unchanged. */}
+      <TopPageMobileScrollBackground />
       <div
         aria-hidden
         className="bg-photo-layer hidden md:block"
@@ -87,8 +88,8 @@ export default function TopPage({
         </div>
 
         <p
-          className="mx-auto mt-2 max-w-xs rounded-2xl bg-white/40 px-4 py-3 text-center font-display-jp text-base font-medium leading-relaxed backdrop-blur-sm md:max-w-md md:text-lg"
-          style={{ color: "#4a4058" }}
+          className="mx-auto mt-2 max-w-xs text-center font-display-jp text-base font-medium leading-relaxed md:max-w-md md:text-lg"
+          style={{ color: "#4a4058", textShadow: "0 1px 10px rgba(255,255,255,0.85), 0 1px 3px rgba(255,255,255,0.85)" }}
         >
           みんなの想いが蝶になって
           <br />

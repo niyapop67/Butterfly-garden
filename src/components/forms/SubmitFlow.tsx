@@ -370,7 +370,11 @@ function AlreadySubmittedNotice({
         </CrystalButton>
       </Link>
 
-      <Link href="/garden" className="font-body text-[11px] underline decoration-dotted underline-offset-4" style={{ color: "var(--color-ink-soft)", opacity: 0.7 }}>
+      <Link
+        href="/garden"
+        className="rounded-full px-4 py-2 font-body text-[11px] underline decoration-dotted underline-offset-4"
+        style={{ background: "rgba(255,255,255,0.55)", color: "var(--color-ink)" }}
+      >
         ガーデンを見る
       </Link>
 
@@ -380,8 +384,8 @@ function AlreadySubmittedNotice({
       <button
         type="button"
         onClick={onSendAnother}
-        className="font-body text-[11px] underline decoration-dotted underline-offset-4"
-        style={{ color: "var(--color-ink-soft)", opacity: 0.7 }}
+        className="rounded-full px-4 py-2 font-body text-[11px] underline decoration-dotted underline-offset-4"
+        style={{ background: "rgba(255,255,255,0.55)", color: "var(--color-ink)" }}
       >
         別の人の分としてもう一通届ける
       </button>
@@ -422,8 +426,8 @@ function ThankYouScreen() {
 
       <Link
         href="/submit/mine"
-        className="font-body text-[11px] underline decoration-dotted underline-offset-4"
-        style={{ color: "var(--color-ink-soft)", opacity: 0.7 }}
+        className="rounded-full px-4 py-2 font-body text-[11px] underline decoration-dotted underline-offset-4"
+        style={{ background: "rgba(255,255,255,0.55)", color: "var(--color-ink)" }}
       >
         送った内容をあとで見返す
       </Link>

@@ -24,11 +24,11 @@
  */
 
 const STAGES = [
-  { threshold: 5, label: "つぼみ" },
-  { threshold: 10, label: "ひらき始め" },
-  { threshold: 15, label: "満開へ" },
-  { threshold: 20, label: "咲きほこる" },
-  { threshold: 30, label: "花束完成" },
+  { threshold: 5 },
+  { threshold: 10 },
+  { threshold: 15 },
+  { threshold: 20 },
+  { threshold: 30 },
 ] as const;
 
 interface EvolutionMilestoneTrackerProps {
@@ -42,9 +42,6 @@ export default function EvolutionMilestoneTracker({
 }: EvolutionMilestoneTrackerProps) {
   return (
     <div className="w-full">
-      <p className="mb-3 text-center font-body text-xs tracking-wider text-[#8b8398]">
-        ── 薔薇の成長 ──
-      </p>
       <div className="flex items-end justify-between gap-1.5 px-1">
         {STAGES.map((s, i) => {
           const reached = forcedComplete || totalButterflies >= s.threshold;
@@ -58,11 +55,6 @@ export default function EvolutionMilestoneTracker({
               >
                 {isFinal ? "💐" : "🌹"}
               </div>
-              <span
-                className={`text-center font-body text-[10px] leading-tight ${reached ? "text-[#c9709a]" : "text-[#b9b2c4]"}`}
-              >
-                {s.label}
-              </span>
             </div>
           );
         })}
