@@ -72,8 +72,8 @@ export default function SubmitFlow() {
     setSubmitError(null);
     setIsSubmitting(true);
     try {
-      await submitEntry(draft);
-      markSubmitted(draft.nickname.trim());
+      const id = await submitEntry(draft);
+      markSubmitted(draft.nickname.trim(), id);
       setIsDone(true);
     } catch (err) {
       console.error(err);
@@ -363,11 +363,15 @@ function AlreadySubmittedNotice({
         </p>
       </GlassCard>
 
-      <Link href="/garden" className="w-full max-w-xs">
+      <Link href="/submit/mine" className="w-full max-w-xs">
         <CrystalButton className="w-full">
           <CrystalIcon size={18} />
-          ガーデンを見る
+          送った内容を見る
         </CrystalButton>
+      </Link>
+
+      <Link href="/garden" className="font-body text-[11px] underline decoration-dotted underline-offset-4" style={{ color: "var(--color-ink-soft)", opacity: 0.7 }}>
+        ガーデンを見る
       </Link>
 
       {/* Deliberately understated — this is a soft nudge, not a hard block
@@ -414,6 +418,14 @@ function ThankYouScreen() {
           <CrystalIcon size={18} />
           ガーデンを見る
         </CrystalButton>
+      </Link>
+
+      <Link
+        href="/submit/mine"
+        className="font-body text-[11px] underline decoration-dotted underline-offset-4"
+        style={{ color: "var(--color-ink-soft)", opacity: 0.7 }}
+      >
+        送った内容をあとで見返す
       </Link>
     </div>
   );

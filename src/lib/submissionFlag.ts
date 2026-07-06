@@ -14,6 +14,12 @@ const STORAGE_KEY = "butterfly-garden:submitted";
 interface SubmissionRecord {
   submittedAt: string;
   nickname: string;
+  /** Firestore doc ID from submitEntry(), used by /submit/mine to fetch
+   *  this specific submission back — see that page for why this is safe
+   *  even though Firestore read rules are open to everyone (the doc ID
+   *  itself, a random Firestore-generated string, is the only thing that
+   *  scopes this to "your own" submission). */
+  id: string;
 }
 
 export function hasSubmittedBefore(): SubmissionRecord | null {
@@ -27,10 +33,10 @@ export function hasSubmittedBefore(): SubmissionRecord | null {
   }
 }
 
-export function markSubmitted(nickname: string): void {
+export function markSubmitted(nickname: string, id: string): void {
   if (typeof window === "undefined") return;
   try {
-    const record: SubmissionRecord = { submittedAt: new Date().toISOString(), nickname };
+    const record: SubmissionRecord = { submittedAt: new Date().toISOString(), nickname, id };
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
   } catch {
     // localStorage unavailable (private mode edge cases, storage full, etc.)
