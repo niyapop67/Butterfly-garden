@@ -145,6 +145,7 @@ body {
   height: 100dvh;
   z-index: -1;
   pointer-events: none;
+  background-image: var(--bg-photo-mobile);
   background-size: cover;
   background-position: top center;
   background-repeat: no-repeat;
@@ -172,17 +173,18 @@ body {
 }
 
 /*
-  2026-07-06: Garden page only — on desktop, garden-bg photos are portrait-
-  cropped (≈0.45 aspect, designed for a phone screen). Cover-fit against a
-  wide landscape viewport blows the image up and shows only a thin vertical
-  slice, cropping out most of the composition. Switch to contain so the full
-  illustration is always visible, letterboxed with the page's own cream
-  background color (matches .bg-garden-page's background-color) rather than
-  a hard crop. Scoped to .bg-garden-page so TOP/SUBMIT (landscape-cropped,
-  already cover-fit correctly) are unaffected.
+  2026-07-06: Garden page only — on desktop, swap in the dedicated landscape
+  (3:2) PC background set instead of stretching the portrait mobile crop
+  (which, at cover-fit against a wide viewport, showed only a thin vertical
+  slice). background-image switches to --bg-photo-desktop (set inline per
+  time-of-day in garden/page.tsx); contain guarantees the full illustration
+  is always visible, letterboxed with the page's cream background-color
+  rather than cropped. Scoped to .bg-garden-page so TOP/SUBMIT (still on the
+  portrait mobile set, correctly cover-fit) are unaffected.
 */
 @media (min-width: 768px) {
   .bg-garden-page .bg-photo-layer {
+    background-image: var(--bg-photo-desktop);
     background-size: contain;
     background-position: center;
     background-color: #fffdf8;

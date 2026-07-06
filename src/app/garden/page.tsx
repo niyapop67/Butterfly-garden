@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useGardenFeed } from "@/lib/useGardenFeed";
 import { useTimeOfDay } from "@/lib/useTimeOfDay";
-import { GARDEN_BG_IMAGES } from "@/lib/timeBackgrounds";
+import { GARDEN_BG_IMAGES, GARDEN_BG_IMAGES_PC } from "@/lib/timeBackgrounds";
 import { getButterflyAsset } from "@/lib/butterflyAssets";
 import FreeFlyingGarden from "@/components/garden/FreeFlyingGarden";
 import CrystalIcon from "@/components/ui/CrystalIcon";
@@ -57,7 +57,10 @@ export default function GardenPage() {
       <div
         aria-hidden
         className="bg-photo-layer"
-        style={{ backgroundImage: `url(${GARDEN_BG_IMAGES[time.id]})` }}
+        style={{
+          "--bg-photo-mobile": `url(${GARDEN_BG_IMAGES[time.id]})`,
+          "--bg-photo-desktop": `url(${GARDEN_BG_IMAGES_PC[time.id]})`,
+        } as CSSProperties}
       />
 
       {/* Ambient lighting overlay */}
