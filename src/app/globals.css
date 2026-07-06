@@ -229,20 +229,22 @@ body {
   background-repeat: no-repeat;
 }
 
+/*
+  2026-07-06: removed for the Garden page specifically — this whitish wash
+  was read as an unwanted "filter" dulling the photo (user feedback: 薄い
+  フィルターみたいなのは取れない？). Header text (Butterfly Garden / time
+  label) already carries its own text-shadow for legibility (see
+  garden/page.tsx header styles), so the wash isn't needed here. Left in
+  place conceptually for .bg-day-garden (TOP/SUBMIT), which still uses the
+  original rule above — not scoped to touch those pages.
+*/
 .bg-garden-page::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  background: linear-gradient(
-    to bottom,
-    rgba(255, 253, 248, 0.45) 0%,
-    rgba(255, 253, 248, 0.2) 16%,
-    rgba(255, 253, 248, 0.1) 40%,
-    rgba(255, 253, 248, 0.2) 75%,
-    rgba(255, 253, 248, 0.45) 100%
-  );
+  background: none;
 }
 
 .divider-ornament {

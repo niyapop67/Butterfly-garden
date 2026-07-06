@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useGardenFeed } from "@/lib/useGardenFeed";
 import { useTimeOfDay } from "@/lib/useTimeOfDay";
-import { GARDEN_BG_IMAGES, GARDEN_BG_IMAGES_PC } from "@/lib/timeBackgrounds";
+import { GARDEN_BG_IMAGES_PC } from "@/lib/timeBackgrounds";
 import { getButterflyAsset } from "@/lib/butterflyAssets";
 import FreeFlyingGarden from "@/components/garden/FreeFlyingGarden";
 import CrystalIcon from "@/components/ui/CrystalIcon";
@@ -25,6 +25,17 @@ export default function GardenPage() {
   const { entries } = useGardenFeed();
   const time = useTimeOfDay();
   const [filter, setFilter] = useState<ButterflyType | "all">("all");
+  const mobileBgScrollRef = useRef<HTMLDivElement>(null);
+
+  // Center the horizontally-scrollable mobile background on first render
+  // (and whenever the image changes, e.g. a time-of-day switch resets
+  // scroll position) so the fountain/gate — the same framing the old
+  // portrait crop showed — is what's visible before the person scrolls.
+  useEffect(() => {
+    const el = mobileBgScrollRef.current;
+    if (!el) return;
+    el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2;
+  }, [time.id]);
 
   // The header count always reflects the true total (matches the TOP
   // page's stats card); only which butterflies actually render is
@@ -54,11 +65,35 @@ export default function GardenPage() {
           already-blue night photo shifted it into an unintended pink/lavender
           cast instead of deepening the night mood. The ambient rgba overlay
           below is a much gentler tint and is kept. */}
+      {/* Mobile (<768px): horizontally scrollable full landscape image
+          instead of the old portrait crop — reuses the same PC image set
+          (GARDEN_BG_IMAGES_PC) at natural aspect (height: 100%, width:
+          auto), inside an overflow-x:auto container, so nothing is cropped;
+          swipe left/right to see the rest of the illustration. Starts
+          centered on mount (fountain, matching the old crop's default
+          framing). Desktop (768px+) hides this and uses the existing
+          bg-photo-layer/contain div below instead — no horizontal overflow
+          there since contain already shows the whole image.
+          Icons/chips/CTA are separate fixed-position elements elsewhere in
+          this tree, so they stay put regardless of this scroll. */}
       <div
         aria-hidden
-        className="bg-photo-layer"
+        ref={mobileBgScrollRef}
+        className="md:hidden fixed inset-0 overflow-x-auto overflow-y-hidden"
+        style={{ zIndex: -1, WebkitOverflowScrolling: "touch" }}
+      >
+        <img
+          src={GARDEN_BG_IMAGES_PC[time.id]}
+          alt=""
+          draggable={false}
+          className="h-full w-auto max-w-none select-none"
+        />
+      </div>
+
+      <div
+        aria-hidden
+        className="hidden md:block bg-photo-layer"
         style={{
-          "--bg-photo-mobile": `url(${GARDEN_BG_IMAGES[time.id]})`,
           "--bg-photo-desktop": `url(${GARDEN_BG_IMAGES_PC[time.id]})`,
         } as CSSProperties}
       />
