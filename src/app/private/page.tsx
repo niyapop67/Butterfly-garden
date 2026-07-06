@@ -61,21 +61,32 @@ function ModeCard({
   description: string;
   enabled: boolean;
 }) {
+  // GlassCard's default text colors (--color-ink / --color-ink-soft) are
+  // dark purple-grey, designed for the light cream backgrounds used
+  // elsewhere on the site. This page sits on .bg-night-garden (dark
+  // indigo), so those defaults were nearly unreadable against the barely-
+  // tinted glass. Override to light cream/lavender (matching this page's
+  // own header text colors above) and bump the glass slightly more opaque
+  // for contrast — scoped to this page only via inline styles, so GlassCard
+  // itself stays unchanged for its light-background uses elsewhere.
   const content = (
-    <GlassCard className={`px-5 py-5 ${enabled ? "" : "opacity-60"}`}>
+    <GlassCard
+      className={`px-5 py-5 ${enabled ? "" : "opacity-60"}`}
+      style={{ background: "rgba(255,255,255,0.14)" }}
+    >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="font-display-jp text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
+          <p className="font-display-jp text-sm font-semibold" style={{ color: "#fffdf8" }}>
             {title}
           </p>
-          <p className="mt-1 font-body text-xs leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
+          <p className="mt-1 font-body text-xs leading-relaxed" style={{ color: "#cbb9e0" }}>
             {description}
           </p>
         </div>
         {!enabled && (
           <span
             className="flex-shrink-0 rounded-full px-2.5 py-1 font-body text-[10px]"
-            style={{ background: "rgba(255,255,255,0.5)", color: "var(--color-ink-soft)" }}
+            style={{ background: "rgba(255,255,255,0.2)", color: "#fffdf8" }}
           >
             近日公開
           </span>
