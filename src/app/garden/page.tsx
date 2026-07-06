@@ -80,11 +80,10 @@ export default function GardenPage() {
         <Link
           href="/"
           aria-label="トップページへ戻る"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md border border-white/30 transition-all hover:bg-white/25"
-          style={{ borderColor: "rgba(232,193,112,0.3)" }}
+          className="flex h-11 w-11 items-center justify-center transition-opacity hover:opacity-70"
         >
-          <svg width="10" height="16" viewBox="0 0 10 16" fill="none" aria-hidden>
-            <path d="M9 1L1 8L9 15" stroke="#a78bdb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          <svg width="12" height="20" viewBox="0 0 10 16" fill="none" aria-hidden style={{ filter: "drop-shadow(0 1px 4px rgba(255,255,255,0.85))" }}>
+            <path d="M9 1L1 8L9 15" stroke="#a78bdb" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
           </svg>
         </Link>
 
@@ -106,10 +105,9 @@ export default function GardenPage() {
         <Link
           href="/submit"
           aria-label="蝶を届ける"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/15 backdrop-blur-md border transition-all hover:bg-white/25"
-          style={{ borderColor: "rgba(232,193,112,0.3)" }}
+          className="flex h-11 w-11 items-center justify-center transition-opacity hover:opacity-70"
         >
-          <CrystalIcon size={18} />
+          <CrystalIcon size={22} />
         </Link>
       </header>
 
