@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import GlassCard from "@/components/ui/GlassCard";
-import CrystalButton from "@/components/ui/CrystalButton";
 import ButterflyImage from "@/components/butterfly/ButterflyImage";
+import LetterModal from "@/components/private/LetterModal";
 import { BUTTERFLY_THEMES } from "@/types/submission";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
 
@@ -20,32 +20,20 @@ import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
  * spec-v2.9-diff-2026-06-28.md §4), so おまかせ再生 and ガーデン探索 are
  * left as "near future" placeholders on /private rather than guessed at.
  *
- * Full message text + voice playback are shown here — this page is
- * already behind GATE 2 (src/middleware.ts), so usePrivateFeed.ts's full
- * fields are appropriate here in a way they are NOT on the public Garden
- * page (see useGardenFeed.ts's GardenEntry, which omits them).
+ * 2026-07-06: changed from showing every message/voice inline (a long,
+ * heavy scroll) to a compact name-only list — tapping a row opens the full
+ * message + voice in LetterModal instead. The "オフライン閲覧用にダウン
+ * ロード" ZIP export (downloadOfflineArchive.ts) is removed as part of
+ * this change: its exported page reproduced the old inline-everything
+ * layout, which no longer matches this page's design, and Niya asked for
+ * it gone rather than kept in sync. Full message text + voice URLs are
+ * still fine to read here — this page is already behind GATE 2
+ * (src/middleware.ts), same as before.
  */
 export default function PrivateListPage() {
   const { entries, loading, error } = usePrivateFeed();
   const [query, setQuery] = useState("");
-  const [archiving, setArchiving] = useState(false);
-  const [archiveError, setArchiveError] = useState<string | null>(null);
-  const [archiveResult, setArchiveResult] = useState<string | null>(null);
-
-  async function handleDownloadOffline() {
-    setArchiving(true);
-    setArchiveError(null);
-    setArchiveResult(null);
-    try {
-      const { downloadOfflineArchive } = await import("@/lib/downloadOfflineArchive");
-      const { voiceCount } = await downloadOfflineArchive(entries);
-      setArchiveResult(`書き出し完了（ボイス${voiceCount}件）。ZIPを展開してindex.htmlを開くと、ネットなしでも見られます。`);
-    } catch {
-      setArchiveError("書き出しに失敗しました。もう一度お試しください。");
-    } finally {
-      setArchiving(false);
-    }
-  }
+  const [selected, setSelected] = useState<PrivateEntry | null>(null);
 
   const sorted = useMemo(
     () => [...entries].sort((a, b) => a.nickname.localeCompare(b.nickname, "ja")),
@@ -86,23 +74,6 @@ export default function PrivateListPage() {
         />
       </section>
 
-      <section className="relative z-10 mb-5">
-        <GlassCard className="px-4 py-4">
-          <p className="mb-2 font-body text-[11px] leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
-            バースデームービーと同じく、ダウンロードしておけばネット環境がなくてもオフラインで開けます。
-          </p>
-          <CrystalButton className="w-full" onClick={handleDownloadOffline} disabled={loading || archiving || entries.length === 0}>
-            {archiving ? "書き出し中…" : "オフライン閲覧用にダウンロード"}
-          </CrystalButton>
-          {archiveResult && (
-            <p className="mt-2 font-body text-[11px]" style={{ color: "var(--color-ink-soft)" }}>
-              {archiveResult}
-            </p>
-          )}
-          {archiveError && <p className="mt-2 font-body text-[11px] text-rose-500">{archiveError}</p>}
-        </GlassCard>
-      </section>
-
       {error && (
         <section className="relative z-10 mb-5">
           <GlassCard className="px-5 py-4 text-center">
@@ -119,7 +90,7 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 flex flex-col gap-3">
+      <section className="relative z-10 flex flex-col gap-2">
         {!loading && filtered.length === 0 && (
           <GlassCard className="px-5 py-6 text-center">
             <p className="font-body text-xs" style={{ color: "var(--color-ink-soft)" }}>
@@ -128,39 +99,36 @@ export default function PrivateListPage() {
           </GlassCard>
         )}
         {filtered.map((entry) => (
-          <PrivateListItem key={entry.id} entry={entry} />
+          <PrivateListItem key={entry.id} entry={entry} onOpen={() => setSelected(entry)} />
         ))}
       </section>
+
+      <LetterModal entry={selected} onClose={() => setSelected(null)} />
     </main>
   );
 }
 
-function PrivateListItem({ entry }: { entry: PrivateEntry }) {
+function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () => void }) {
   return (
-    <GlassCard className="px-4 py-4">
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0">
-          <ButterflyImage type={entry.butterflyType} size="small" displayWidth={40} />
-        </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2">
+    <button type="button" onClick={onOpen} className="w-full text-left">
+      <GlassCard className="px-4 py-3 transition-transform active:scale-[0.98]">
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0">
+            <ButterflyImage type={entry.butterflyType} size="small" displayWidth={32} />
+          </div>
+          <div className="min-w-0 flex-1">
             <p className="truncate font-display-jp text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
               {entry.nickname || "（名前未設定）"}
             </p>
-            <span className="flex-shrink-0 font-body text-[10px]" style={{ color: "#a89fb3" }}>
-              {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? ""}
-            </span>
           </div>
-          <p className="mt-1.5 whitespace-pre-wrap font-body text-xs leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
-            {entry.message}
-          </p>
-          {entry.voiceUrl && (
-            <audio controls preload="none" src={entry.voiceUrl} className="mt-2 h-8 w-full">
-              お使いのブラウザは音声再生に対応していません。
-            </audio>
-          )}
+          <span className="flex-shrink-0 font-body text-[10px]" style={{ color: "#a89fb3" }}>
+            {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? ""}
+          </span>
+          <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden className="flex-shrink-0 opacity-50">
+            <path d="M1 1L6 6L1 11" stroke="#a78bdb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
         </div>
-      </div>
-    </GlassCard>
+      </GlassCard>
+    </button>
   );
 }
