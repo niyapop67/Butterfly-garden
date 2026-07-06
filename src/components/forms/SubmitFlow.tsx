@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -11,6 +11,7 @@ import ButterflySelector from "@/components/forms/ButterflySelector";
 import VoiceRecorder from "@/components/forms/VoiceRecorder";
 import ButterflyImage from "@/components/butterfly/ButterflyImage";
 import { submitEntry } from "@/lib/submitEntry";
+import { hasSubmittedBefore, markSubmitted } from "@/lib/submissionFlag";
 import {
   EMPTY_DRAFT,
   MESSAGE_MAX_LENGTH,
@@ -42,6 +43,17 @@ export default function SubmitFlow() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);
 
+  // 2026-07-06: lightweight, client-only "already submitted from this
+  // device" check — see submissionFlag.ts for what this does and doesn't
+  // catch. Read after mount (not as a useState initializer) so server and
+  // first client render match; the form briefly shows before this resolves,
+  // which is fine for something this low-stakes.
+  const [priorSubmission, setPriorSubmission] = useState<{ nickname: string } | null>(null);
+  const [bypassPriorNotice, setBypassPriorNotice] = useState(false);
+  useEffect(() => {
+    setPriorSubmission(hasSubmittedBefore());
+  }, []);
+
   function goNext() {
     setStep((s) => (s < 5 ? ((s + 1) as Step) : s));
   }
@@ -61,6 +73,7 @@ export default function SubmitFlow() {
     setIsSubmitting(true);
     try {
       await submitEntry(draft);
+      markSubmitted(draft.nickname.trim());
       setIsDone(true);
     } catch (err) {
       console.error(err);
@@ -72,6 +85,15 @@ export default function SubmitFlow() {
 
   if (isDone) {
     return <ThankYouScreen />;
+  }
+
+  if (priorSubmission && !bypassPriorNotice) {
+    return (
+      <AlreadySubmittedNotice
+        nickname={priorSubmission.nickname}
+        onSendAnother={() => setBypassPriorNotice(true)}
+      />
+    );
   }
 
   return (
@@ -313,6 +335,52 @@ function ConfirmStep({ draft }: { draft: SubmissionDraft }) {
       <p className="mt-4 text-center font-body text-[11px]" style={{ color: "var(--color-ink-soft)" }}>
         送信後の編集はできません
       </p>
+    </div>
+  );
+}
+
+function AlreadySubmittedNotice({
+  nickname,
+  onSendAnother,
+}: {
+  nickname: string;
+  onSendAnother: () => void;
+}) {
+  return (
+    <div className="relative z-10 mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-6 px-6 py-12 text-center">
+      <GlassCard className="w-full max-w-xs px-6 py-8">
+        <p className="mb-3 text-3xl" aria-hidden>
+          🦋
+        </p>
+        <p className="font-display-jp text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
+          蝶を届けました
+        </p>
+        <p className="mt-2 font-body text-xs leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
+          {nickname ? `「${nickname}」として、` : ""}
+          このブラウザからは既にメッセージを送信済みです。
+          <br />
+          想いはちゃんとガーデンに届いています。
+        </p>
+      </GlassCard>
+
+      <Link href="/garden" className="w-full max-w-xs">
+        <CrystalButton className="w-full">
+          <CrystalIcon size={18} />
+          ガーデンを見る
+        </CrystalButton>
+      </Link>
+
+      {/* Deliberately understated — this is a soft nudge, not a hard block
+          (same device could be shared by family/friends), see
+          submissionFlag.ts for why this can't be a real duplicate check. */}
+      <button
+        type="button"
+        onClick={onSendAnother}
+        className="font-body text-[11px] underline decoration-dotted underline-offset-4"
+        style={{ color: "var(--color-ink-soft)", opacity: 0.7 }}
+      >
+        別の人の分としてもう一通届ける
+      </button>
     </div>
   );
 }
