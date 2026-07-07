@@ -73,7 +73,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               </svg>
             </button>
 
-            <div className="absolute inset-0 z-0 flex flex-col overflow-y-auto px-[13%] pb-[11%] pt-[19%]">
+            <div className="absolute inset-0 z-0 flex flex-col overflow-y-auto px-[13%] pb-[17%] pt-[28.5%]">
               <h2
                 className="flex-shrink-0 text-center font-display text-3xl italic"
                 style={{ color: "#8a6d3f" }}
@@ -90,12 +90,12 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 </p>
               </div>
 
-              <div className="flex-shrink-0 flex flex-col items-center gap-3 pb-1">
+              <div className="flex-shrink-0 flex flex-col items-end gap-3 pb-1">
                 {entry.voiceUrl && (
                   <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
                 )}
 
-                <div className="text-center">
+                <div className="w-full text-right">
                   <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
                     From
                   </p>
