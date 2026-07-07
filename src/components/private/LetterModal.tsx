@@ -14,11 +14,12 @@ interface LetterModalProps {
  * 2026-07-06: "名前一覧リスト" changed from showing every message/voice
  * inline to a name-only list — tapping a name opens this modal instead.
  * Design follows the ChatGPT mockup Niya shared (Dear MIKA parchment card,
- * gold filigree border, rose bouquet crest). The rose-bouquet corner art
- * from that mockup isn't wired in yet — see the ChatGPT prompt given in
- * chat for generating it as a real transparent PNG asset. Until that
- * exists, the card leans on a CSS-drawn gold divider + gem glyph instead of
- * leaving a blank gap, so it still looks intentional without the art.
+ * gold filigree border, rose bouquet crest).
+ * 2026-07-07: rose-bouquet frame art arrived (public/images/decor/letter_frame_rose.png)
+ * and replaced the CSS-drawn gold divider placeholder. The card is now the
+ * full frame image itself (background-size 100% 100%, aspect-ratio locked
+ * to the asset's 2:3), with content absolutely positioned inside on top,
+ * scrollable for longer messages so the frame art never stretches oddly.
  */
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
   return (
@@ -40,11 +41,13 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm rounded-[28px] px-6 pb-7 pt-8"
+            className="relative w-full max-w-sm"
             style={{
-              background: "linear-gradient(180deg, #fdf8ef 0%, #faf1e2 100%)",
-              border: "2px solid rgba(212,175,110,0.55)",
-              boxShadow: "0 20px 60px rgba(60,30,50,0.35), inset 0 0 0 1px rgba(255,255,255,0.6)",
+              aspectRatio: "2 / 3",
+              backgroundImage: "url(/images/decor/letter_frame_rose.png)",
+              backgroundSize: "100% 100%",
+              backgroundRepeat: "no-repeat",
+              filter: "drop-shadow(0 20px 45px rgba(60,30,50,0.35))",
             }}
           >
             <button
@@ -58,49 +61,36 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               </svg>
             </button>
 
-            {/* Gold divider + gem glyph stands in for the rose-bouquet crest
-                in the mockup until that art asset exists — see prompt in
-                chat / a future docs/ note. */}
-            <div className="mb-2 flex items-center justify-center gap-2" aria-hidden>
-              <span className="h-px w-10" style={{ background: "rgba(212,175,110,0.5)" }} />
-              <span style={{ color: "#e0a0c0", fontSize: 14 }}>◆</span>
-              <span className="h-px w-10" style={{ background: "rgba(212,175,110,0.5)" }} />
-            </div>
+            <div className="absolute inset-0 flex flex-col overflow-y-auto px-[13%] pb-[9%] pt-[19%]">
+              <h2
+                className="text-center font-display text-3xl italic"
+                style={{ color: "#8a6d3f" }}
+              >
+                Dear MIKA
+              </h2>
 
-            <h2
-              className="text-center font-display text-3xl italic"
-              style={{ color: "#8a6d3f" }}
-            >
-              Dear MIKA
-            </h2>
-
-            <div className="mt-4 mb-5 flex items-center justify-center gap-2" aria-hidden>
-              <span className="h-px w-16" style={{ background: "rgba(212,175,110,0.4)" }} />
-              <span style={{ color: "#e0a0c0", fontSize: 10 }}>◆</span>
-              <span className="h-px w-16" style={{ background: "rgba(212,175,110,0.4)" }} />
-            </div>
-
-            <p
-              className="whitespace-pre-wrap text-center font-message-jp text-base leading-relaxed"
-              style={{ color: "#4a4058" }}
-            >
-              {entry.message}
-            </p>
-
-            {entry.voiceUrl && <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />}
-
-            <div className="mt-6 text-right">
-              <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
-                From
+              <p
+                className="mt-4 whitespace-pre-wrap text-center font-message-jp text-base leading-relaxed"
+                style={{ color: "#4a4058" }}
+              >
+                {entry.message}
               </p>
-              <p className="font-display text-lg italic" style={{ color: "#8a6d3f" }}>
-                {entry.nickname || "（名前未設定）"}
+
+              {entry.voiceUrl && <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />}
+
+              <div className="mt-6 text-right">
+                <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
+                  From
+                </p>
+                <p className="font-display text-lg italic" style={{ color: "#8a6d3f" }}>
+                  {entry.nickname || "（名前未設定）"}
+                </p>
+              </div>
+
+              <p className="mt-3 text-center font-body text-[10px]" style={{ color: "#b3a690" }}>
+                {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? ""}
               </p>
             </div>
-
-            <p className="mt-3 text-center font-body text-[10px]" style={{ color: "#b3a690" }}>
-              {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? ""}
-            </p>
           </motion.div>
         </motion.div>
       )}

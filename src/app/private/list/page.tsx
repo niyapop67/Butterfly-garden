@@ -3,9 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import GlassCard from "@/components/ui/GlassCard";
-import ButterflyImage from "@/components/butterfly/ButterflyImage";
 import LetterModal from "@/components/private/LetterModal";
-import { BUTTERFLY_THEMES } from "@/types/submission";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
 
 /**
@@ -90,13 +88,15 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 flex flex-col gap-2">
+      <section className="relative z-10 grid grid-cols-3 gap-2.5">
         {!loading && filtered.length === 0 && (
-          <GlassCard className="px-5 py-6 text-center">
-            <p className="font-body text-xs" style={{ color: "var(--color-ink-soft)" }}>
-              該当する蝶が見つかりませんでした。
-            </p>
-          </GlassCard>
+          <div className="col-span-3">
+            <GlassCard className="px-5 py-6 text-center">
+              <p className="font-body text-xs" style={{ color: "var(--color-ink-soft)" }}>
+                該当する蝶が見つかりませんでした。
+              </p>
+            </GlassCard>
+          </div>
         )}
         {filtered.map((entry) => (
           <PrivateListItem key={entry.id} entry={entry} onOpen={() => setSelected(entry)} />
@@ -110,25 +110,25 @@ export default function PrivateListPage() {
 
 function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () => void }) {
   return (
-    <button type="button" onClick={onOpen} className="w-full text-left">
-      <GlassCard className="px-4 py-3 transition-transform active:scale-[0.98]">
-        <div className="flex items-center gap-3">
-          <div className="flex-shrink-0">
-            <ButterflyImage type={entry.butterflyType} size="small" displayWidth={32} />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="truncate font-display-jp text-sm font-semibold" style={{ color: "var(--color-ink)" }}>
-              {entry.nickname || "（名前未設定）"}
-            </p>
-          </div>
-          <span className="flex-shrink-0 font-body text-[10px]" style={{ color: "#a89fb3" }}>
-            {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? ""}
-          </span>
-          <svg width="7" height="12" viewBox="0 0 7 12" fill="none" aria-hidden className="flex-shrink-0 opacity-50">
-            <path d="M1 1L6 6L1 11" stroke="#a78bdb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </div>
-      </GlassCard>
+    <button
+      type="button"
+      onClick={onOpen}
+      className="flex aspect-[3/4] flex-col items-center justify-center rounded-2xl px-2 py-3 text-center transition-transform active:scale-[0.96]"
+      style={{
+        background: "linear-gradient(180deg, #fdf8ef 0%, #faf1e2 100%)",
+        border: "1.5px solid rgba(212,175,110,0.55)",
+        boxShadow: "0 6px 16px rgba(60,30,50,0.18), inset 0 0 0 1px rgba(255,255,255,0.6)",
+      }}
+    >
+      <span style={{ color: "#e0a0c0", fontSize: 11 }} aria-hidden>
+        ◆
+      </span>
+      <p
+        className="mt-1.5 line-clamp-2 break-all font-display-jp text-xs font-semibold leading-snug"
+        style={{ color: "#8a6d3f" }}
+      >
+        {entry.nickname || "（名前未設定）"}
+      </p>
     </button>
   );
 }
