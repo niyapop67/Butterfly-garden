@@ -77,7 +77,7 @@ export default function TopPage({
       <section className="relative z-10 mb-10 text-center">
         <div className="relative mx-auto max-w-xs pb-6 pt-4 md:max-w-md">
           <h1
-            className="font-display text-5xl italic leading-tight md:text-7xl"
+            className="font-display text-5xl font-semibold italic leading-tight md:text-7xl"
             style={{ color: "#3f9c82", textShadow: "0 2px 16px rgba(255,255,255,0.9), 0 1px 3px rgba(255,255,255,0.9)" }}
           >
             Butterfly Garden
