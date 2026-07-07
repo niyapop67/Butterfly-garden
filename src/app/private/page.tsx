@@ -1,103 +1,18 @@
-import Link from "next/link";
-import GlassCard from "@/components/ui/GlassCard";
+import { redirect } from "next/navigation";
 
 /**
- * GATE 2 landing page — default `next` destination from /private/enter
- * when no specific target was requested (e.g. someone bookmarks
- * /private/enter directly rather than arriving via a specific link).
+ * GATE 2 landing route — default `next` destination from /private/enter
+ * when no specific target was requested.
  *
- * Menu for 6章「MIKAプライベート体験」's three modes. Only 名前一覧リスト
- * is built (see spec-v2.9-diff-2026-06-28.md §4 for why the other two are
- * left as placeholders rather than guessed at — their detailed UI lives in
- * v2.9 §6, which hasn't been shared in this chat).
+ * 2026-07-07: the 3-mode hub menu (名前一覧リスト／おまかせ再生／
+ * ガーデン探索) is removed per Niya's request — only 名前一覧リスト was
+ * ever built, and the other two modes' detailed UI (v2.9 §6) was never
+ * shared in this chat, so they stayed unbuilt placeholders. Rather than
+ * show a menu with one real option, /private now redirects straight to
+ * the name list so MIKA lands on usable content immediately. The
+ * Happy Birthday / date branding that used to live in this hub's header
+ * moved to the top of /private/list instead.
  */
 export default function PrivateHubPage() {
-  return (
-    <main className="bg-night-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      <header className="relative z-10 mb-8 text-center">
-        <p className="mb-2 text-2xl" aria-hidden>
-          🦋
-        </p>
-        <h1 className="font-display-jp text-lg" style={{ color: "#fffdf8" }}>
-          MIKAプライベート体験
-        </h1>
-        <p className="mt-2 font-body text-xs" style={{ color: "#cbb9e0" }}>
-          ここからは、MIKAだけが見られる場所です。
-        </p>
-      </header>
-
-      <section className="relative z-10 flex flex-col gap-4">
-        <ModeCard
-          href="/private/list"
-          title="名前一覧リスト"
-          description="参加してくれたみんなの名前とメッセージを、一覧で見る"
-          enabled
-        />
-        <ModeCard
-          href="/private/slideshow"
-          title="おまかせ再生"
-          description="みんなの想いを、古い順にスライドショーで自動再生する"
-          enabled
-        />
-        <ModeCard
-          href="/private/explore"
-          title="ガーデン探索"
-          description="ガーデンの中を歩くように、蝶をひとつずつタップして見ていく"
-          enabled
-        />
-      </section>
-    </main>
-  );
-}
-
-function ModeCard({
-  href,
-  title,
-  description,
-  enabled,
-}: {
-  href: string;
-  title: string;
-  description: string;
-  enabled: boolean;
-}) {
-  // GlassCard's default text colors (--color-ink / --color-ink-soft) are
-  // dark purple-grey, designed for the light cream backgrounds used
-  // elsewhere on the site. This page sits on .bg-night-garden (dark
-  // indigo), so those defaults were nearly unreadable against the barely-
-  // tinted glass. Override to light cream/lavender (matching this page's
-  // own header text colors above) and bump the glass slightly more opaque
-  // for contrast — scoped to this page only via inline styles, so GlassCard
-  // itself stays unchanged for its light-background uses elsewhere.
-  const content = (
-    <GlassCard
-      className={`px-5 py-5 ${enabled ? "" : "opacity-60"}`}
-      style={{ background: "rgba(255,255,255,0.14)" }}
-    >
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="font-display-jp text-sm font-semibold" style={{ color: "#fffdf8" }}>
-            {title}
-          </p>
-          <p className="mt-1 font-body text-xs leading-relaxed" style={{ color: "#cbb9e0" }}>
-            {description}
-          </p>
-        </div>
-        {!enabled && (
-          <span
-            className="flex-shrink-0 rounded-full px-2.5 py-1 font-body text-[10px]"
-            style={{ background: "rgba(255,255,255,0.2)", color: "#fffdf8" }}
-          >
-            近日公開
-          </span>
-        )}
-      </div>
-    </GlassCard>
-  );
-
-  if (!enabled) {
-    return <div aria-disabled>{content}</div>;
-  }
-
-  return <Link href={href}>{content}</Link>;
+  redirect("/private/list");
 }

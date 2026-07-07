@@ -2,12 +2,22 @@
 
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { BUTTERFLY_THEMES } from "@/types/submission";
 import type { PrivateEntry } from "@/lib/usePrivateFeed";
 
 interface LetterModalProps {
   entry: PrivateEntry | null;
   onClose: () => void;
+}
+
+/** メッセージは最大500文字。短いほど大きく、長いほど小さく、
+ *  常に読みやすいサイズに収まるよう段階的に調整する。 */
+function getMessageFontSizeClass(length: number): string {
+  if (length <= 40) return "text-3xl";
+  if (length <= 80) return "text-2xl";
+  if (length <= 150) return "text-xl";
+  if (length <= 260) return "text-lg";
+  if (length <= 380) return "text-base";
+  return "text-sm";
 }
 
 /**
@@ -22,6 +32,8 @@ interface LetterModalProps {
  * scrollable for longer messages so the frame art never stretches oddly.
  */
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
+  const messageSizeClass = entry ? getMessageFontSizeClass(entry.message.length) : "text-base";
+
   return (
     <AnimatePresence>
       {entry && (
@@ -41,7 +53,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-sm"
+            className="relative w-full max-w-md"
             style={{
               aspectRatio: "2 / 3",
               backgroundImage: "url(/images/decor/letter_frame_rose.png)",
@@ -54,14 +66,14 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               type="button"
               onClick={onClose}
               aria-label="閉じる"
-              className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm"
+              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm"
             >
               <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
                 <path d="M1 1L11 11M11 1L1 11" stroke="#8b8398" strokeWidth="1.5" strokeLinecap="round" />
               </svg>
             </button>
 
-            <div className="absolute inset-0 flex flex-col overflow-y-auto px-[13%] pb-[9%] pt-[19%]">
+            <div className="absolute inset-0 z-0 flex flex-col overflow-y-auto px-[13%] pb-[9%] pt-[19%]">
               <h2
                 className="text-center font-display text-3xl italic"
                 style={{ color: "#8a6d3f" }}
@@ -70,7 +82,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               </h2>
 
               <p
-                className="mt-4 whitespace-pre-wrap text-center font-message-jp text-base leading-relaxed"
+                className={`mt-4 whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
                 style={{ color: "#4a4058" }}
               >
                 {entry.message}
@@ -86,10 +98,6 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                   {entry.nickname || "（名前未設定）"}
                 </p>
               </div>
-
-              <p className="mt-3 text-center font-body text-[10px]" style={{ color: "#b3a690" }}>
-                {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? ""}
-              </p>
             </div>
           </motion.div>
         </motion.div>

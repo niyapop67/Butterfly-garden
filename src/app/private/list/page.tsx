@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import GlassCard from "@/components/ui/GlassCard";
 import LetterModal from "@/components/private/LetterModal";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
@@ -46,19 +45,13 @@ export default function PrivateListPage() {
 
   return (
     <main className="bg-night-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
-      <header className="relative z-10 mb-6 flex items-center gap-3">
-        <Link
-          href="/private"
-          aria-label="プライベート体験トップへ戻る"
-          className="flex h-11 w-11 items-center justify-center rounded-full bg-white/50 backdrop-blur-md shadow-glass-soft"
-        >
-          <svg width="10" height="16" viewBox="0 0 10 16" fill="none" aria-hidden>
-            <path d="M9 1L1 8L9 15" stroke="#a78bdb" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-        </Link>
-        <h1 className="font-display-jp text-base" style={{ color: "#fffdf8" }}>
-          名前一覧リスト
+      <header className="relative z-10 mb-6 text-center">
+        <h1 className="font-display text-3xl italic" style={{ color: "#fffdf8" }}>
+          Happy Birthday
         </h1>
+        <p className="mt-1 font-display text-sm tracking-widest" style={{ color: "#cbb9e0" }}>
+          2026.8.23
+        </p>
       </header>
 
       <section className="relative z-10 mb-5">
@@ -88,9 +81,9 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 grid grid-cols-3 gap-2.5">
+      <section className="relative z-10 grid grid-cols-4 gap-2">
         {!loading && filtered.length === 0 && (
-          <div className="col-span-3">
+          <div className="col-span-4">
             <GlassCard className="px-5 py-6 text-center">
               <p className="font-body text-xs" style={{ color: "var(--color-ink-soft)" }}>
                 該当する蝶が見つかりませんでした。
@@ -113,18 +106,18 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
     <button
       type="button"
       onClick={onOpen}
-      className="flex aspect-[3/4] flex-col items-center justify-center rounded-2xl px-2 py-3 text-center transition-transform active:scale-[0.96]"
+      className="flex aspect-[8/5] flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1 text-center transition-transform active:scale-[0.94]"
       style={{
         background: "linear-gradient(180deg, #fdf8ef 0%, #faf1e2 100%)",
-        border: "1.5px solid rgba(212,175,110,0.55)",
-        boxShadow: "0 6px 16px rgba(60,30,50,0.18), inset 0 0 0 1px rgba(255,255,255,0.6)",
+        border: "1px solid rgba(212,175,110,0.55)",
+        boxShadow: "0 3px 8px rgba(60,30,50,0.16), inset 0 0 0 1px rgba(255,255,255,0.6)",
       }}
     >
-      <span style={{ color: "#e0a0c0", fontSize: 11 }} aria-hidden>
+      <span style={{ color: "#e0a0c0", fontSize: 8 }} aria-hidden>
         ◆
       </span>
       <p
-        className="mt-1.5 line-clamp-2 break-all font-display-jp text-xs font-semibold leading-snug"
+        className="line-clamp-2 break-all font-display-jp text-[10px] font-semibold leading-tight"
         style={{ color: "#8a6d3f" }}
       >
         {entry.nickname || "（名前未設定）"}
