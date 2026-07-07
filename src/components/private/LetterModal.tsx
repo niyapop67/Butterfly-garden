@@ -81,7 +81,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 Dear MIKA
               </h2>
 
-              <div className="flex flex-1 flex-col items-center justify-center gap-4 py-4">
+              <div className="flex flex-1 flex-col items-center justify-center gap-9 py-4">
                 <p
                   className={`whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
                   style={{ color: "#4a4058" }}
