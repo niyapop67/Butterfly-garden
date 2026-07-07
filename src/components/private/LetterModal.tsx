@@ -81,21 +81,21 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 Dear MIKA
               </h2>
 
-              <div className="flex flex-1 flex-col items-center justify-center px-2">
+              <div className="flex flex-1 flex-col items-center justify-start px-2 pt-3">
                 <p
                   className={`whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
                   style={{ color: "#4a4058" }}
                 >
                   {entry.message}
                 </p>
-              </div>
 
-              <div className="flex-shrink-0 flex flex-col items-end gap-3 pb-1">
                 {entry.voiceUrl && (
-                  <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+                  <div className="mt-6 w-full">
+                    <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+                  </div>
                 )}
 
-                <div className="w-full text-right">
+                <div className="mt-8 w-full text-right">
                   <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
                     From
                   </p>
