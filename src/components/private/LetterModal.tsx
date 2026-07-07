@@ -81,7 +81,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             </div>
 
             <p
-              className="whitespace-pre-wrap text-center font-display-jp text-base leading-relaxed"
+              className="whitespace-pre-wrap text-center font-message-jp text-base leading-relaxed"
               style={{ color: "#4a4058" }}
             >
               {entry.message}

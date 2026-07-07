@@ -22,18 +22,8 @@ const displayFont = localFont({
 const displayFontJp = localFont({
   src: [
     {
-      path: "../fonts/shippori-mincho/ShipporiMincho-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/shippori-mincho/ShipporiMincho-Medium.ttf",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../fonts/shippori-mincho/ShipporiMincho-SemiBold.ttf",
-      weight: "600",
+      path: "../fonts/noto-sans-jp/NotoSansJP-Variable.ttf",
+      weight: "400 700",
       style: "normal",
     },
   ],
@@ -41,21 +31,23 @@ const displayFontJp = localFont({
   display: "swap",
 });
 
+const messageFontJp = localFont({
+  src: [
+    {
+      path: "../fonts/noto-sans-jp/NotoSansJP-Variable.ttf",
+      weight: "400 700",
+      style: "normal",
+    },
+  ],
+  variable: "--font-message-jp",
+  display: "swap",
+});
+
 const bodyFont = localFont({
   src: [
     {
-      path: "../fonts/zen-maru-gothic/ZenMaruGothic-Regular.ttf",
-      weight: "400",
-      style: "normal",
-    },
-    {
-      path: "../fonts/zen-maru-gothic/ZenMaruGothic-Medium.ttf",
-      weight: "500",
-      style: "normal",
-    },
-    {
-      path: "../fonts/zen-maru-gothic/ZenMaruGothic-Bold.ttf",
-      weight: "700",
+      path: "../fonts/noto-sans-jp/NotoSansJP-Variable.ttf",
+      weight: "400 700",
       style: "normal",
     },
   ],
@@ -88,7 +80,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={`${displayFont.variable} ${displayFontJp.variable} ${bodyFont.variable}`}>
+    <html lang="ja" className={`${displayFont.variable} ${displayFontJp.variable} ${bodyFont.variable} ${messageFontJp.variable}`}>
       <body>
         <div className="mobile-frame">{children}</div>
       </body>
