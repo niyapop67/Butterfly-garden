@@ -73,7 +73,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               </svg>
             </button>
 
-            <div className="absolute inset-0 z-0 flex flex-col overflow-y-auto px-[13%] pb-[8%] pt-[19%]">
+            <div className="absolute inset-0 z-0 flex flex-col overflow-y-auto px-[13%] pb-[11%] pt-[19%]">
               <h2
                 className="flex-shrink-0 text-center font-display text-3xl italic"
                 style={{ color: "#8a6d3f" }}
@@ -81,26 +81,28 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 Dear MIKA
               </h2>
 
-              <div className="flex flex-1 flex-col items-center justify-center gap-9 py-4">
+              <div className="flex flex-1 flex-col items-center justify-center px-2">
                 <p
                   className={`whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
                   style={{ color: "#4a4058" }}
                 >
                   {entry.message}
                 </p>
+              </div>
 
+              <div className="flex-shrink-0 flex flex-col items-center gap-3 pb-1">
                 {entry.voiceUrl && (
                   <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
                 )}
-              </div>
 
-              <div className="flex-shrink-0 text-center">
-                <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
-                  From
-                </p>
-                <p className="font-display text-lg italic" style={{ color: "#8a6d3f" }}>
-                  {entry.nickname || "（名前未設定）"}
-                </p>
+                <div className="text-center">
+                  <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
+                    From
+                  </p>
+                  <p className="font-display text-lg italic" style={{ color: "#8a6d3f" }}>
+                    {entry.nickname || "（名前未設定）"}
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>
