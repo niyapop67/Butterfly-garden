@@ -343,3 +343,20 @@ body {
 }
 
 /* touch: 2026-07-04 — Vercel再デプロイトリガー用の空コメント */
+
+/* 2026-07-07: 私書箱の名前一覧カード用マーキー。7文字を超える名前は
+   このアニメーションで横スクロール表示する（PrivateListItem参照）。
+   同じテキストを2つ並べて全体の50%分だけ動かすことで、名前の長さに
+   関わらず継ぎ目なくループする定番の実装。 */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  animation: marquee-scroll 5s linear infinite;
+}

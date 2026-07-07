@@ -102,11 +102,14 @@ export default function PrivateListPage() {
 }
 
 function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () => void }) {
+  const name = entry.nickname || "（名前未設定）";
+  const needsScroll = name.length > 7;
+
   return (
     <button
       type="button"
       onClick={onOpen}
-      className="flex aspect-[8/5] flex-col items-center justify-center gap-0.5 rounded-lg px-1.5 py-1 text-center transition-transform active:scale-[0.94]"
+      className="flex aspect-[8/5] flex-col items-center justify-center gap-1 rounded-lg px-1 py-1 text-center transition-transform active:scale-[0.94]"
       style={{
         background: "linear-gradient(180deg, #fdf8ef 0%, #faf1e2 100%)",
         border: "1px solid rgba(212,175,110,0.55)",
@@ -116,12 +119,32 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
       <span style={{ color: "#e0a0c0", fontSize: 8 }} aria-hidden>
         ◆
       </span>
-      <p
-        className="line-clamp-2 break-all font-display-jp text-[10px] font-semibold leading-tight"
-        style={{ color: "#8a6d3f" }}
-      >
-        {entry.nickname || "（名前未設定）"}
-      </p>
+      <div className="w-full overflow-hidden">
+        {needsScroll ? (
+          <div className="flex w-max animate-marquee">
+            <p
+              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight"
+              style={{ color: "#8a6d3f" }}
+            >
+              {name}
+            </p>
+            <p
+              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight"
+              style={{ color: "#8a6d3f" }}
+              aria-hidden
+            >
+              {name}
+            </p>
+          </div>
+        ) : (
+          <p
+            className="whitespace-nowrap text-center font-display-jp text-sm font-bold leading-tight"
+            style={{ color: "#8a6d3f" }}
+          >
+            {name}
+          </p>
+        )}
+      </div>
     </button>
   );
 }
