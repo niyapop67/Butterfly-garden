@@ -56,13 +56,17 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative w-full max-w-md"
+            className="relative"
             style={{
-              // Native frame art is 2:3, but the parchment is stretched
-              // ~100px taller so the signature always has room to breathe
-              // inside the paper rather than crowding the bottom border.
+              // Width is derived from BOTH the available width and the
+              // available height, so the box always keeps its exact 2:3.75
+              // ratio — it never gets height-clamped and squished, which
+              // previously threw off the width-based percentage padding
+              // below (padding percentages always resolve against width,
+              // never height) and let the player/signature drift past the
+              // frame artwork's real border.
+              width: "min(100%, 28rem, calc((100vh - 4rem) * 2 / 3.75))",
               aspectRatio: "2 / 3.75",
-              maxHeight: "calc(100vh - 4rem)",
               backgroundImage: "url(/images/decor/letter_frame_rose.png)",
               backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
@@ -82,7 +86,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 paddingLeft: "13%",
                 paddingRight: "13%",
                 paddingTop: "26%",
-                paddingBottom: "calc(15% + 20px)",
+                paddingBottom: "16%",
               }}
             >
               <Greeting />
