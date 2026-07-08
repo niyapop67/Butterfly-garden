@@ -68,7 +68,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             >
               {/* Inner line: the double-border look from the reference */}
               <div
-                className="relative flex min-h-0 flex-1 flex-col rounded-[2px] px-8 py-9 sm:px-10"
+                className="relative flex min-h-0 flex-1 flex-col rounded-[2px] px-9 py-10 sm:px-11"
                 style={{ border: "1px solid rgba(184,147,90,0.32)" }}
               >
                 <CornerFlourish position="tl" />
@@ -137,7 +137,7 @@ function CornerFlourish({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
       src="/images/decor/corner_ornament.png"
       alt=""
       aria-hidden
-      className={`pointer-events-none absolute ${placement[position]} h-12 w-12 sm:h-14 sm:w-14`}
+      className={`pointer-events-none absolute ${placement[position]} h-16 w-16 sm:h-20 sm:w-20`}
       style={{ transform: transform[position], opacity: 0.92 }}
     />
   );
