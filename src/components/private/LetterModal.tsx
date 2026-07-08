@@ -161,18 +161,22 @@ function Divider() {
  *  from the original design comes back without reintroducing the
  *  full-frame scaling problems. */
 function RoseCrest() {
+  const fade =
+    "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)";
   return (
     <div
       className="mx-auto flex-shrink-0"
       style={{
-        width: "72%",
-        maxWidth: "220px",
-        height: "64px",
-        marginBottom: "8px",
+        width: "78%",
+        maxWidth: "240px",
+        height: "62px",
+        marginBottom: "10px",
         backgroundImage: "url(/images/decor/letter_frame_rose.png)",
         backgroundSize: "cover",
         backgroundPosition: "center top",
         backgroundRepeat: "no-repeat",
+        WebkitMaskImage: fade,
+        maskImage: fade,
       }}
       aria-hidden
     />
@@ -305,14 +309,18 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         )}
       </button>
 
-      <div className="flex flex-1 items-center gap-[2.5px]" aria-hidden>
+      <div
+        className="flex flex-1 items-end gap-[2.5px]"
+        style={{ height: "26px" }}
+        aria-hidden
+      >
         {bars.map((h, i) => (
           <span
             key={i}
-            className="w-[2.5px] rounded-full"
+            className="w-[2.5px] flex-shrink-0 rounded-full"
             style={{
-              height: `${h}%`,
-              background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.35)",
+              height: `${Math.max(4, Math.round((h / 100) * 26))}px`,
+              background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.45)",
             }}
           />
         ))}
