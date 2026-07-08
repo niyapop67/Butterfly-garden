@@ -82,15 +82,13 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 <Greeting />
                 <Divider />
                 <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
-                <Divider />
 
-                {/* Sender + player: a single fixed block that never scrolls
-                    and never moves — the name sits right above the player. */}
+                {/* 4枚目レイアウト: メッセージ → プレーヤー → From/名前(右寄せ) */}
                 <div className="flex flex-shrink-0 flex-col">
-                  <Sender name={entry.nickname} />
                   {entry.voiceUrl && (
                     <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
                   )}
+                  <Sender name={entry.nickname} />
                 </div>
 
                 <GemDivider />
@@ -226,19 +224,13 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
   );
 }
 
-/**
- * The letter's "wax seal" moment. Uses the provided jeweled player frame
- * as the background (sized at its own aspect ratio so the border artwork
- * never stretches or distorts), an invisible button overlaid on top of the
- * frame's own painted play button, and the glowing waveform image overlaid
- * in two layers — a dim full-width copy plus a bright copy clipped to the
- * playback progress — to fake a real progress bar from a single static
- * graphic.
- */
 function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: number | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 0–1
+  const [progress, setProgress] = useState(0);
+
+  const barCount = 28;
+  const bars = useSeededBarHeights(src, barCount);
 
   useEffect(() => {
     function handleTimeUpdate() {
@@ -246,11 +238,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
       if (!audio || !audio.duration) return;
       setProgress(audio.currentTime / audio.duration);
     }
-    function handleEnded() {
-      setIsPlaying(false);
-      setProgress(0);
-    }
-
+    function handleEnded() { setIsPlaying(false); setProgress(0); }
     const audio = audioRef.current;
     if (!audio) return;
     audio.addEventListener("timeupdate", handleTimeUpdate);
@@ -264,85 +252,88 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
   function toggle() {
     const audio = audioRef.current;
     if (!audio) return;
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
-    } else {
-      audio.play();
-      setIsPlaying(true);
-    }
+    if (isPlaying) { audio.pause(); setIsPlaying(false); }
+    else { audio.play(); setIsPlaying(true); }
   }
 
-  const displaySeconds =
-    durationSeconds != null
-      ? `0:${String(Math.round(durationSeconds)).padStart(2, "0")}`
-      : "";
+  const activeBars = Math.round(progress * barCount);
+  const displaySeconds = durationSeconds != null
+    ? `0:${String(Math.round(durationSeconds)).padStart(2, "0")}`
+    : "";
 
   return (
     <div
-      className="relative mt-3 w-full flex-shrink-0"
-      style={{ aspectRatio: "1868 / 560" }}
+      className="mt-3 flex w-full flex-shrink-0 items-center gap-3 rounded-full px-4 py-3"
+      style={{
+        minHeight: "56px",
+        background: "rgba(255,245,245,0.70)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        border: "1px solid rgba(255,200,210,0.50)",
+        boxShadow: "0 6px 20px rgba(139,90,60,0.12), inset 0 1px 1px rgba(255,255,255,0.7)",
+      }}
     >
       <audio ref={audioRef} src={src} preload="none" />
-
-      <img
-        src="/images/decor/voice_player_frame.png"
-        alt=""
-        aria-hidden
-        className="absolute inset-0 h-full w-full object-contain"
-      />
-
-      {/* Waveform: dim base copy + bright copy clipped to playback progress */}
-      <div className="absolute" style={{ left: "27%", right: "8%", top: "28%", height: "44%" }}>
-        <img
-          src="/images/decor/voice_waveform_glow.png"
-          alt=""
-          aria-hidden
-          className="absolute inset-0 h-full w-full object-contain object-left opacity-30"
-        />
-        <div className="absolute inset-0 overflow-hidden" style={{ width: `${progress * 100}%` }}>
-          <img
-            src="/images/decor/voice_waveform_glow.png"
-            alt=""
-            aria-hidden
-            className="h-full object-contain object-left"
-            style={{ width: "calc(100% / " + Math.max(progress, 0.0001) + ")" }}
-          />
-        </div>
-      </div>
-
-      {displaySeconds && (
-        <span
-          className="absolute font-body text-[11px]"
-          style={{ right: "9%", bottom: "12%", color: "#a06080" }}
-        >
-          {displaySeconds}
-        </span>
-      )}
-
       <button
         type="button"
         onClick={toggle}
         aria-label={isPlaying ? "一時停止" : "再生"}
-        className="absolute flex items-center justify-center"
-        style={{ left: "2%", top: "10%", width: "24%", height: "80%" }}
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+        style={{ background: "linear-gradient(135deg,#ff9ec4,#ff6fa8)", boxShadow: "0 4px 14px rgba(255,111,168,0.45)" }}
       >
-        {isPlaying && (
-          <svg width="16" height="16" viewBox="0 0 12 12" fill="none" aria-hidden>
-            <rect x="1" y="1" width="3.5" height="10" rx="1" fill="white" fillOpacity="0.9" />
-            <rect x="7" y="1" width="3.5" height="10" rx="1" fill="white" fillOpacity="0.9" />
+        {isPlaying ? (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+            <rect x="1" y="1" width="3.5" height="10" rx="1" fill="white" />
+            <rect x="7" y="1" width="3.5" height="10" rx="1" fill="white" />
+          </svg>
+        ) : (
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+            <path d="M2 1L11 6L2 11V1Z" fill="white" />
           </svg>
         )}
       </button>
+
+      <div className="flex flex-1 items-end gap-[2px]" style={{ height: "28px" }} aria-hidden>
+        {bars.map((h, i) => (
+          <span
+            key={i}
+            className="w-[2px] flex-shrink-0 rounded-full"
+            style={{
+              height: `${Math.max(4, Math.round((h / 100) * 28))}px`,
+              background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.45)",
+            }}
+          />
+        ))}
+      </div>
+
+      {displaySeconds && (
+        <span className="flex-shrink-0 font-body text-[11px]" style={{ color: "#a06080" }}>
+          {displaySeconds}
+        </span>
+      )}
     </div>
   );
+}
+
+function useSeededBarHeights(seed: string, count: number): number[] {
+  const [heights] = useState(() => {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+    const out: number[] = [];
+    for (let i = 0; i < count; i++) {
+      h = (h * 1103515245 + 12345) >>> 0;
+      out.push(30 + (h % 1000) / 1000 * 70);
+    }
+    return out;
+  });
+  return heights;
 }
 
 /** The handwritten signature. Right-aligned, directly above the player,
  *  always inside the card since the card is content-sized. */
 function Sender({ name }: { name: string | null | undefined }) {
   return (
-    <div className="flex-shrink-0 text-center">
+    <div className="flex-shrink-0 pt-4 text-right">
       <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>
         From
       </p>
