@@ -61,7 +61,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               // Native frame art is 2:3, but the parchment is stretched
               // ~100px taller so the signature always has room to breathe
               // inside the paper rather than crowding the bottom border.
-              aspectRatio: "2 / 3.45",
+              aspectRatio: "2 / 3.75",
               maxHeight: "calc(100vh - 4rem)",
               backgroundImage: "url(/images/decor/letter_frame_rose.png)",
               backgroundSize: "100% 100%",
@@ -82,7 +82,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 paddingLeft: "13%",
                 paddingRight: "13%",
                 paddingTop: "26%",
-                paddingBottom: "calc(13% + 16px)",
+                paddingBottom: "calc(15% + 20px)",
               }}
             >
               <Greeting />
@@ -170,28 +170,16 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
 function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: number | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0); // 0–1
-
-  const barCount = 28;
-  const bars = useSeededBarHeights(src, barCount);
 
   useEffect(() => {
-    function handleTimeUpdate() {
-      const audio = audioRef.current;
-      if (!audio || !audio.duration) return;
-      setProgress(audio.currentTime / audio.duration);
-    }
     function handleEnded() {
       setIsPlaying(false);
-      setProgress(0);
     }
 
     const audio = audioRef.current;
     if (!audio) return;
-    audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("ended", handleEnded);
     return () => {
-      audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("ended", handleEnded);
     };
   }, []);
@@ -208,7 +196,6 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
     }
   }
 
-  const activeBars = Math.round(progress * barCount);
   const displaySeconds =
     durationSeconds != null
       ? `0:${String(Math.round(durationSeconds)).padStart(2, "0")}`
@@ -216,14 +203,14 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
   return (
     <div
-      className="flex w-full flex-shrink-0 items-center gap-3 rounded-[24px] px-[18px]"
+      className="flex w-full flex-shrink-0 items-center gap-3 rounded-full px-4 py-2"
       style={{
-        minHeight: "74px",
+        minHeight: "52px",
         background: "rgba(255,245,245,0.65)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,255,255,0.5)",
-        boxShadow: "0 8px 28px rgba(139,90,60,0.14), inset 0 1px 1px rgba(255,255,255,0.6)",
+        boxShadow: "0 6px 20px rgba(139,90,60,0.14), inset 0 1px 1px rgba(255,255,255,0.6)",
       }}
     >
       <audio ref={audioRef} src={src} preload="none" />
@@ -231,7 +218,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         type="button"
         onClick={toggle}
         aria-label={isPlaying ? "一時停止" : "再生"}
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
+        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
         style={{
           background: "linear-gradient(135deg, #ff9ec4, #ff6fa8)",
           boxShadow: "0 4px 14px rgba(255,111,168,0.45)",
@@ -249,21 +236,12 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         )}
       </button>
 
-      <div className="flex flex-1 items-center gap-[2px]" aria-hidden>
-        {bars.map((h, i) => (
-          <span
-            key={i}
-            className="w-[2.5px] rounded-full"
-            style={{
-              height: `${h}%`,
-              background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.35)",
-            }}
-          />
-        ))}
-      </div>
+      <span className="font-body text-[12px]" style={{ color: "#a06080" }}>
+        {isPlaying ? "再生中…" : "ボイスメッセージ"}
+      </span>
 
       {displaySeconds && (
-        <span className="flex-shrink-0 font-body text-[11px]" style={{ color: "#a06080" }}>
+        <span className="ml-auto flex-shrink-0 font-body text-[11px]" style={{ color: "#a06080" }}>
           {displaySeconds}
         </span>
       )}
@@ -290,18 +268,3 @@ function Sender({ name }: { name: string | null | undefined }) {
   );
 }
 
-/** Deterministic per-src pseudo-random bar heights (30–100%) so the same
- *  clip always draws the same waveform shape across re-renders. */
-function useSeededBarHeights(seed: string, count: number): number[] {
-  const [heights] = useState(() => {
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-    const out: number[] = [];
-    for (let i = 0; i < count; i++) {
-      h = (h * 1103515245 + 12345) >>> 0;
-      out.push(30 + (h % 1000) / 1000 * 70);
-    }
-    return out;
-  });
-  return heights;
-}
