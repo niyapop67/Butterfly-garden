@@ -56,17 +56,17 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             exit={{ opacity: 0, scale: 0.94, y: 12 }}
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
-            className="relative"
+            className="relative w-full"
             style={{
-              // Width is derived from BOTH the available width and the
-              // available height, so the box always keeps its exact 2:3.75
-              // ratio — it never gets height-clamped and squished, which
-              // previously threw off the width-based percentage padding
-              // below (padding percentages always resolve against width,
-              // never height) and let the player/signature drift past the
-              // frame artwork's real border.
-              width: "min(100%, 28rem, calc((100vh - 4rem) * 2 / 3.75))",
-              aspectRatio: "2 / 3.75",
+              // Back to width-first sizing (the previous 2:3.45 ratio),
+              // just bigger overall and wider so ~20 characters fit
+              // comfortably per line. If the card is ever taller than the
+              // viewport, the overlay itself scrolls (it has its own
+              // overflow-y-auto) rather than the card being height-clamped
+              // and squished — squishing is what threw the percentage
+              // padding out of sync with the frame artwork before.
+              maxWidth: "36rem",
+              aspectRatio: "2 / 3.45",
               backgroundImage: "url(/images/decor/letter_frame_rose.png)",
               backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
@@ -83,8 +83,8 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             <div
               className="flex h-full w-full flex-col"
               style={{
-                paddingLeft: "13%",
-                paddingRight: "13%",
+                paddingLeft: "10%",
+                paddingRight: "10%",
                 paddingTop: "26%",
                 paddingBottom: "16%",
               }}
