@@ -25,11 +25,13 @@ function getMessageFontSizeClass(length: number): string {
  * inline to a name-only list — tapping a name opens this modal instead.
  * Design follows the ChatGPT mockup Niya shared (Dear MIKA parchment card,
  * gold filigree border, rose bouquet crest).
- * 2026-07-07: rose-bouquet frame art arrived (public/images/decor/letter_frame_rose.png)
- * and replaced the CSS-drawn gold divider placeholder. The card is now the
- * full frame image itself (background-size 100% 100%, aspect-ratio locked
- * to the asset's 2:3), with content absolutely positioned inside on top,
- * scrollable for longer messages so the frame art never stretches oddly.
+ * 2026-07-07: rose-bouquet frame art arrived (public/images/decor/letter_frame_rose.png).
+ * 2026-07-08: rebuilt on a single vertical flex layout instead of absolute
+ * positioning. The card's background image is purely decorative — all real
+ * layout now lives in one flex column (Greeting → MessageScrollArea →
+ * VoicePlayer → Sender), so the message body is the only element that can
+ * ever change height. Player and sender never move regardless of message
+ * length.
  */
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
   const messageSizeClass = entry ? getMessageFontSizeClass(entry.message.length) : "text-base";
@@ -43,7 +45,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-5 py-8"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-5 py-8"
           onClick={onClose}
         >
           <motion.div
@@ -63,63 +65,95 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               filter: "drop-shadow(0 20px 45px rgba(60,30,50,0.35))",
             }}
           >
-            <button
-              type="button"
-              onClick={onClose}
-              aria-label="閉じる"
-              className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm"
+            <CloseButton onClose={onClose} />
+
+            {/* Single vertical flex column. Side/top padding is percentage-based
+                to line up the content with the rose frame artwork; bottom
+                padding is a flat 24px per the letter's own breathing room. */}
+            <div
+              className="flex h-full w-full flex-col"
+              style={{ paddingLeft: "13%", paddingRight: "13%", paddingTop: "28.5%", paddingBottom: "24px" }}
             >
-              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-                <path d="M1 1L11 11M11 1L1 11" stroke="#8b8398" strokeWidth="1.5" strokeLinecap="round" />
-              </svg>
-            </button>
-
-            <div className="absolute inset-0 z-0 flex flex-col px-[13%] pb-[17%] pt-[28.5%]">
-              <h2
-                className="flex-shrink-0 text-center font-display text-3xl italic"
-                style={{ color: "#8a6d3f" }}
-              >
-                Dear MIKA
-              </h2>
-
-              {/* Only this region scrolls internally when the message is long.
-                  min-h-0 lets the flex item actually shrink to the available
-                  space instead of growing past the card (which was pushing
-                  the name past the frame art / triggering page-level scroll). */}
-              <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
-                {/* my-auto vertically centers this block when it's shorter
-                    than the available space (fixes the empty-bottom look on
-                    short messages), and naturally collapses to top-aligned
-                    scrolling once content is taller than the space. */}
-                <div className="my-auto flex w-full flex-col items-center px-2 py-2">
-                  <p
-                    className={`whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
-                    style={{ color: "#4a4058" }}
-                  >
-                    {entry.message}
-                  </p>
-
-                  {entry.voiceUrl && (
-                    <div className="mt-6 w-full">
-                      <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
-                    </div>
-                  )}
-
-                  <div className="mt-8 w-full text-right">
-                    <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
-                      From
-                    </p>
-                    <p className="font-display text-xl font-semibold italic" style={{ color: "#8a6d3f" }}>
-                      {entry.nickname || "（名前未設定）"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <Greeting />
+              <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
+              {entry.voiceUrl && (
+                <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+              )}
+              <Sender name={entry.nickname} />
             </div>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
+  );
+}
+
+function CloseButton({ onClose }: { onClose: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClose}
+      aria-label="閉じる"
+      className="absolute right-4 top-4 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white shadow-sm"
+    >
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+        <path d="M1 1L11 11M11 1L1 11" stroke="#8b8398" strokeWidth="1.5" strokeLinecap="round" />
+      </svg>
+    </button>
+  );
+}
+
+/** Fixed-height greeting line. Never shrinks, never scrolls. */
+function Greeting() {
+  return (
+    <h2
+      className="flex-shrink-0 text-center font-display text-3xl italic"
+      style={{ color: "#8a6d3f" }}
+    >
+      Dear MIKA
+    </h2>
+  );
+}
+
+/**
+ * The ONLY scrollable region in the letter. Grows to fill whatever space is
+ * left between the greeting and the player/sender block below, with a
+ * guaranteed minimum so the letter never feels cramped. Short messages sit
+ * at the top with open space beneath; long messages scroll internally and
+ * never push the player or sender out of place.
+ */
+function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass: string }) {
+  return (
+    <div
+      className="flex flex-col items-center px-2 pt-3"
+      style={{
+        flex: "1 1 auto",
+        minHeight: "220px",
+        overflowY: "auto",
+        overflowX: "hidden",
+      }}
+    >
+      <p
+        className={`w-full whitespace-pre-wrap text-center font-message-jp leading-relaxed ${sizeClass}`}
+        style={{ color: "#4a4058" }}
+      >
+        {message}
+      </p>
+    </div>
+  );
+}
+
+/** Sits directly beneath the message area, always visible, never moves. */
+function Sender({ name }: { name: string | null | undefined }) {
+  return (
+    <div className="flex-shrink-0 pt-6 text-right">
+      <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
+        From
+      </p>
+      <p className="font-display text-xl font-semibold italic" style={{ color: "#8a6d3f" }}>
+        {name || "（名前未設定）"}
+      </p>
+    </div>
   );
 }
 
@@ -129,6 +163,8 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
  * analysis — same convention as most chat-app voice bubbles). Bars ahead
  * of playback position are solid pink, bars behind are faded, giving a
  * simple progress readout without a standard scrub bar.
+ * flex-shrink-0: the player is the letter's "signature section" — it must
+ * never be compressed or pushed around by the message above it.
  */
 function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: number | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -179,7 +215,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
   return (
     <div
-      className="flex w-full items-center gap-3 rounded-2xl px-4 py-3"
+      className="flex w-full flex-shrink-0 items-center gap-3 rounded-2xl px-4 py-3"
       style={{ background: "rgba(224,160,192,0.12)", border: "1px solid rgba(224,160,192,0.35)" }}
     >
       <audio ref={audioRef} src={src} preload="none" />
