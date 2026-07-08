@@ -92,6 +92,8 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                     <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
                   )}
                 </div>
+
+                <GemDivider />
               </div>
             </div>
           </motion.div>
@@ -107,18 +109,17 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       type="button"
       onClick={onClose}
       aria-label="閉じる"
-      className="absolute right-3 top-3 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-white shadow-sm"
+      className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center"
     >
-      <svg width="11" height="11" viewBox="0 0 12 12" fill="none" aria-hidden>
-        <path d="M1 1L11 11M11 1L1 11" stroke="#8b8398" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
+      <img src="/images/decor/close_button_gem.png" alt="" aria-hidden className="h-full w-full object-contain" />
     </button>
   );
 }
 
-/** Corner ornament using the richer jeweled artwork Niya provided — a
- *  single fixed-size image, reused for all 4 corners via CSS mirror/rotate
- *  (never stretched to fill the card, so it can't distort or drift). */
+/** Corner ornament using the new individually-generated jeweled artwork —
+ *  each corner is its own image at its own natural aspect ratio, placed at
+ *  a fixed size (never stretched to fill the card, so it can't distort or
+ *  drift regardless of how tall/short the letter ends up being). */
 function CornerFlourish({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
   const placement: Record<string, string> = {
     tl: "left-0 top-0",
@@ -126,19 +127,18 @@ function CornerFlourish({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
     br: "right-0 bottom-0",
     bl: "left-0 bottom-0",
   };
-  const transform: Record<string, string> = {
-    tl: "none",
-    tr: "scaleX(-1)",
-    br: "scale(-1, -1)",
-    bl: "scaleY(-1)",
+  const src: Record<string, string> = {
+    tl: "/images/decor/corner_tl.png",
+    tr: "/images/decor/corner_tr.png",
+    bl: "/images/decor/corner_bl.png",
+    br: "/images/decor/corner_br.png",
   };
   return (
     <img
-      src="/images/decor/corner_ornament.png"
+      src={src[position]}
       alt=""
       aria-hidden
-      className={`pointer-events-none absolute ${placement[position]} h-16 w-16 sm:h-20 sm:w-20`}
-      style={{ transform: transform[position], opacity: 0.92 }}
+      className={`pointer-events-none absolute ${placement[position]} h-16 w-auto sm:h-20`}
     />
   );
 }
@@ -156,29 +156,32 @@ function Divider() {
   );
 }
 
-/** Small crest — crops just the rose bouquet from the top of the frame
- *  artwork into a fixed, non-stretching size, so the richer decoration
- *  from the original design comes back without reintroducing the
- *  full-frame scaling problems. */
+/** Top-center decoration — the rose bouquet spray, shown at its own
+ *  natural aspect ratio (no stretching, no cropping needed since it's
+ *  already a clean horizontal spray with a transparent background). */
 function RoseCrest() {
-  const fade =
-    "linear-gradient(to right, transparent 0%, black 18%, black 82%, transparent 100%)";
   return (
-    <div
-      className="mx-auto flex-shrink-0"
-      style={{
-        width: "78%",
-        maxWidth: "240px",
-        height: "62px",
-        marginBottom: "10px",
-        backgroundImage: "url(/images/decor/letter_frame_rose.png)",
-        backgroundSize: "cover",
-        backgroundPosition: "center top",
-        backgroundRepeat: "no-repeat",
-        WebkitMaskImage: fade,
-        maskImage: fade,
-      }}
+    <img
+      src="/images/decor/rose_bouquet_divider.png"
+      alt=""
       aria-hidden
+      className="mx-auto flex-shrink-0"
+      style={{ width: "76%", maxWidth: "260px", height: "auto", marginBottom: "6px" }}
+    />
+  );
+}
+
+/** Bottom-center decoration — a smaller matching gem+gold flourish that
+ *  closes the letter beneath the signature, mirroring the rose bouquet
+ *  up top. Same "natural size, never stretched" approach. */
+function GemDivider() {
+  return (
+    <img
+      src="/images/decor/gem_divider_bottom.png"
+      alt=""
+      aria-hidden
+      className="mx-auto flex-shrink-0"
+      style={{ width: "50%", maxWidth: "170px", height: "auto", marginTop: "14px" }}
     />
   );
 }
@@ -224,16 +227,18 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
 }
 
 /**
- * The letter's "wax seal" moment — a soft glassmorphic capsule that always
- * stays in place beneath the message, never compressed or displaced.
+ * The letter's "wax seal" moment. Uses the provided jeweled player frame
+ * as the background (sized at its own aspect ratio so the border artwork
+ * never stretches or distorts), an invisible button overlaid on top of the
+ * frame's own painted play button, and the glowing waveform image overlaid
+ * in two layers — a dim full-width copy plus a bright copy clipped to the
+ * playback progress — to fake a real progress bar from a single static
+ * graphic.
  */
 function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: number | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [progress, setProgress] = useState(0); // 0–1
-
-  const barCount = 24;
-  const bars = useSeededBarHeights(src, barCount);
 
   useEffect(() => {
     function handleTimeUpdate() {
@@ -268,7 +273,6 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
     }
   }
 
-  const activeBars = Math.round(progress * barCount);
   const displaySeconds =
     durationSeconds != null
       ? `0:${String(Math.round(durationSeconds)).padStart(2, "0")}`
@@ -276,79 +280,62 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
   return (
     <div
-      className="mt-3 flex w-full flex-shrink-0 items-center gap-3 rounded-full px-4 py-2.5"
-      style={{
-        minHeight: "56px",
-        background: "rgba(255,245,245,0.65)",
-        backdropFilter: "blur(18px)",
-        WebkitBackdropFilter: "blur(18px)",
-        border: "1px solid rgba(255,255,255,0.5)",
-        boxShadow: "0 6px 20px rgba(139,90,60,0.14), inset 0 1px 1px rgba(255,255,255,0.6)",
-      }}
+      className="relative mt-3 w-full flex-shrink-0"
+      style={{ aspectRatio: "1868 / 560" }}
     >
       <audio ref={audioRef} src={src} preload="none" />
+
+      <img
+        src="/images/decor/voice_player_frame.png"
+        alt=""
+        aria-hidden
+        className="absolute inset-0 h-full w-full object-contain"
+      />
+
+      {/* Waveform: dim base copy + bright copy clipped to playback progress */}
+      <div className="absolute" style={{ left: "27%", right: "8%", top: "28%", height: "44%" }}>
+        <img
+          src="/images/decor/voice_waveform_glow.png"
+          alt=""
+          aria-hidden
+          className="absolute inset-0 h-full w-full object-contain object-left opacity-30"
+        />
+        <div className="absolute inset-0 overflow-hidden" style={{ width: `${progress * 100}%` }}>
+          <img
+            src="/images/decor/voice_waveform_glow.png"
+            alt=""
+            aria-hidden
+            className="h-full object-contain object-left"
+            style={{ width: "calc(100% / " + Math.max(progress, 0.0001) + ")" }}
+          />
+        </div>
+      </div>
+
+      {displaySeconds && (
+        <span
+          className="absolute font-body text-[11px]"
+          style={{ right: "9%", bottom: "12%", color: "#a06080" }}
+        >
+          {displaySeconds}
+        </span>
+      )}
+
       <button
         type="button"
         onClick={toggle}
         aria-label={isPlaying ? "一時停止" : "再生"}
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-        style={{
-          background: "linear-gradient(135deg, #ff9ec4, #ff6fa8)",
-          boxShadow: "0 4px 14px rgba(255,111,168,0.45)",
-        }}
+        className="absolute flex items-center justify-center"
+        style={{ left: "2%", top: "10%", width: "24%", height: "80%" }}
       >
-        {isPlaying ? (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-            <rect x="1" y="1" width="3.5" height="10" rx="1" fill="white" />
-            <rect x="7" y="1" width="3.5" height="10" rx="1" fill="white" />
-          </svg>
-        ) : (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-            <path d="M2 1L11 6L2 11V1Z" fill="white" />
+        {isPlaying && (
+          <svg width="16" height="16" viewBox="0 0 12 12" fill="none" aria-hidden>
+            <rect x="1" y="1" width="3.5" height="10" rx="1" fill="white" fillOpacity="0.9" />
+            <rect x="7" y="1" width="3.5" height="10" rx="1" fill="white" fillOpacity="0.9" />
           </svg>
         )}
       </button>
-
-      <div
-        className="flex flex-1 items-end gap-[2.5px]"
-        style={{ height: "26px" }}
-        aria-hidden
-      >
-        {bars.map((h, i) => (
-          <span
-            key={i}
-            className="w-[2.5px] flex-shrink-0 rounded-full"
-            style={{
-              height: `${Math.max(4, Math.round((h / 100) * 26))}px`,
-              background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.45)",
-            }}
-          />
-        ))}
-      </div>
-
-      {displaySeconds && (
-        <span className="flex-shrink-0 font-body text-[11px]" style={{ color: "#a06080" }}>
-          {displaySeconds}
-        </span>
-      )}
     </div>
   );
-}
-
-/** Deterministic per-src pseudo-random bar heights (30–100%) so the same
- *  clip always draws the same waveform shape across re-renders. */
-function useSeededBarHeights(seed: string, count: number): number[] {
-  const [heights] = useState(() => {
-    let h = 0;
-    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
-    const out: number[] = [];
-    for (let i = 0; i < count; i++) {
-      h = (h * 1103515245 + 12345) >>> 0;
-      out.push(30 + (h % 1000) / 1000 * 70);
-    }
-    return out;
-  });
-  return heights;
 }
 
 /** The handwritten signature. Right-aligned, directly above the player,
