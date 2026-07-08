@@ -68,7 +68,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             >
               {/* Inner line: the double-border look from the reference */}
               <div
-                className="relative flex min-h-0 flex-1 flex-col rounded-[2px] px-7 py-8 sm:px-9"
+                className="relative flex min-h-0 flex-1 flex-col rounded-[2px] px-8 py-9 sm:px-10"
                 style={{ border: "1px solid rgba(184,147,90,0.32)" }}
               >
                 <CornerFlourish position="tl" />
@@ -116,32 +116,30 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Small quarter-corner ornament, fixed pixel size — unlike a stretched
- *  background, this never distorts or drifts regardless of card size. */
+/** Corner ornament using the richer jeweled artwork Niya provided — a
+ *  single fixed-size image, reused for all 4 corners via CSS mirror/rotate
+ *  (never stretched to fill the card, so it can't distort or drift). */
 function CornerFlourish({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
-  const rotation: Record<string, number> = { tl: 0, tr: 90, br: 180, bl: 270 };
   const placement: Record<string, string> = {
-    tl: "left-1 top-1",
-    tr: "right-1 top-1",
-    br: "right-1 bottom-1",
-    bl: "left-1 bottom-1",
+    tl: "left-0 top-0",
+    tr: "right-0 top-0",
+    br: "right-0 bottom-0",
+    bl: "left-0 bottom-0",
+  };
+  const transform: Record<string, string> = {
+    tl: "none",
+    tr: "scaleX(-1)",
+    br: "scale(-1, -1)",
+    bl: "scaleY(-1)",
   };
   return (
-    <svg
-      className={`pointer-events-none absolute ${placement[position]} h-6 w-6`}
-      style={{ transform: `rotate(${rotation[position]}deg)` }}
-      viewBox="0 0 28 28"
-      fill="none"
+    <img
+      src="/images/decor/corner_ornament.png"
+      alt=""
       aria-hidden
-    >
-      <path
-        d="M2 26 V10 C2 5 5 2 10 2 H26"
-        stroke="#B8935A"
-        strokeWidth="1.1"
-        strokeLinecap="round"
-      />
-      <circle cx="9" cy="9" r="1.3" fill="#B8935A" />
-    </svg>
+      className={`pointer-events-none absolute ${placement[position]} h-12 w-12 sm:h-14 sm:w-14`}
+      style={{ transform: transform[position], opacity: 0.92 }}
+    />
   );
 }
 
@@ -228,16 +226,28 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
 function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: number | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [progress, setProgress] = useState(0); // 0–1
+
+  const barCount = 24;
+  const bars = useSeededBarHeights(src, barCount);
 
   useEffect(() => {
+    function handleTimeUpdate() {
+      const audio = audioRef.current;
+      if (!audio || !audio.duration) return;
+      setProgress(audio.currentTime / audio.duration);
+    }
     function handleEnded() {
       setIsPlaying(false);
+      setProgress(0);
     }
 
     const audio = audioRef.current;
     if (!audio) return;
+    audio.addEventListener("timeupdate", handleTimeUpdate);
     audio.addEventListener("ended", handleEnded);
     return () => {
+      audio.removeEventListener("timeupdate", handleTimeUpdate);
       audio.removeEventListener("ended", handleEnded);
     };
   }, []);
@@ -254,6 +264,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
     }
   }
 
+  const activeBars = Math.round(progress * barCount);
   const displaySeconds =
     durationSeconds != null
       ? `0:${String(Math.round(durationSeconds)).padStart(2, "0")}`
@@ -261,9 +272,9 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
   return (
     <div
-      className="mt-3 flex w-full flex-shrink-0 items-center gap-3 rounded-full px-4 py-2"
+      className="mt-3 flex w-full flex-shrink-0 items-center gap-3 rounded-full px-4 py-2.5"
       style={{
-        minHeight: "48px",
+        minHeight: "56px",
         background: "rgba(255,245,245,0.65)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
@@ -276,7 +287,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         type="button"
         onClick={toggle}
         aria-label={isPlaying ? "一時停止" : "再生"}
-        className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full"
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
         style={{
           background: "linear-gradient(135deg, #ff9ec4, #ff6fa8)",
           boxShadow: "0 4px 14px rgba(255,111,168,0.45)",
@@ -294,17 +305,42 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         )}
       </button>
 
-      <span className="font-body text-[12px]" style={{ color: "#a06080" }}>
-        {isPlaying ? "再生中…" : "ボイスメッセージ"}
-      </span>
+      <div className="flex flex-1 items-center gap-[2.5px]" aria-hidden>
+        {bars.map((h, i) => (
+          <span
+            key={i}
+            className="w-[2.5px] rounded-full"
+            style={{
+              height: `${h}%`,
+              background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.35)",
+            }}
+          />
+        ))}
+      </div>
 
       {displaySeconds && (
-        <span className="ml-auto flex-shrink-0 font-body text-[11px]" style={{ color: "#a06080" }}>
+        <span className="flex-shrink-0 font-body text-[11px]" style={{ color: "#a06080" }}>
           {displaySeconds}
         </span>
       )}
     </div>
   );
+}
+
+/** Deterministic per-src pseudo-random bar heights (30–100%) so the same
+ *  clip always draws the same waveform shape across re-renders. */
+function useSeededBarHeights(seed: string, count: number): number[] {
+  const [heights] = useState(() => {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+    const out: number[] = [];
+    for (let i = 0; i < count; i++) {
+      h = (h * 1103515245 + 12345) >>> 0;
+      out.push(30 + (h % 1000) / 1000 * 70);
+    }
+    return out;
+  });
+  return heights;
 }
 
 /** The handwritten signature. Right-aligned, directly above the player,
