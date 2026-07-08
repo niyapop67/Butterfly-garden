@@ -56,7 +56,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             className="relative w-full"
             style={{ maxWidth: "26rem", maxHeight: "88vh" }}
           >
-            {/* Outer frame: thin gold line, soft paper gradient, gentle shadow */}
+            {/* Outer frame */}
             <div
               className="relative flex h-full flex-col rounded-sm p-[6px]"
               style={{
@@ -66,32 +66,55 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 maxHeight: "88vh",
               }}
             >
-              {/* Inner line: the double-border look from the reference */}
+              {/* Inner line */}
               <div
-                className="relative flex min-h-0 flex-1 flex-col rounded-[2px] px-9 py-10 sm:px-11"
-                style={{ border: "1px solid rgba(184,147,90,0.32)" }}
+                className="relative flex min-h-0 flex-1 flex-col rounded-[2px]"
+                style={{
+                  border: "1px solid rgba(184,147,90,0.32)",
+                  paddingLeft: "2rem",
+                  paddingRight: "2rem",
+                  paddingTop: "4.5rem",   /* 薔薇の高さ分だけ空ける */
+                  paddingBottom: "3.5rem", /* ジェムの高さ分だけ空ける */
+                }}
               >
+                {/* Corner flourishes */}
                 <CornerFlourish position="tl" />
                 <CornerFlourish position="tr" />
                 <CornerFlourish position="bl" />
                 <CornerFlourish position="br" />
 
+                {/* Rose bouquet: absolute, centered on the top edge */}
+                <div className="pointer-events-none absolute left-0 right-0 top-0 flex justify-center" style={{ transform: "translateY(-42%)" }}>
+                  <img
+                    src="/images/decor/rose_bouquet_divider.png"
+                    alt=""
+                    aria-hidden
+                    style={{ width: "72%", maxWidth: "240px", height: "auto" }}
+                  />
+                </div>
+
+                {/* Gem divider: absolute, centered on the bottom edge */}
+                <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center" style={{ transform: "translateY(38%)" }}>
+                  <img
+                    src="/images/decor/gem_divider_bottom.png"
+                    alt=""
+                    aria-hidden
+                    style={{ width: "46%", maxWidth: "160px", height: "auto" }}
+                  />
+                </div>
+
                 <CloseButton onClose={onClose} />
 
-                <RoseCrest />
                 <Greeting />
                 <Divider />
                 <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
 
-                {/* 4枚目レイアウト: メッセージ → プレーヤー → From/名前(右寄せ) */}
                 <div className="flex flex-shrink-0 flex-col">
                   {entry.voiceUrl && (
                     <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
                   )}
                   <Sender name={entry.nickname} />
                 </div>
-
-                <GemDivider />
               </div>
             </div>
           </motion.div>
@@ -154,36 +177,6 @@ function Divider() {
   );
 }
 
-/** Top-center decoration — the rose bouquet spray, shown at its own
- *  natural aspect ratio (no stretching, no cropping needed since it's
- *  already a clean horizontal spray with a transparent background). */
-function RoseCrest() {
-  return (
-    <img
-      src="/images/decor/rose_bouquet_divider.png"
-      alt=""
-      aria-hidden
-      className="mx-auto flex-shrink-0"
-      style={{ width: "76%", maxWidth: "260px", height: "auto", marginBottom: "6px" }}
-    />
-  );
-}
-
-/** Bottom-center decoration — a smaller matching gem+gold flourish that
- *  closes the letter beneath the signature, mirroring the rose bouquet
- *  up top. Same "natural size, never stretched" approach. */
-function GemDivider() {
-  return (
-    <img
-      src="/images/decor/gem_divider_bottom.png"
-      alt=""
-      aria-hidden
-      className="mx-auto flex-shrink-0"
-      style={{ width: "50%", maxWidth: "170px", height: "auto", marginTop: "14px" }}
-    />
-  );
-}
-
 /** Fixed-height greeting line. Never shrinks, never scrolls. Italic
  *  Cormorant Garamond in warm antique gold — the letter's opening flourish. */
 function Greeting() {
@@ -209,7 +202,7 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
       className="flex min-h-0 flex-col items-center px-1"
       style={{
         flex: "0 1 auto",
-        maxHeight: "38vh",
+        maxHeight: "45vh",
         overflowY: "auto",
         overflowX: "hidden",
       }}
@@ -263,14 +256,14 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
   return (
     <div
-      className="mt-3 flex w-full flex-shrink-0 items-center gap-3 rounded-full px-4 py-3"
+      className="mt-2 flex w-full flex-shrink-0 items-center gap-2 rounded-full px-3 py-2"
       style={{
-        minHeight: "56px",
+        minHeight: "44px",
         background: "rgba(255,245,245,0.70)",
         backdropFilter: "blur(18px)",
         WebkitBackdropFilter: "blur(18px)",
         border: "1px solid rgba(255,200,210,0.50)",
-        boxShadow: "0 6px 20px rgba(139,90,60,0.12), inset 0 1px 1px rgba(255,255,255,0.7)",
+        boxShadow: "0 4px 14px rgba(139,90,60,0.10), inset 0 1px 1px rgba(255,255,255,0.7)",
       }}
     >
       <audio ref={audioRef} src={src} preload="none" />
@@ -278,8 +271,8 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         type="button"
         onClick={toggle}
         aria-label={isPlaying ? "一時停止" : "再生"}
-        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-        style={{ background: "linear-gradient(135deg,#ff9ec4,#ff6fa8)", boxShadow: "0 4px 14px rgba(255,111,168,0.45)" }}
+        className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
+        style={{ background: "linear-gradient(135deg,#ff9ec4,#ff6fa8)", boxShadow: "0 3px 10px rgba(255,111,168,0.40)" }}
       >
         {isPlaying ? (
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
@@ -293,13 +286,13 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         )}
       </button>
 
-      <div className="flex flex-1 items-end gap-[2px]" style={{ height: "28px" }} aria-hidden>
+      <div className="flex flex-1 items-end gap-[2px]" style={{ height: "22px" }} aria-hidden>
         {bars.map((h, i) => (
           <span
             key={i}
             className="w-[2px] flex-shrink-0 rounded-full"
             style={{
-              height: `${Math.max(4, Math.round((h / 100) * 28))}px`,
+              height: `${Math.max(3, Math.round((h / 100) * 22))}px`,
               background: i < activeBars ? "#ff6fa8" : "rgba(224,160,192,0.45)",
             }}
           />
