@@ -78,6 +78,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
 
                 <CloseButton onClose={onClose} />
 
+                <RoseCrest />
                 <Greeting />
                 <Divider />
                 <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
@@ -154,6 +155,29 @@ function Divider() {
     >
       • • •
     </div>
+  );
+}
+
+/** Small crest — crops just the rose bouquet from the top of the frame
+ *  artwork into a fixed, non-stretching size, so the richer decoration
+ *  from the original design comes back without reintroducing the
+ *  full-frame scaling problems. */
+function RoseCrest() {
+  return (
+    <div
+      className="mx-auto flex-shrink-0"
+      style={{
+        width: "72%",
+        maxWidth: "220px",
+        height: "64px",
+        marginBottom: "8px",
+        backgroundImage: "url(/images/decor/letter_frame_rose.png)",
+        backgroundSize: "cover",
+        backgroundPosition: "center top",
+        backgroundRepeat: "no-repeat",
+      }}
+      aria-hidden
+    />
   );
 }
 
@@ -287,7 +311,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
  *  always inside the card since the card is content-sized. */
 function Sender({ name }: { name: string | null | undefined }) {
   return (
-    <div className="flex-shrink-0 text-right">
+    <div className="flex-shrink-0 text-center">
       <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>
         From
       </p>
