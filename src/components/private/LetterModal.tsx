@@ -43,7 +43,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-5 py-8"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-5 py-8"
           onClick={onClose}
         >
           <motion.div
@@ -56,6 +56,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             className="relative w-full max-w-md"
             style={{
               aspectRatio: "2 / 3",
+              maxHeight: "calc(100vh - 4rem)",
               backgroundImage: "url(/images/decor/letter_frame_rose.png)",
               backgroundSize: "100% 100%",
               backgroundRepeat: "no-repeat",
@@ -73,7 +74,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
               </svg>
             </button>
 
-            <div className="absolute inset-0 z-0 flex flex-col overflow-y-auto px-[13%] pb-[17%] pt-[28.5%]">
+            <div className="absolute inset-0 z-0 flex flex-col px-[13%] pb-[17%] pt-[28.5%]">
               <h2
                 className="flex-shrink-0 text-center font-display text-3xl italic"
                 style={{ color: "#8a6d3f" }}
@@ -81,27 +82,37 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 Dear MIKA
               </h2>
 
-              <div className="flex flex-1 flex-col items-center justify-start px-2 pt-3">
-                <p
-                  className={`whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
-                  style={{ color: "#4a4058" }}
-                >
-                  {entry.message}
-                </p>
+              {/* Only this region scrolls internally when the message is long.
+                  min-h-0 lets the flex item actually shrink to the available
+                  space instead of growing past the card (which was pushing
+                  the name past the frame art / triggering page-level scroll). */}
+              <div className="mt-2 min-h-0 flex-1 overflow-y-auto">
+                {/* my-auto vertically centers this block when it's shorter
+                    than the available space (fixes the empty-bottom look on
+                    short messages), and naturally collapses to top-aligned
+                    scrolling once content is taller than the space. */}
+                <div className="my-auto flex w-full flex-col items-center px-2 py-2">
+                  <p
+                    className={`whitespace-pre-wrap text-center font-message-jp leading-relaxed ${messageSizeClass}`}
+                    style={{ color: "#4a4058" }}
+                  >
+                    {entry.message}
+                  </p>
 
-                {entry.voiceUrl && (
-                  <div className="mt-6 w-full">
-                    <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+                  {entry.voiceUrl && (
+                    <div className="mt-6 w-full">
+                      <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+                    </div>
+                  )}
+
+                  <div className="mt-8 w-full text-right">
+                    <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
+                      From
+                    </p>
+                    <p className="font-display text-xl font-semibold italic" style={{ color: "#8a6d3f" }}>
+                      {entry.nickname || "（名前未設定）"}
+                    </p>
                   </div>
-                )}
-
-                <div className="mt-8 w-full text-right">
-                  <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
-                    From
-                  </p>
-                  <p className="font-display text-lg italic" style={{ color: "#8a6d3f" }}>
-                    {entry.nickname || "（名前未設定）"}
-                  </p>
                 </div>
               </div>
             </div>
