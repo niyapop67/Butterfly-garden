@@ -21,17 +21,18 @@ function getMessageFontSizeClass(length: number): string {
 }
 
 /**
- * 2026-07-06: "名前一覧リスト" changed from showing every message/voice
- * inline to a name-only list — tapping a name opens this modal instead.
- * Design follows the ChatGPT mockup Niya shared (Dear MIKA parchment card,
- * gold filigree border, rose bouquet crest).
- * 2026-07-07: rose-bouquet frame art arrived (public/images/decor/letter_frame_rose.png).
- * 2026-07-08: rebuilt on a single vertical flex layout instead of absolute
- * positioning. The card's background image is purely decorative — all real
- * layout now lives in one flex column (Greeting → MessageScrollArea →
- * VoicePlayer → Sender), so the message body is the only element that can
- * ever change height. Player and sender never move regardless of message
- * length.
+ * 2026-07-08: Cinematic redesign pass. The letter should feel like a
+ * collectible prop from the ending scene of a live-action fairytale — warm
+ * candlelight parchment, italic Cormorant Garamond greeting, a refined
+ * Zen Old Mincho serif for the Japanese message and signature, and a
+ * glassmorphic voice player standing in as the letter's "wax seal" moment.
+ *
+ * Layout stays a single vertical flex column (Greeting → MessageScrollArea →
+ * VoicePlayer → Sender). The message body is the only element that can ever
+ * change height; the player and signature never move. The parchment's own
+ * aspect ratio was made taller than the source art's native 2:3 so every
+ * section — including the signature — always sits safely inside the paper,
+ * never spilling past the frame artwork.
  */
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
   const messageSizeClass = entry ? getMessageFontSizeClass(entry.message.length) : "text-base";
@@ -57,7 +58,10 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md"
             style={{
-              aspectRatio: "2 / 3",
+              // Native frame art is 2:3, but the parchment is stretched
+              // ~100px taller so the signature always has room to breathe
+              // inside the paper rather than crowding the bottom border.
+              aspectRatio: "2 / 3.45",
               maxHeight: "calc(100vh - 4rem)",
               backgroundImage: "url(/images/decor/letter_frame_rose.png)",
               backgroundSize: "100% 100%",
@@ -67,12 +71,19 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
           >
             <CloseButton onClose={onClose} />
 
-            {/* Single vertical flex column. Side/top padding is percentage-based
-                to line up the content with the rose frame artwork; bottom
-                padding is a flat 24px per the letter's own breathing room. */}
+            {/* Single vertical flex column — every section flows naturally,
+                nothing is absolutely positioned. Side/top padding lines the
+                content up with the rose frame artwork; bottom padding keeps
+                the signature clear of the bottom border, plus the letter's
+                own 24px of closing breathing room. */}
             <div
               className="flex h-full w-full flex-col"
-              style={{ paddingLeft: "13%", paddingRight: "13%", paddingTop: "28.5%", paddingBottom: "24px" }}
+              style={{
+                paddingLeft: "13%",
+                paddingRight: "13%",
+                paddingTop: "26%",
+                paddingBottom: "calc(15% + 24px)",
+              }}
             >
               <Greeting />
               <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
@@ -103,12 +114,13 @@ function CloseButton({ onClose }: { onClose: () => void }) {
   );
 }
 
-/** Fixed-height greeting line. Never shrinks, never scrolls. */
+/** Fixed-height greeting line. Never shrinks, never scrolls. Italic
+ *  Cormorant Garamond in warm antique gold — the letter's opening flourish. */
 function Greeting() {
   return (
     <h2
-      className="flex-shrink-0 text-center font-display text-3xl italic"
-      style={{ color: "#8a6d3f" }}
+      className="flex-shrink-0 text-center font-display text-3xl font-semibold italic"
+      style={{ color: "#8A6A3E", marginBottom: "40px" }}
     >
       Dear MIKA
     </h2>
@@ -117,25 +129,28 @@ function Greeting() {
 
 /**
  * The ONLY scrollable region in the letter. Grows to fill whatever space is
- * left between the greeting and the player/sender block below, with a
- * guaranteed minimum so the letter never feels cramped. Short messages sit
- * at the top with open space beneath; long messages scroll internally and
- * never push the player or sender out of place.
+ * left between the greeting and the player/signature below, with a
+ * guaranteed min/max height so the letter never feels cramped or runs away
+ * on very long messages. Short messages sit at the top with open, elegant
+ * space beneath; long messages scroll internally and never push the player
+ * or signature out of place.
  */
 function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass: string }) {
   return (
     <div
-      className="flex flex-col items-center px-2 pt-3"
+      className="flex flex-col items-center px-4"
       style={{
         flex: "1 1 auto",
         minHeight: "220px",
+        maxHeight: "420px",
         overflowY: "auto",
         overflowX: "hidden",
+        marginBottom: "32px",
       }}
     >
       <p
-        className={`w-full whitespace-pre-wrap text-center font-message-jp leading-relaxed ${sizeClass}`}
-        style={{ color: "#4a4058" }}
+        className={`w-full whitespace-pre-wrap text-center font-letter-jp ${sizeClass}`}
+        style={{ color: "#5B4B43", lineHeight: 1.8, letterSpacing: "0.02em" }}
       >
         {message}
       </p>
@@ -143,28 +158,9 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
   );
 }
 
-/** Sits directly beneath the message area, always visible, never moves. */
-function Sender({ name }: { name: string | null | undefined }) {
-  return (
-    <div className="flex-shrink-0 pt-6 text-right">
-      <p className="font-body text-[11px]" style={{ color: "#a89060" }}>
-        From
-      </p>
-      <p className="font-display text-xl font-semibold italic" style={{ color: "#8a6d3f" }}>
-        {name || "（名前未設定）"}
-      </p>
-    </div>
-  );
-}
-
 /**
- * Custom pink circular play/pause + static waveform bars (heights seeded
- * per-clip so they don't all look identical, not derived from real audio
- * analysis — same convention as most chat-app voice bubbles). Bars ahead
- * of playback position are solid pink, bars behind are faded, giving a
- * simple progress readout without a standard scrub bar.
- * flex-shrink-0: the player is the letter's "signature section" — it must
- * never be compressed or pushed around by the message above it.
+ * The letter's "wax seal" moment — a soft glassmorphic capsule that always
+ * stays in place beneath the message, never compressed or displaced.
  */
 function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: number | null }) {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -215,8 +211,16 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
   return (
     <div
-      className="flex w-full flex-shrink-0 items-center gap-3 rounded-2xl px-4 py-3"
-      style={{ background: "rgba(224,160,192,0.12)", border: "1px solid rgba(224,160,192,0.35)" }}
+      className="flex w-full flex-shrink-0 items-center gap-3 rounded-[24px] px-[18px]"
+      style={{
+        marginBottom: "16px",
+        minHeight: "74px",
+        background: "rgba(255,245,245,0.65)",
+        backdropFilter: "blur(18px)",
+        WebkitBackdropFilter: "blur(18px)",
+        border: "1px solid rgba(255,255,255,0.5)",
+        boxShadow: "0 8px 28px rgba(139,90,60,0.14), inset 0 1px 1px rgba(255,255,255,0.6)",
+      }}
     >
       <audio ref={audioRef} src={src} preload="none" />
       <button
@@ -224,7 +228,10 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         onClick={toggle}
         aria-label={isPlaying ? "一時停止" : "再生"}
         className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full"
-        style={{ background: "linear-gradient(135deg, #ff9ec4, #ff6fa8)" }}
+        style={{
+          background: "linear-gradient(135deg, #ff9ec4, #ff6fa8)",
+          boxShadow: "0 4px 14px rgba(255,111,168,0.45)",
+        }}
       >
         {isPlaying ? (
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
@@ -256,6 +263,25 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
           {displaySeconds}
         </span>
       )}
+    </div>
+  );
+}
+
+/** The handwritten signature. Always inside the parchment, right-aligned,
+ *  directly beneath the player, with the letter's closing breathing room
+ *  handled by the parent's own bottom padding. */
+function Sender({ name }: { name: string | null | undefined }) {
+  return (
+    <div className="flex-shrink-0 text-right">
+      <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>
+        From
+      </p>
+      <p
+        className="font-letter-jp text-xl font-semibold"
+        style={{ color: "#7A5B34" }}
+      >
+        {name || "（名前未設定）"}
+      </p>
     </div>
   );
 }

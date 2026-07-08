@@ -55,6 +55,26 @@ const bodyFont = localFont({
   display: "swap",
 });
 
+// Used only inside the birthday LetterModal ("Dear MIKA" parchment card) —
+// a refined Japanese serif for the handwritten-letter feel, distinct from
+// the sans-serif used everywhere else on the site.
+const letterFontJp = localFont({
+  src: [
+    {
+      path: "../fonts/zen-old-mincho/ZenOldMincho-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+    {
+      path: "../fonts/zen-old-mincho/ZenOldMincho-SemiBold.ttf",
+      weight: "600",
+      style: "normal",
+    },
+  ],
+  variable: "--font-letter-jp",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   title: "Butterfly Garden for MIKA",
   description:
@@ -80,7 +100,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ja" className={`${displayFont.variable} ${displayFontJp.variable} ${bodyFont.variable} ${messageFontJp.variable}`}>
+    <html
+      lang="ja"
+      className={`${displayFont.variable} ${displayFontJp.variable} ${bodyFont.variable} ${messageFontJp.variable} ${letterFontJp.variable}`}
+    >
       <body>
         <div className="mobile-frame">{children}</div>
       </body>

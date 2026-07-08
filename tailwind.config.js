@@ -17,6 +17,7 @@ module.exports = {
         "display-jp": ["var(--font-display-jp)", "Noto Sans JP", "sans-serif"],
         body: ["var(--font-body)", "Noto Sans JP", "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "sans-serif"],
         "message-jp": ["var(--font-message-jp)", "Noto Sans JP", "sans-serif"],
+        "letter-jp": ["var(--font-letter-jp)", "serif"],
       },
       borderRadius: {
         crystal: "24px",
