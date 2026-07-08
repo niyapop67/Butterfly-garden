@@ -82,15 +82,20 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 paddingLeft: "13%",
                 paddingRight: "13%",
                 paddingTop: "26%",
-                paddingBottom: "calc(15% + 24px)",
+                paddingBottom: "calc(13% + 16px)",
               }}
             >
               <Greeting />
               <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
-              {entry.voiceUrl && (
-                <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
-              )}
-              <Sender name={entry.nickname} />
+              {/* Sender + player are a single fixed block: the name sits at
+                  the player's top-right corner, both flex-shrink:0, neither
+                  ever scrolls. */}
+              <div className="flex flex-shrink-0 flex-col" style={{ marginBottom: "24px" }}>
+                <Sender name={entry.nickname} />
+                {entry.voiceUrl && (
+                  <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+                )}
+              </div>
             </div>
           </motion.div>
         </motion.div>
@@ -213,7 +218,6 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
     <div
       className="flex w-full flex-shrink-0 items-center gap-3 rounded-[24px] px-[18px]"
       style={{
-        marginBottom: "16px",
         minHeight: "74px",
         background: "rgba(255,245,245,0.65)",
         backdropFilter: "blur(18px)",
@@ -272,7 +276,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
  *  handled by the parent's own bottom padding. */
 function Sender({ name }: { name: string | null | undefined }) {
   return (
-    <div className="flex-shrink-0 text-right">
+    <div className="flex-shrink-0 text-right" style={{ marginBottom: "8px" }}>
       <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>
         From
       </p>
