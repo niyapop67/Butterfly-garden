@@ -57,54 +57,29 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
              * the crystal to overlap from below.
              */}
 
-            {/* ── Corner flourishes (z:20, above paper+frame) ────────── */}
-            {/* top-left */}
-            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
-              className="pointer-events-none absolute"
-              style={{ width: "40%", top: 0, left: 0, zIndex: 20 }} />
-            {/* top-right (flip H) */}
-            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
-              className="pointer-events-none absolute"
-              style={{ width: "40%", top: 0, right: 0, zIndex: 20, transform: "scaleX(-1)" }} />
-            {/* bottom-left (flip V) */}
-            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
-              className="pointer-events-none absolute"
-              style={{ width: "40%", bottom: 0, left: 0, zIndex: 20, transform: "scaleY(-1)" }} />
-            {/* bottom-right (flip both) */}
-            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
-              className="pointer-events-none absolute"
-              style={{ width: "40%", bottom: 0, right: 0, zIndex: 20, transform: "scale(-1,-1)" }} />
+            {/* ── Corner flourishes ── */}
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
+              style={{ width: "28%", top: 0, left: 0, zIndex: 20 }} />
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
+              style={{ width: "28%", top: 0, right: 0, zIndex: 20, transform: "scaleX(-1)" }} />
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
+              style={{ width: "28%", bottom: 0, left: 0, zIndex: 20, transform: "scaleY(-1)" }} />
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
+              style={{ width: "28%", bottom: 0, right: 0, zIndex: 20, transform: "scale(-1,-1)" }} />
 
-            {/*
-             * Rose bouquet — top centre.
-             * The arm is at 49% of the image height.
-             * The corner arm is at 23.6% of the corner image height.
-             * Corner image height ≈ 40% of card width × (512/768) ≈ 26.7% of card width.
-             * Corner arm y from card top ≈ 26.7% × 23.6% ≈ 6.3% of card width.
-             * We want the rose arm (49% of rose height) to land at that same y.
-             * Rose image height = rose width × (1024/1536) = rose width × 0.667
-             * rose_arm_y = rose_width × 0.667 × 0.490 = rose_width × 0.327
-             * rose_top = corner_arm_y - rose_arm_y
-             *
-             * Simplified: translate the rose up so its arm aligns with the corner arm.
-             * In CSS we express this as a negative top offset on the rose container.
-             * Empirically: rose width = 90% of card, arm at 49% height (≈ 90%×0.667×0.49 ≈ 29.4% card width)
-             * corner arm at ≈ 6.3% card width → rose top = 6.3% - 29.4% ≈ -23% card width
-             */}
+            {/* ── Rose bouquet — top centre ── */}
             <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
-              style={{ top: 0, transform: "translateY(-38%)", zIndex: 25 }}>
-              <img src="/images/decor/rose_top.png" alt="" aria-hidden
-                style={{ width: "88%", height: "auto" }} />
+              style={{ top: 0, transform: "translateY(-30%)", zIndex: 25 }}>
+              <img src="/images/decor/rose_top.png" alt="" aria-hidden style={{ width: "74%", height: "auto" }} />
             </div>
 
-            {/* Crystal divider — bottom centre, arm aligns with bottom corner arms */}
+            {/* ── Crystal — bottom centre ── */}
             <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
-              style={{ bottom: 0, transform: "translateY(40%)", zIndex: 25 }}>
-              <img src="/images/decor/crystal_bottom.png" alt="" aria-hidden
-                style={{ width: "72%", height: "auto" }} />
+              style={{ bottom: 0, transform: "translateY(35%)", zIndex: 25 }}>
+              <img src="/images/decor/crystal_bottom.png" alt="" aria-hidden style={{ width: "58%", height: "auto" }} />
             </div>
 
-            {/* ── Paper card (z:10) ─────────────────────────────────── */}
+            {/* ── Paper card ── */}
             <div
               className="relative flex flex-col rounded-sm"
               style={{
@@ -114,8 +89,8 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 zIndex: 10,
                 paddingLeft: "1.75rem",
                 paddingRight: "1.75rem",
-                paddingTop: "5.5rem",
-                paddingBottom: "4.5rem",
+                paddingTop: "4.5rem",
+                paddingBottom: "5rem",
               }}
             >
               <CloseButton onClose={onClose} />
@@ -175,16 +150,17 @@ function Greeting() {
 function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass: string }) {
   return (
     <div
-      className="flex min-h-0 flex-col items-center px-1"
+      className="flex min-h-0 flex-col items-center self-center px-1"
       style={{
         flex: "0 1 auto",
-        maxHeight: "45vh",
+        width: "15ch",
+        maxHeight: "calc(1.8em * 7.5)",
         overflowY: "auto",
         overflowX: "hidden",
       }}
     >
       <p
-        className={`w-full whitespace-pre-wrap text-center font-letter-jp ${sizeClass}`}
+        className={`w-full whitespace-pre-wrap text-left font-letter-jp ${sizeClass}`}
         style={{ color: "#5B4B43", lineHeight: 1.8, letterSpacing: "0.02em" }}
       >
         {message}
