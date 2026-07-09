@@ -10,12 +10,12 @@ interface LetterModalProps {
 }
 
 function getMessageFontSizeClass(length: number): string {
-  if (length <= 40) return "text-2xl";
-  if (length <= 80) return "text-xl";
-  if (length <= 150) return "text-lg";
-  if (length <= 260) return "text-base";
-  if (length <= 380) return "text-[15px]";
-  return "text-sm";
+  if (length <= 40) return "text-3xl";
+  if (length <= 80) return "text-2xl";
+  if (length <= 150) return "text-xl";
+  if (length <= 260) return "text-lg";
+  if (length <= 380) return "text-base";
+  return "text-[15px]";
 }
 
 function getModalMaxWidth(length: number): string {
