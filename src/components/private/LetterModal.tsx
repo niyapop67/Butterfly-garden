@@ -9,8 +9,6 @@ interface LetterModalProps {
   onClose: () => void;
 }
 
-/** メッセージは最大500文字。短いほど大きく、長いほど小さく、
- *  常に読みやすいサイズに収まるよう段階的に調整する。 */
 function getMessageFontSizeClass(length: number): string {
   if (length <= 40) return "text-2xl";
   if (length <= 80) return "text-xl";
@@ -20,17 +18,6 @@ function getMessageFontSizeClass(length: number): string {
   return "text-sm";
 }
 
-/**
- * 2026-07-08 (rebuild #2): The previous version stretched a single frame
- * photo across a fixed aspect-ratio box — every time the message got long
- * or the viewport got short, that box either squished the artwork or spilled
- * content past its border. Rewritten to match the reference the birthday
- * team shared: a compact, CONTENT-SIZED card (no aspect-ratio, no stretched
- * background) with a simple double gold line border and small corner
- * flourishes. Height now comes from the content itself, capped by a
- * max-height on the card and an internal scroll region for the message, so
- * nothing can ever spill outside the paper again.
- */
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
   const messageSizeClass = entry ? getMessageFontSizeClass(entry.message.length) : "text-base";
 
@@ -43,7 +30,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-5 py-8"
+          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-5 py-10"
           onClick={onClose}
         >
           <motion.div
@@ -54,32 +41,81 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full"
-            style={{ maxWidth: "26rem", maxHeight: "88vh" }}
+            style={{ maxWidth: "26rem" }}
           >
-            {/* Full decorative frame — absolutely positioned behind all content.
-                The image has a transparent centre (extracted by Python) so the
-                paper gradient behind it shows through. */}
-            <img
-              src="/images/decor/full_frame.png"
-              alt=""
-              aria-hidden
-              className="pointer-events-none absolute inset-0 h-full w-full"
-              style={{ objectFit: "fill", zIndex: 0 }}
-            />
+            {/*
+             * Decoration layer — sits ABOVE the paper so ornaments overlap the border.
+             * All three images are positioned with their "arm" (the horizontal gold
+             * branch) at the same CSS top/bottom value so the lines visually connect:
+             *
+             *   Corner arm centre  = 23.6% of corner image height
+             *   Rose arm centre    = 49.0% of rose image height
+             *   Crystal arm centre = 45.7% of crystal image height
+             *
+             * The card's top padding (5.5rem ≈ 88px) leaves room for the rose to
+             * overlap from above; bottom padding (4.5rem ≈ 72px) leaves room for
+             * the crystal to overlap from below.
+             */}
 
-            {/* Paper background + content — sits on top of the frame image */}
+            {/* ── Corner flourishes (z:20, above paper+frame) ────────── */}
+            {/* top-left */}
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
+              className="pointer-events-none absolute"
+              style={{ width: "40%", top: 0, left: 0, zIndex: 20 }} />
+            {/* top-right (flip H) */}
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
+              className="pointer-events-none absolute"
+              style={{ width: "40%", top: 0, right: 0, zIndex: 20, transform: "scaleX(-1)" }} />
+            {/* bottom-left (flip V) */}
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
+              className="pointer-events-none absolute"
+              style={{ width: "40%", bottom: 0, left: 0, zIndex: 20, transform: "scaleY(-1)" }} />
+            {/* bottom-right (flip both) */}
+            <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden
+              className="pointer-events-none absolute"
+              style={{ width: "40%", bottom: 0, right: 0, zIndex: 20, transform: "scale(-1,-1)" }} />
+
+            {/*
+             * Rose bouquet — top centre.
+             * The arm is at 49% of the image height.
+             * The corner arm is at 23.6% of the corner image height.
+             * Corner image height ≈ 40% of card width × (512/768) ≈ 26.7% of card width.
+             * Corner arm y from card top ≈ 26.7% × 23.6% ≈ 6.3% of card width.
+             * We want the rose arm (49% of rose height) to land at that same y.
+             * Rose image height = rose width × (1024/1536) = rose width × 0.667
+             * rose_arm_y = rose_width × 0.667 × 0.490 = rose_width × 0.327
+             * rose_top = corner_arm_y - rose_arm_y
+             *
+             * Simplified: translate the rose up so its arm aligns with the corner arm.
+             * In CSS we express this as a negative top offset on the rose container.
+             * Empirically: rose width = 90% of card, arm at 49% height (≈ 90%×0.667×0.49 ≈ 29.4% card width)
+             * corner arm at ≈ 6.3% card width → rose top = 6.3% - 29.4% ≈ -23% card width
+             */}
+            <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
+              style={{ top: 0, transform: "translateY(-38%)", zIndex: 25 }}>
+              <img src="/images/decor/rose_top.png" alt="" aria-hidden
+                style={{ width: "88%", height: "auto" }} />
+            </div>
+
+            {/* Crystal divider — bottom centre, arm aligns with bottom corner arms */}
+            <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
+              style={{ bottom: 0, transform: "translateY(40%)", zIndex: 25 }}>
+              <img src="/images/decor/crystal_bottom.png" alt="" aria-hidden
+                style={{ width: "72%", height: "auto" }} />
+            </div>
+
+            {/* ── Paper card (z:10) ─────────────────────────────────── */}
             <div
-              className="relative flex h-full flex-col rounded-sm"
+              className="relative flex flex-col rounded-sm"
               style={{
                 background: "linear-gradient(160deg, #FFFDF6 0%, #FDF3E7 55%, #FBEEDD 100%)",
+                border: "1px solid rgba(184,147,90,0.40)",
                 boxShadow: "0 24px 50px rgba(60,30,50,0.28)",
-                maxHeight: "88vh",
-                zIndex: 1,
-                /* padding matches the frame artwork's border thickness */
+                zIndex: 10,
                 paddingLeft: "1.75rem",
                 paddingRight: "1.75rem",
-                paddingTop: "5rem",
-                paddingBottom: "4rem",
+                paddingTop: "5.5rem",
+                paddingBottom: "4.5rem",
               }}
             >
               <CloseButton onClose={onClose} />
@@ -106,19 +142,18 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       type="button"
       onClick={onClose}
       aria-label="閉じる"
-      className="absolute right-2 top-2 z-10 flex h-9 w-9 items-center justify-center"
+      className="absolute right-3 top-3 z-30 flex h-8 w-8 items-center justify-center"
     >
       <img src="/images/decor/close_button_gem.png" alt="" aria-hidden className="h-full w-full object-contain" />
     </button>
   );
 }
 
-/** Small centered divider, standing in for the reference's "•••" rule. */
 function Divider() {
   return (
     <div
       className="flex-shrink-0 select-none text-center"
-      style={{ color: "#C7A876", letterSpacing: "6px", margin: "14px 0", fontSize: "11px" }}
+      style={{ color: "#C7A876", letterSpacing: "6px", margin: "12px 0", fontSize: "11px" }}
       aria-hidden
     >
       • • •
@@ -126,8 +161,6 @@ function Divider() {
   );
 }
 
-/** Fixed-height greeting line. Never shrinks, never scrolls. Italic
- *  Cormorant Garamond in warm antique gold — the letter's opening flourish. */
 function Greeting() {
   return (
     <h2
@@ -139,12 +172,6 @@ function Greeting() {
   );
 }
 
-/**
- * The ONLY scrollable region in the letter. A generous but bounded
- * max-height keeps the whole card content-sized and predictable; short
- * messages just take up less room (no forced empty space), long messages
- * scroll internally and never push the player or signature out of place.
- */
 function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass: string }) {
   return (
     <div
@@ -224,12 +251,12 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
         style={{ background: "linear-gradient(135deg,#ff9ec4,#ff6fa8)", boxShadow: "0 3px 10px rgba(255,111,168,0.40)" }}
       >
         {isPlaying ? (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden>
             <rect x="1" y="1" width="3.5" height="10" rx="1" fill="white" />
             <rect x="7" y="1" width="3.5" height="10" rx="1" fill="white" />
           </svg>
         ) : (
-          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+          <svg width="10" height="10" viewBox="0 0 12 12" fill="none" aria-hidden>
             <path d="M2 1L11 6L2 11V1Z" fill="white" />
           </svg>
         )}
@@ -257,6 +284,17 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
   );
 }
 
+function Sender({ name }: { name: string | null | undefined }) {
+  return (
+    <div className="flex-shrink-0 pt-3 text-right">
+      <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>From</p>
+      <p className="font-letter-jp text-lg font-semibold" style={{ color: "#7A5B34" }}>
+        {name || "（名前未設定）"}
+      </p>
+    </div>
+  );
+}
+
 function useSeededBarHeights(seed: string, count: number): number[] {
   const [heights] = useState(() => {
     let h = 0;
@@ -269,19 +307,4 @@ function useSeededBarHeights(seed: string, count: number): number[] {
     return out;
   });
   return heights;
-}
-
-/** The handwritten signature. Right-aligned, directly above the player,
- *  always inside the card since the card is content-sized. */
-function Sender({ name }: { name: string | null | undefined }) {
-  return (
-    <div className="flex-shrink-0 pt-4 text-right">
-      <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>
-        From
-      </p>
-      <p className="font-letter-jp text-lg font-semibold" style={{ color: "#7A5B34" }}>
-        {name || "（名前未設定）"}
-      </p>
-    </div>
-  );
 }
