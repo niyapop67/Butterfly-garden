@@ -59,24 +59,24 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
 
             {/* ── Corner flourishes ── */}
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "28%", top: 0, left: 0, zIndex: 20 }} />
+              style={{ width: "17%", top: "-4px", left: "-4px", zIndex: 20 }} />
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "28%", top: 0, right: 0, zIndex: 20, transform: "scaleX(-1)" }} />
+              style={{ width: "17%", top: "-4px", right: "-4px", zIndex: 20, transform: "scaleX(-1)" }} />
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "28%", bottom: 0, left: 0, zIndex: 20, transform: "scaleY(-1)" }} />
+              style={{ width: "17%", bottom: "-4px", left: "-4px", zIndex: 20, transform: "scaleY(-1)" }} />
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "28%", bottom: 0, right: 0, zIndex: 20, transform: "scale(-1,-1)" }} />
+              style={{ width: "17%", bottom: "-4px", right: "-4px", zIndex: 20, transform: "scale(-1,-1)" }} />
 
             {/* ── Rose bouquet — top centre ── */}
             <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
-              style={{ top: 0, transform: "translateY(-30%)", zIndex: 25 }}>
-              <img src="/images/decor/rose_top.png" alt="" aria-hidden style={{ width: "74%", height: "auto" }} />
+              style={{ top: 0, transform: "translateY(-42%)", zIndex: 25 }}>
+              <img src="/images/decor/rose_top.png" alt="" aria-hidden style={{ width: "46%", height: "auto" }} />
             </div>
 
             {/* ── Crystal — bottom centre ── */}
             <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
-              style={{ bottom: 0, transform: "translateY(35%)", zIndex: 25 }}>
-              <img src="/images/decor/crystal_bottom.png" alt="" aria-hidden style={{ width: "58%", height: "auto" }} />
+              style={{ bottom: 0, transform: "translateY(38%)", zIndex: 25 }}>
+              <img src="/images/decor/crystal_bottom.png" alt="" aria-hidden style={{ width: "30%", height: "auto" }} />
             </div>
 
             {/* ── Paper card ── */}
@@ -89,8 +89,8 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 zIndex: 10,
                 paddingLeft: "1.75rem",
                 paddingRight: "1.75rem",
-                paddingTop: "4.5rem",
-                paddingBottom: "5rem",
+                paddingTop: "3.25rem",
+                paddingBottom: "3.5rem",
               }}
             >
               <CloseButton onClose={onClose} />
