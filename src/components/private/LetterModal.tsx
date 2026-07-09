@@ -56,65 +56,41 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             className="relative w-full"
             style={{ maxWidth: "26rem", maxHeight: "88vh" }}
           >
-            {/* Outer frame */}
+            {/* Full decorative frame — absolutely positioned behind all content.
+                The image has a transparent centre (extracted by Python) so the
+                paper gradient behind it shows through. */}
+            <img
+              src="/images/decor/full_frame.png"
+              alt=""
+              aria-hidden
+              className="pointer-events-none absolute inset-0 h-full w-full"
+              style={{ objectFit: "fill", zIndex: 0 }}
+            />
+
+            {/* Paper background + content — sits on top of the frame image */}
             <div
-              className="relative flex h-full flex-col rounded-sm p-[6px]"
+              className="relative flex h-full flex-col rounded-sm"
               style={{
                 background: "linear-gradient(160deg, #FFFDF6 0%, #FDF3E7 55%, #FBEEDD 100%)",
-                border: "1px solid rgba(184,147,90,0.55)",
                 boxShadow: "0 24px 50px rgba(60,30,50,0.28)",
                 maxHeight: "88vh",
+                zIndex: 1,
+                /* padding matches the frame artwork's border thickness */
+                paddingLeft: "1.75rem",
+                paddingRight: "1.75rem",
+                paddingTop: "5rem",
+                paddingBottom: "4rem",
               }}
             >
-              {/* Inner line */}
-              <div
-                className="relative flex min-h-0 flex-1 flex-col rounded-[2px]"
-                style={{
-                  border: "1px solid rgba(184,147,90,0.32)",
-                  paddingLeft: "2rem",
-                  paddingRight: "2rem",
-                  paddingTop: "4.5rem",   /* 薔薇の高さ分だけ空ける */
-                  paddingBottom: "3.5rem", /* ジェムの高さ分だけ空ける */
-                }}
-              >
-                {/* Corner flourishes */}
-                <CornerFlourish position="tl" />
-                <CornerFlourish position="tr" />
-                <CornerFlourish position="bl" />
-                <CornerFlourish position="br" />
-
-                {/* Rose bouquet: absolute, centered on the top edge */}
-                <div className="pointer-events-none absolute left-0 right-0 top-0 flex justify-center" style={{ transform: "translateY(-42%)" }}>
-                  <img
-                    src="/images/decor/rose_bouquet_divider.png"
-                    alt=""
-                    aria-hidden
-                    style={{ width: "72%", maxWidth: "240px", height: "auto" }}
-                  />
-                </div>
-
-                {/* Gem divider: absolute, centered on the bottom edge */}
-                <div className="pointer-events-none absolute bottom-0 left-0 right-0 flex justify-center" style={{ transform: "translateY(38%)" }}>
-                  <img
-                    src="/images/decor/gem_divider_bottom.png"
-                    alt=""
-                    aria-hidden
-                    style={{ width: "46%", maxWidth: "160px", height: "auto" }}
-                  />
-                </div>
-
-                <CloseButton onClose={onClose} />
-
-                <Greeting />
-                <Divider />
-                <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
-
-                <div className="flex flex-shrink-0 flex-col">
-                  {entry.voiceUrl && (
-                    <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
-                  )}
-                  <Sender name={entry.nickname} />
-                </div>
+              <CloseButton onClose={onClose} />
+              <Greeting />
+              <Divider />
+              <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
+              <div className="flex flex-shrink-0 flex-col">
+                {entry.voiceUrl && (
+                  <VoicePlayer src={entry.voiceUrl} durationSeconds={entry.voiceDurationSeconds} />
+                )}
+                <Sender name={entry.nickname} />
               </div>
             </div>
           </motion.div>
@@ -134,33 +110,6 @@ function CloseButton({ onClose }: { onClose: () => void }) {
     >
       <img src="/images/decor/close_button_gem.png" alt="" aria-hidden className="h-full w-full object-contain" />
     </button>
-  );
-}
-
-/** Corner ornament using the new individually-generated jeweled artwork —
- *  each corner is its own image at its own natural aspect ratio, placed at
- *  a fixed size (never stretched to fill the card, so it can't distort or
- *  drift regardless of how tall/short the letter ends up being). */
-function CornerFlourish({ position }: { position: "tl" | "tr" | "bl" | "br" }) {
-  const placement: Record<string, string> = {
-    tl: "left-0 top-0",
-    tr: "right-0 top-0",
-    br: "right-0 bottom-0",
-    bl: "left-0 bottom-0",
-  };
-  const src: Record<string, string> = {
-    tl: "/images/decor/corner_tl.png",
-    tr: "/images/decor/corner_tr.png",
-    bl: "/images/decor/corner_bl.png",
-    br: "/images/decor/corner_br.png",
-  };
-  return (
-    <img
-      src={src[position]}
-      alt=""
-      aria-hidden
-      className={`pointer-events-none absolute ${placement[position]} h-16 w-auto sm:h-20`}
-    />
   );
 }
 
