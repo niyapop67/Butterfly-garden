@@ -161,14 +161,14 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
       style={{
         flex: "0 1 auto",
         width: "19.3em",
-        maxHeight: "calc(1.8em * 7.5)",
+        maxHeight: "calc(2em * 7.5)",
         overflowY: "auto",
         overflowX: "hidden",
       }}
     >
       <p
         className={`w-full whitespace-pre-wrap text-center font-letter-jp ${sizeClass}`}
-        style={{ color: "#5B4B43", lineHeight: 1.8, letterSpacing: "0.02em" }}
+        style={{ color: "#4A3826", lineHeight: 2, letterSpacing: "0.04em", fontWeight: 600 }}
       >
         {message}
       </p>
