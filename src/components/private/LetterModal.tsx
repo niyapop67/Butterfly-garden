@@ -19,14 +19,14 @@ function getMessageFontSizeClass(length: number): string {
 }
 
 function getModalMaxWidth(length: number): string {
-  if (length <= 150) return "26rem";
-  if (length <= 300) return "29rem";
-  return "32rem";
+  if (length <= 150) return "29rem";
+  if (length <= 300) return "32rem";
+  return "35rem";
 }
 
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
   const messageSizeClass = entry ? getMessageFontSizeClass(entry.message.length) : "text-base";
-  const modalMaxWidth = entry ? getModalMaxWidth(entry.message.length) : "26rem";
+  const modalMaxWidth = entry ? getModalMaxWidth(entry.message.length) : "29rem";
 
   return (
     <AnimatePresence>
@@ -160,7 +160,7 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
       className="flex min-h-0 flex-col items-center self-center px-1"
       style={{
         flex: "0 1 auto",
-        width: "15.28em",
+        width: "19.3em",
         maxHeight: "calc(1.8em * 7.5)",
         overflowY: "auto",
         overflowX: "hidden",
