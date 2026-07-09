@@ -160,7 +160,7 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
       className="flex min-h-0 flex-col items-center self-center px-1"
       style={{
         flex: "0 1 auto",
-        width: "calc(15em + 14 * 0.02em)",
+        width: "15.28em",
         maxHeight: "calc(1.8em * 7.5)",
         overflowY: "auto",
         overflowX: "hidden",
@@ -269,11 +269,11 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
 function Sender({ name }: { name: string | null | undefined }) {
   return (
-    <div className="flex-shrink-0 self-end pt-3 text-left">
-      <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>From</p>
-      <p className="font-letter-jp text-lg font-semibold" style={{ color: "#7A5B34" }}>
+    <div className="flex flex-shrink-0 items-baseline justify-end gap-1.5 pt-3">
+      <span className="font-body text-xs" style={{ color: "#A6885A" }}>From</span>
+      <span className="font-body text-base font-semibold" style={{ color: "#7A5B34" }}>
         {name || "（名前未設定）"}
-      </p>
+      </span>
     </div>
   );
 }
