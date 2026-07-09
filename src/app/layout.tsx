@@ -61,12 +61,12 @@ const bodyFont = localFont({
 const letterFontJp = localFont({
   src: [
     {
-      path: "../fonts/zen-old-mincho/ZenOldMincho-Regular.ttf",
+      path: "../fonts/klee-one/KleeOne-Regular.ttf",
       weight: "400",
       style: "normal",
     },
     {
-      path: "../fonts/zen-old-mincho/ZenOldMincho-SemiBold.ttf",
+      path: "../fonts/klee-one/KleeOne-SemiBold.ttf",
       weight: "600",
       style: "normal",
     },

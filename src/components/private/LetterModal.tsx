@@ -155,6 +155,7 @@ function Greeting() {
 }
 
 function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass: string }) {
+  const isShort = message.length <= 30 && !message.includes("\n");
   return (
     <div
       className="flex min-h-0 flex-col items-center self-center px-1"
@@ -167,7 +168,7 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
       }}
     >
       <p
-        className={`w-full whitespace-pre-wrap text-center font-letter-jp ${sizeClass}`}
+        className={`w-full whitespace-pre-wrap font-letter-jp ${isShort ? "text-center" : "text-left"} ${sizeClass}`}
         style={{ color: "#4A3826", lineHeight: 2, letterSpacing: "0.04em", fontWeight: 600 }}
       >
         {message}
