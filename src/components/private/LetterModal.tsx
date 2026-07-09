@@ -18,8 +18,15 @@ function getMessageFontSizeClass(length: number): string {
   return "text-sm";
 }
 
+function getModalMaxWidth(length: number): string {
+  if (length <= 150) return "26rem";
+  if (length <= 300) return "29rem";
+  return "32rem";
+}
+
 export default function LetterModal({ entry, onClose }: LetterModalProps) {
   const messageSizeClass = entry ? getMessageFontSizeClass(entry.message.length) : "text-base";
+  const modalMaxWidth = entry ? getModalMaxWidth(entry.message.length) : "26rem";
 
   return (
     <AnimatePresence>
@@ -41,7 +48,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
             transition={{ duration: 0.3 }}
             onClick={(e) => e.stopPropagation()}
             className="relative w-full"
-            style={{ maxWidth: "26rem" }}
+            style={{ maxWidth: modalMaxWidth }}
           >
             {/*
              * Decoration layer — sits ABOVE the paper so ornaments overlap the border.
@@ -59,15 +66,15 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
 
             {/* ── Corner flourishes ── */}
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "17%", top: "-4px", left: "-4px", zIndex: 20 }} />
+              style={{ width: "21%", top: "-6px", left: "-6px", zIndex: 20 }} />
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "17%", top: "-4px", right: "-4px", zIndex: 20, transform: "scaleX(-1)" }} />
+              style={{ width: "21%", top: "-6px", right: "-6px", zIndex: 20, transform: "scaleX(-1)" }} />
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "17%", bottom: "-4px", left: "-4px", zIndex: 20, transform: "scaleY(-1)" }} />
+              style={{ width: "21%", bottom: "-6px", left: "-6px", zIndex: 20, transform: "scaleY(-1)" }} />
             <img src="/images/decor/corner_tl_new.png" alt="" aria-hidden className="pointer-events-none absolute"
-              style={{ width: "17%", bottom: "-4px", right: "-4px", zIndex: 20, transform: "scale(-1,-1)" }} />
+              style={{ width: "21%", bottom: "-6px", right: "-6px", zIndex: 20, transform: "scale(-1,-1)" }} />
 
-            {/* ── Rose bouquet — top centre ── */}
+            <CloseButton onClose={onClose} />
             <div className="pointer-events-none absolute left-0 right-0 flex justify-center"
               style={{ top: 0, transform: "translateY(-42%)", zIndex: 25 }}>
               <img src="/images/decor/rose_top.png" alt="" aria-hidden style={{ width: "46%", height: "auto" }} />
@@ -87,13 +94,12 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
                 border: "1px solid rgba(184,147,90,0.40)",
                 boxShadow: "0 24px 50px rgba(60,30,50,0.28)",
                 zIndex: 10,
-                paddingLeft: "1.75rem",
-                paddingRight: "1.75rem",
+                paddingLeft: entry && entry.message.length > 260 ? "3rem" : "1.75rem",
+                paddingRight: entry && entry.message.length > 260 ? "3rem" : "1.75rem",
                 paddingTop: "3.25rem",
                 paddingBottom: "3.5rem",
               }}
             >
-              <CloseButton onClose={onClose} />
               <Greeting />
               <Divider />
               <MessageScrollArea message={entry.message} sizeClass={messageSizeClass} />
@@ -117,9 +123,10 @@ function CloseButton({ onClose }: { onClose: () => void }) {
       type="button"
       onClick={onClose}
       aria-label="閉じる"
-      className="absolute right-3 top-3 z-30 flex h-8 w-8 items-center justify-center"
+      className="pointer-events-auto absolute flex h-9 w-9 items-center justify-center"
+      style={{ top: "-14px", right: "-14px", zIndex: 40 }}
     >
-      <img src="/images/decor/close_button_gem.png" alt="" aria-hidden className="h-full w-full object-contain" />
+      <img src="/images/decor/close_button_gem.png" alt="" aria-hidden className="h-full w-full object-contain drop-shadow-md" />
     </button>
   );
 }
@@ -262,7 +269,7 @@ function VoicePlayer({ src, durationSeconds }: { src: string; durationSeconds: n
 
 function Sender({ name }: { name: string | null | undefined }) {
   return (
-    <div className="flex-shrink-0 pt-3 text-right">
+    <div className="flex-shrink-0 self-end pt-3 text-left">
       <p className="font-body text-[11px]" style={{ color: "#A6885A" }}>From</p>
       <p className="font-letter-jp text-lg font-semibold" style={{ color: "#7A5B34" }}>
         {name || "（名前未設定）"}
