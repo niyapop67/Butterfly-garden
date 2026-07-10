@@ -14,8 +14,8 @@ function getMessageFontSizeClass(length: number): string {
   if (length <= 80) return "text-2xl";
   if (length <= 150) return "text-xl";
   if (length <= 260) return "text-lg";
-  if (length <= 380) return "text-base";
-  return "text-[15px]";
+  if (length <= 380) return "text-lg";
+  return "text-base";
 }
 
 function getModalMaxWidth(length: number): string {
@@ -162,14 +162,14 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
       style={{
         flex: "0 1 auto",
         width: "19.3em",
-        maxHeight: "calc(2em * 7.5)",
+        maxHeight: "calc(1.9em * 7.5)",
         overflowY: "auto",
         overflowX: "hidden",
       }}
     >
       <p
         className={`w-full whitespace-pre-wrap font-letter-jp ${isShort ? "text-center" : "text-left"} ${sizeClass}`}
-        style={{ color: "#4A3826", lineHeight: 2, letterSpacing: "0.04em", fontWeight: 600 }}
+        style={{ color: "#3B2A1A", lineHeight: 1.9, letterSpacing: "0.02em", fontWeight: 600 }}
       >
         {message}
       </p>
