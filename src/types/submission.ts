@@ -67,11 +67,11 @@ export const BUTTERFLY_THEMES: Record<ButterflyType, ButterflyThemeInfo> = {
   },
 };
 
-/** v2.9 diff: message limit raised 300 -> 500 chars. */
-export const MESSAGE_MAX_LENGTH = 500;
+/** v2.9 diff: message limit raised 300 -> 500 chars. Raised again 500 -> 3000 chars (2026-07-10). */
+export const MESSAGE_MAX_LENGTH = 3000;
 
-/** v2.9 diff: voice limit raised 10-20s -> 60s. */
-export const VOICE_MAX_SECONDS = 60;
+/** v2.9 diff: voice limit raised 10-20s -> 60s. Raised again 60 -> 180s (2026-07-10). */
+export const VOICE_MAX_SECONDS = 180;
 
 /** Nickname is short and unconstrained by spec beyond "required". Keep a
  * sane upper bound so it can't be used to smuggle in a huge string. */
