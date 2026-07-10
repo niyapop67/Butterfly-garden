@@ -20,6 +20,7 @@ export default function AdminEntryList({ adminKey }: { adminKey: string }) {
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmId, setConfirmId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -109,13 +110,34 @@ export default function AdminEntryList({ adminKey }: { adminKey: string }) {
                       `（${new Date(entry.deletionRequestedAt).toLocaleString("ja-JP")}）`}
                   </p>
                 )}
-                <p className="mb-1 font-body text-[10px] text-white/30">
+                <p className="mb-2 font-body text-[10px] text-white/30">
                   {entry.createdAtMs ? new Date(entry.createdAtMs).toLocaleString("ja-JP") : "日時不明"}
                   {entry.voiceUrl && " ・ ボイスあり"}
+                  {` ・ ${entry.message.length}字`}
                 </p>
-                <p className="mb-3 whitespace-pre-wrap font-body text-xs leading-relaxed text-white/70">
-                  {entry.message}
-                </p>
+
+                {expandedId === entry.id ? (
+                  <>
+                    <p className="mb-2 whitespace-pre-wrap font-body text-xs leading-relaxed text-white/70">
+                      {entry.message}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(null)}
+                      className="mb-3 font-body text-[11px] text-white/40 underline underline-offset-2"
+                    >
+                      本文を隠す
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(entry.id)}
+                    className="mb-3 font-body text-[11px] text-white/40 underline underline-offset-2"
+                  >
+                    本文を表示
+                  </button>
+                )}
 
                 {confirmId === entry.id ? (
                   <div className="flex items-center gap-2">
