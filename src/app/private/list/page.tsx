@@ -47,17 +47,10 @@ export default function PrivateListPage() {
     <main className="bg-night-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
       <header className="relative z-10 mb-6 text-center">
         <img
-          src="/images/decor/birthday_butterfly_banner.png"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 w-[140%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-90"
+          src="/images/decor/birthday_butterfly_banner_original.jpg"
+          alt="Happy Birthday 2026.8.23"
+          className="mx-auto w-full max-w-xl"
         />
-        <h1 className="font-display text-3xl italic" style={{ color: "#fffdf8" }}>
-          Happy Birthday
-        </h1>
-        <p className="mt-1 font-display text-sm tracking-widest" style={{ color: "#cbb9e0" }}>
-          2026.8.23
-        </p>
       </header>
 
       <section className="relative z-10 mb-5">
