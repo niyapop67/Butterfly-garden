@@ -111,7 +111,7 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
       className="flex aspect-[8/5] flex-col items-center justify-center gap-1 rounded-lg px-1 py-1 text-center transition-transform active:scale-[0.94]"
       style={{
         background: "linear-gradient(180deg, #fdf8ef 0%, #faf1e2 100%)",
-        border: "1px solid rgba(212,175,110,0.55)",
+        border: "1.5px solid #b8925a",
         boxShadow: "0 3px 8px rgba(60,30,50,0.16), inset 0 0 0 1px rgba(255,255,255,0.6)",
       }}
     >
