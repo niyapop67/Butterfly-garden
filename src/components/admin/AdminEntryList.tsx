@@ -11,6 +11,8 @@ interface AdminEntry {
   butterflyType: ButterflyType;
   voiceUrl: string | null;
   createdAtMs: number | null;
+  deletionRequested: boolean;
+  deletionRequestedAt: string | null;
 }
 
 export default function AdminEntryList({ adminKey }: { adminKey: string }) {
@@ -28,7 +30,13 @@ export default function AdminEntryList({ adminKey }: { adminKey: string }) {
       });
       if (!res.ok) throw new Error(`status ${res.status}`);
       const data = await res.json();
-      setEntries(data.entries);
+      const sorted = [...data.entries].sort((a: AdminEntry, b: AdminEntry) => {
+        if (a.deletionRequested !== b.deletionRequested) {
+          return a.deletionRequested ? -1 : 1;
+        }
+        return 0;
+      });
+      setEntries(sorted);
     } catch {
       setError("読み込みに失敗しました。ページを再読み込みしてください。");
     }
@@ -78,7 +86,14 @@ export default function AdminEntryList({ adminKey }: { adminKey: string }) {
           <p className="mb-4 font-body text-[11px] text-white/40">全{entries.length}件</p>
           <div className="flex flex-col gap-2">
             {entries.map((entry) => (
-              <div key={entry.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div
+                key={entry.id}
+                className={`rounded-2xl border p-4 ${
+                  entry.deletionRequested
+                    ? "border-rose-400/60 bg-rose-500/10"
+                    : "border-white/10 bg-white/5"
+                }`}
+              >
                 <div className="mb-1 flex items-baseline justify-between gap-2">
                   <span className="font-body text-sm font-semibold">
                     {entry.nickname || "（名前未設定）"}
@@ -87,6 +102,13 @@ export default function AdminEntryList({ adminKey }: { adminKey: string }) {
                     {BUTTERFLY_THEMES[entry.butterflyType]?.labelJa ?? entry.butterflyType}
                   </span>
                 </div>
+                {entry.deletionRequested && (
+                  <p className="mb-1 font-body text-[11px] font-semibold text-rose-300">
+                    🔴 削除依頼あり
+                    {entry.deletionRequestedAt &&
+                      `（${new Date(entry.deletionRequestedAt).toLocaleString("ja-JP")}）`}
+                  </p>
+                )}
                 <p className="mb-1 font-body text-[10px] text-white/30">
                   {entry.createdAtMs ? new Date(entry.createdAtMs).toLocaleString("ja-JP") : "日時不明"}
                   {entry.voiceUrl && " ・ ボイスあり"}

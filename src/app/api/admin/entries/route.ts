@@ -38,6 +38,8 @@ export async function GET(request: NextRequest) {
       butterflyType: data.butterflyType ?? "",
       voiceUrl: data.voiceUrl ?? null,
       createdAtMs: data.createdAt?.toMillis?.() ?? null,
+      deletionRequested: Boolean(data.deletionRequested),
+      deletionRequestedAt: data.deletionRequestedAt ?? null,
     };
   });
 

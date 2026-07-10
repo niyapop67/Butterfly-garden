@@ -91,6 +91,11 @@ export interface SubmissionDoc {
   voiceDurationSeconds: number | null;
   /** Server timestamp (Firestore Timestamp at write time, via serverTimestamp()). */
   createdAt: unknown;
+  /** 2026-07-10: set via /api/request-deletion when the submitter asks to
+   *  be taken down. Surfaced in /private/admin for Niya to review + delete;
+   *  never auto-deletes anything itself (see that route's comment). */
+  deletionRequested?: boolean;
+  deletionRequestedAt?: string;
 }
 
 /** Shape used while the form is being filled out, before submission. */

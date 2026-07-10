@@ -38,6 +38,10 @@ export default function MySubmissionPage() {
     | { status: "ready"; entry: SubmissionDoc }
   >({ status: "checking" });
 
+  const [deleteRequestState, setDeleteRequestState] = useState<
+    "idle" | "confirming" | "sending" | "sent" | "error"
+  >("idle");
+
   useEffect(() => {
     const record = hasSubmittedBefore();
     if (!record) {
@@ -51,10 +55,31 @@ export default function MySubmissionPage() {
           setState({ status: "error" });
           return;
         }
-        setState({ status: "ready", entry: snap.data() as SubmissionDoc });
+        const entry = snap.data() as SubmissionDoc;
+        setState({ status: "ready", entry });
+        if (entry.deletionRequested) {
+          setDeleteRequestState("sent");
+        }
       })
       .catch(() => setState({ status: "error" }));
   }, []);
+
+  async function handleRequestDeletion() {
+    const record = hasSubmittedBefore();
+    if (!record) return;
+    setDeleteRequestState("sending");
+    try {
+      const res = await fetch("/api/request-deletion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: record.id }),
+      });
+      if (!res.ok) throw new Error("request failed");
+      setDeleteRequestState("sent");
+    } catch {
+      setDeleteRequestState("error");
+    }
+  }
 
   return (
     <main className="bg-day-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
@@ -132,6 +157,52 @@ export default function MySubmissionPage() {
                     お使いのブラウザは音声再生に対応していません。
                   </audio>
                 )}
+
+                <div className="mt-4 border-t border-[var(--color-ink-soft)]/15 pt-3">
+                  {deleteRequestState === "sent" ? (
+                    <p className="font-body text-[11px] leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
+                      削除依頼を受け付けました。確認でき次第、削除いたします。
+                    </p>
+                  ) : deleteRequestState === "confirming" ? (
+                    <div className="space-y-2">
+                      <p className="font-body text-[11px] leading-relaxed" style={{ color: "var(--color-ink-soft)" }}>
+                        本当に削除を依頼しますか？この投稿を確認後、運営が削除します。
+                      </p>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={handleRequestDeletion}
+                          className="flex-1 rounded-full bg-rose-100 px-3 py-1.5 font-body text-[11px] text-rose-600"
+                        >
+                          依頼する
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setDeleteRequestState("idle")}
+                          className="flex-1 rounded-full bg-white/60 px-3 py-1.5 font-body text-[11px]"
+                          style={{ color: "var(--color-ink-soft)" }}
+                        >
+                          やめる
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteRequestState("confirming")}
+                      disabled={deleteRequestState === "sending"}
+                      className="font-body text-[11px] underline underline-offset-2"
+                      style={{ color: "var(--color-ink-soft)" }}
+                    >
+                      {deleteRequestState === "sending" ? "送信中…" : "この投稿の削除を依頼する"}
+                    </button>
+                  )}
+                  {deleteRequestState === "error" && (
+                    <p className="mt-1 font-body text-[11px] text-rose-500">
+                      送信に失敗しました。もう一度お試しください。
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </GlassCard>
