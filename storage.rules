@@ -7,8 +7,8 @@ service firebase.storage {
       allow read: if true;
 
       // Create only. Reject anything that isn't a reasonably-sized webm
-      // clip (60s of audio/webm comfortably fits under 5MB).
-      allow create: if request.resource.size < 5 * 1024 * 1024
+      // clip (180s of audio/webm comfortably fits under 15MB).
+      allow create: if request.resource.size < 15 * 1024 * 1024
                     && request.resource.contentType == 'audio/webm';
       allow update, delete: if false;
     }
