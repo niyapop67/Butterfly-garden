@@ -20,7 +20,7 @@ service cloud.firestore {
                     && request.resource.data.nickname.size() <= 40
                     && request.resource.data.message is string
                     && request.resource.data.message.size() > 0
-                    && request.resource.data.message.size() <= 500
+                    && request.resource.data.message.size() <= 3000
                     && request.resource.data.butterflyType in
                         ['pink-heart', 'tiffany-sky', 'crystal-white', 'aurora-dream',
                          'emerald-garden', 'golden-sunshine'];
