@@ -46,6 +46,10 @@ export async function POST(request: NextRequest) {
   const webhookUrl = process.env.DISCORD_DELETE_WEBHOOK_URL;
   if (webhookUrl) {
     try {
+      const adminKey = process.env.ADMIN_KEY;
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://butterfly-garden-alpha.vercel.app";
+      const adminLink = adminKey ? `${siteUrl}/private/admin?key=${adminKey}` : `${siteUrl}/private/admin`;
+
       await fetch(webhookUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -53,9 +57,8 @@ export async function POST(request: NextRequest) {
           content:
             `🦋 **削除依頼が届きました**\n` +
             `ニックネーム: ${data?.nickname ?? "（不明）"}\n` +
-            `メッセージ冒頭: ${(data?.message ?? "").slice(0, 40)}${(data?.message ?? "").length > 40 ? "…" : ""}\n` +
             `投稿ID: ${id}\n` +
-            `→ /private/admin から確認・削除してください`,
+            `${adminLink}`,
         }),
       });
     } catch {
