@@ -47,7 +47,7 @@ export default function PrivateListPage() {
     <main className="bg-night-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
       <header className="relative z-10 mb-6 text-center">
         <img
-          src="/images/decor/birthday_butterfly_banner_original.jpg"
+          src="/images/decor/birthday_banner_v2.png"
           alt="Happy Birthday 2026.8.23"
           className="mx-auto w-full max-w-xl"
         />
