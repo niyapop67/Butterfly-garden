@@ -37,7 +37,7 @@ export default function LetterModal({ entry, onClose }: LetterModalProps) {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
-          className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-black/60 px-5 py-10"
+          className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/60 px-5 py-10"
           onClick={onClose}
         >
           <motion.div
@@ -158,13 +158,9 @@ function MessageScrollArea({ message, sizeClass }: { message: string; sizeClass:
   const isShort = message.length <= 30 && !message.includes("\n");
   return (
     <div
-      className="flex min-h-0 flex-col items-center self-center px-1"
+      className="flex flex-col items-center self-center px-1"
       style={{
-        flex: "0 1 auto",
         width: "19.3em",
-        maxHeight: "calc(1.9em * 7.5)",
-        overflowY: "auto",
-        overflowX: "hidden",
       }}
     >
       <p
