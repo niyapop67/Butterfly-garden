@@ -57,6 +57,84 @@ const BUTTERFLY_THEME_LABELS = {
   "golden-sunshine": "ゴールデンサンシャイン",
 };
 
+/** Sets both the classic PDF /Info dictionary (Title/Author/Subject/
+ * Keywords — what Finder/Explorer "Get Info" panels read) and a proper
+ * XMP metadata stream (what archival tools and modern DAM software read).
+ * Invisible while reading, but this is what makes the file behave like a
+ * real archival deliverable instead of an anonymous PDF. */
+function setMetadata(pdfDoc) {
+  const title = "Butterfly Garden Book";
+  const author = "Butterfly Garden Project";
+  const subject = "Happy Birthday to MIKA";
+  const keywords = ["Butterfly Garden", "Moon Garden", "Collector's Edition"];
+  const now = new Date();
+
+  // ---- Classic Info dictionary ----
+  pdfDoc.setTitle(title);
+  pdfDoc.setAuthor(author);
+  pdfDoc.setSubject(subject);
+  pdfDoc.setKeywords(keywords);
+  pdfDoc.setCreator("Butterfly Garden Book generator (pdf-lib)");
+  pdfDoc.setProducer("Butterfly Garden for MIKA");
+  pdfDoc.setCreationDate(now);
+  pdfDoc.setModificationDate(now);
+
+  // ---- XMP metadata stream (dc:, pdf:, xmp: namespaces) ----
+  const isoDate = now.toISOString();
+  const xmp = `<?xpacket begin="\ufeff" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/">
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <rdf:Description rdf:about=""
+        xmlns:dc="http://purl.org/dc/elements/1.1/"
+        xmlns:pdf="http://ns.adobe.com/pdf/1.3/"
+        xmlns:xmp="http://ns.adobe.com/xap/1.0/">
+      <dc:title>
+        <rdf:Alt><rdf:li xml:lang="x-default">${escapeXml(title)}</rdf:li></rdf:Alt>
+      </dc:title>
+      <dc:creator>
+        <rdf:Seq><rdf:li>${escapeXml(author)}</rdf:li></rdf:Seq>
+      </dc:creator>
+      <dc:description>
+        <rdf:Alt><rdf:li xml:lang="x-default">${escapeXml(subject)}</rdf:li></rdf:Alt>
+      </dc:description>
+      <dc:subject>
+        <rdf:Bag>${keywords.map((k) => `<rdf:li>${escapeXml(k)}</rdf:li>`).join("")}</rdf:Bag>
+      </dc:subject>
+      <pdf:Keywords>${escapeXml(keywords.join(", "))}</pdf:Keywords>
+      <pdf:Producer>Butterfly Garden for MIKA</pdf:Producer>
+      <xmp:CreatorTool>Butterfly Garden Book generator (pdf-lib)</xmp:CreatorTool>
+      <xmp:CreateDate>${isoDate}</xmp:CreateDate>
+      <xmp:ModifyDate>${isoDate}</xmp:ModifyDate>
+    </rdf:Description>
+  </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="w"?>`;
+
+  // context.stream() does a naive charCodeAt-per-byte conversion for plain
+  // JS strings, which corrupts the multi-byte xpacket BOM. Encode to real
+  // UTF-8 bytes first (a Buffer is a Uint8Array subclass, so pdf-lib uses
+  // it as-is instead of re-encoding it).
+  const xmpBytes = Buffer.from(xmp, "utf-8");
+  const context = pdfDoc.context;
+  const metadataRef = context.register(
+    context.stream(xmpBytes, {
+      Type: PDFName.of("Metadata"),
+      Subtype: PDFName.of("XML"),
+      Length: xmpBytes.length,
+    })
+  );
+  pdfDoc.catalog.set(PDFName.of("Metadata"), metadataRef);
+}
+
+function escapeXml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
 async function main() {
   const [, , entriesPath, outPath] = process.argv;
   if (!entriesPath || !outPath) {
@@ -69,9 +147,7 @@ async function main() {
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
-  pdfDoc.setTitle("Butterfly Garden for MIKA — Book");
-  pdfDoc.setProducer("Butterfly Garden for MIKA");
-  pdfDoc.setAuthor("Butterfly Garden for MIKA");
+  setMetadata(pdfDoc);
 
   // ---- Fonts ----
   const kleeRegular = await pdfDoc.embedFont(fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-Regular.ttf")));
@@ -89,12 +165,23 @@ async function main() {
   const roseImg = await pdfDoc.embedPng(fs.readFileSync(path.join(REPO_PUBLIC, "images/decor/rose_top.png")));
   const crystalImg = await pdfDoc.embedPng(fs.readFileSync(path.join(REPO_PUBLIC, "images/decor/crystal_bottom.png")));
 
-  // ==== Cover page ====
-  drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant, count: chronological.length });
+  // ==== Page flow: Movie ends → this Book opens ====
+  // Cover (closing-curtain feel, minimal) → Title Page (formal) →
+  // Prologue (short narrative bridge from movie to letters) → Contents →
+  // Letters. Each top-level section also gets its own outline entry.
+  const sectionOutline = [];
 
-  // ==== Table of contents (page numbers filled in after render) ====
+  sectionOutline.push({ title: "Cover", pageIndex: pdfDoc.getPageCount() });
+  drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant });
+
+  sectionOutline.push({ title: "Title Page", pageIndex: pdfDoc.getPageCount() });
+  drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count: chronological.length });
+
+  sectionOutline.push({ title: "Prologue", pageIndex: pdfDoc.getPageCount() });
+  drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans });
+
+  sectionOutline.push({ title: "Contents", pageIndex: pdfDoc.getPageCount() });
   const tocPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
-  const tocEntryPositions = []; // {y, nickname}
 
   // ==== Letter pages ====
   const outlineTargets = []; // { title, pageIndex }
@@ -116,35 +203,81 @@ async function main() {
   // ---- Fill in TOC now that we know final page numbers ----
   renderToc(tocPage, chronological, outlineTargets, notoSans, cormorantItalic, kleeSemi);
 
-  // ---- Add PDF outline (bookmarks) for jump navigation ----
-  addOutline(pdfDoc, outlineTargets);
+  // ---- Add PDF outline (bookmarks): section markers + a "Letters" group ----
+  const lettersNode = { title: "Letters", pageIndex: outlineTargets[0]?.pageIndex, children: outlineTargets };
+  addOutline(pdfDoc, [...sectionOutline, lettersNode]);
 
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(outPath, pdfBytes);
   console.log(`Wrote ${outPath} (${pdfDoc.getPageCount()} pages, ${chronological.length} entries)`);
 }
 
-function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant, count }) {
+/** Cover: the last frame of the movie, held on screen — just the mark,
+ * nothing else. The Title Page (next) is where the book formally
+ * introduces itself. Keeping the cover this quiet is what makes the
+ * "movie ends, book begins" hand-off feel intentional rather than
+ * abrupt. */
+function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
 
   const title = "Butterfly Garden";
-  const titleSize = 40;
+  const titleSize = 34;
   const titleWidth = cormorant.widthOfTextAtSize(title, titleSize);
   page.drawText(title, {
     x: (PAGE_W - titleWidth) / 2,
-    y: PAGE_H / 2 + 60,
+    y: PAGE_H / 2 + 10,
     size: titleSize,
     font: cormorant,
     color: COVER_ACCENT,
   });
 
   const sub = "for MIKA";
-  const subSize = 24;
+  const subSize = 18;
   const subWidth = cormorantItalic.widthOfTextAtSize(sub, subSize);
   page.drawText(sub, {
     x: (PAGE_W - subWidth) / 2,
-    y: PAGE_H / 2 + 20,
+    y: PAGE_H / 2 - 22,
+    size: subSize,
+    font: cormorantItalic,
+    color: rgb(0.9, 0.9, 0.95),
+  });
+}
+
+/** Formal title page — where the book properly states what it is,
+ * separate from the quiet cover mark. */
+function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count }) {
+  const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+
+  const edition = "Collector's Edition";
+  const editionSize = 10;
+  const editionWidth = notoSans.widthOfTextAtSize(edition, editionSize);
+  page.drawText(edition, {
+    x: (PAGE_W - editionWidth) / 2,
+    y: PAGE_H / 2 + 130,
+    size: editionSize,
+    font: notoSans,
+    color: rgb(0.75, 0.75, 0.85),
+  });
+
+  const title = "Butterfly Garden";
+  const titleSize = 38;
+  const titleWidth = cormorant.widthOfTextAtSize(title, titleSize);
+  page.drawText(title, {
+    x: (PAGE_W - titleWidth) / 2,
+    y: PAGE_H / 2 + 80,
+    size: titleSize,
+    font: cormorant,
+    color: COVER_ACCENT,
+  });
+
+  const sub = "for MIKA";
+  const subSize = 22;
+  const subWidth = cormorantItalic.widthOfTextAtSize(sub, subSize);
+  page.drawText(sub, {
+    x: (PAGE_W - subWidth) / 2,
+    y: PAGE_H / 2 + 44,
     size: subSize,
     font: cormorantItalic,
     color: rgb(1, 1, 1),
@@ -155,7 +288,7 @@ function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant, count }) 
   const bookWidth = notoSans.widthOfTextAtSize(bookLabel, bookSize);
   page.drawText(bookLabel, {
     x: (PAGE_W - bookWidth) / 2,
-    y: PAGE_H / 2 - 30,
+    y: PAGE_H / 2 - 4,
     size: bookSize,
     font: notoSans,
     color: rgb(0.85, 0.85, 0.9),
@@ -166,11 +299,75 @@ function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant, count }) 
   const countWidth = notoSans.widthOfTextAtSize(countLabel, countSize);
   page.drawText(countLabel, {
     x: (PAGE_W - countWidth) / 2,
-    y: PAGE_H / 2 - 52,
+    y: PAGE_H / 2 - 26,
     size: countSize,
     font: notoSans,
     color: rgb(0.7, 0.7, 0.78),
   });
+
+  const dateStr = new Intl.DateTimeFormat("ja-JP", { dateStyle: "long" }).format(new Date());
+  const dateSize = 9;
+  const dateWidth = notoSans.widthOfTextAtSize(dateStr, dateSize);
+  page.drawText(dateStr, {
+    x: (PAGE_W - dateWidth) / 2,
+    y: PAGE_H / 2 - 60,
+    size: dateSize,
+    font: notoSans,
+    color: rgb(0.55, 0.55, 0.65),
+  });
+}
+
+/** Prologue — the narrative hinge between the movie's last frame and the
+ * first letter. Deliberately short: one screen, no page break mid-thought.
+ * Edit PROLOGUE_LINES below to change the wording; keep it under ~10
+ * short lines so it reads like a held breath, not another chapter. */
+const PROLOGUE_LINES = [
+  "映画の羽ばたきが、静かに止んだあと。",
+  "",
+  "散らばった光のかけらは、",
+  "一枚ずつ、ここに舞い降りていた。",
+  "",
+  "それぞれの蝶が運んできたのは、",
+  "誰かがあなたのために書いた、小さな手紙。",
+  "",
+  "ページをめくるたび、",
+  "ガーデンのつづきが始まります。",
+];
+
+function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
+  const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+
+  const label = "Prologue";
+  const labelSize = 16;
+  const labelWidth = cormorantItalic.widthOfTextAtSize(label, labelSize);
+  page.drawText(label, {
+    x: (PAGE_W - labelWidth) / 2,
+    y: PAGE_H - 160,
+    size: labelSize,
+    font: cormorantItalic,
+    color: COVER_ACCENT,
+  });
+
+  const bodySize = 13;
+  const lineHeight = bodySize * 2.1;
+  let y = PAGE_H / 2 + (PROLOGUE_LINES.length * lineHeight) / 2 - lineHeight;
+
+  for (const line of PROLOGUE_LINES) {
+    if (line === "") {
+      y -= lineHeight * 0.6;
+      continue;
+    }
+    const w = kleeRegular.widthOfTextAtSize(line, bodySize);
+    page.drawText(line, {
+      x: (PAGE_W - w) / 2,
+      y,
+      size: bodySize,
+      font: kleeRegular,
+      color: rgb(0.92, 0.9, 0.94),
+    });
+    y -= lineHeight;
+  }
 }
 
 function renderToc(page, entries, outlineTargets, notoSans, cormorantItalic, kleeSemi) {
@@ -453,36 +650,61 @@ function wrapText(text, font, size, maxWidth) {
 /** Low-level PDF outline (bookmarks) so viewers show a jump-to-entry
  * sidebar — Preview, Acrobat, most phone PDF apps all read this. pdf-lib
  * has no high-level API for this, so we build the /Outlines dictionary
- * tree directly via pdfDoc.context. */
-function addOutline(pdfDoc, targets) {
+ * tree directly via pdfDoc.context.
+ *
+ * `nodes` is a tree: each node is either a leaf ({ title, pageIndex }) or
+ * a group ({ title, pageIndex?, children: [...] }). Groups render as an
+ * expandable folder in the sidebar (e.g. "Letters" containing one entry
+ * per participant). */
+function addOutline(pdfDoc, nodes) {
   const context = pdfDoc.context;
   const pages = pdfDoc.getPages();
 
-  const outlineItemRefs = targets.map(() => context.nextRef());
+  function destFor(pageIndex) {
+    const page = pages[pageIndex];
+    return context.obj([page.ref, PDFName.of("Fit")]);
+  }
+
+  // Returns { firstRef, lastRef, count } for this sibling level; count is
+  // the number of visible rows this level contributes (used by the
+  // parent's /Count).
+  function buildLevel(levelNodes, parentRef) {
+    const refs = levelNodes.map(() => context.nextRef());
+    let totalCount = 0;
+
+    levelNodes.forEach((node, i) => {
+      const dict = {
+        Title: PDFHexString.fromText(node.title),
+        Parent: parentRef,
+      };
+      if (i > 0) dict.Prev = refs[i - 1];
+      if (i < levelNodes.length - 1) dict.Next = refs[i + 1];
+      if (typeof node.pageIndex === "number") dict.Dest = destFor(node.pageIndex);
+
+      if (node.children && node.children.length > 0) {
+        const child = buildLevel(node.children, refs[i]);
+        dict.First = child.firstRef;
+        dict.Last = child.lastRef;
+        dict.Count = PDFNumber.of(child.count);
+      }
+
+      context.assign(refs[i], context.obj(dict));
+      totalCount += 1 + (node.children ? node.children.length : 0);
+    });
+
+    return { firstRef: refs[0], lastRef: refs[refs.length - 1], count: totalCount };
+  }
+
   const outlinesRootRef = context.nextRef();
-
-  targets.forEach((target, i) => {
-    const page = pages[target.pageIndex];
-    const destArray = context.obj([page.ref, PDFName.of("Fit")]);
-
-    const dict = {
-      Title: PDFHexString.fromText(target.title),
-      Parent: outlinesRootRef,
-      Dest: destArray,
-    };
-    if (i > 0) dict.Prev = outlineItemRefs[i - 1];
-    if (i < targets.length - 1) dict.Next = outlineItemRefs[i + 1];
-
-    context.assign(outlineItemRefs[i], context.obj(dict));
-  });
+  const top = buildLevel(nodes, outlinesRootRef);
 
   context.assign(
     outlinesRootRef,
     context.obj({
       Type: PDFName.of("Outlines"),
-      First: outlineItemRefs[0],
-      Last: outlineItemRefs[outlineItemRefs.length - 1],
-      Count: PDFNumber.of(targets.length),
+      First: top.firstRef,
+      Last: top.lastRef,
+      Count: PDFNumber.of(top.count),
     })
   );
 
