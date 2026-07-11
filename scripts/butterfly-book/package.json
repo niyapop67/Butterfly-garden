@@ -1,0 +1,16 @@
+{
+  "name": "butterfly-book-scripts",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "export": "node export-from-firestore.mjs entries.json",
+    "build": "node generate-book.mjs entries.json ../../butterfly-garden-book.pdf",
+    "build:example": "node generate-book.mjs example-entries.json ../../example-book.pdf"
+  },
+  "dependencies": {
+    "pdf-lib": "^1.17.1",
+    "@pdf-lib/fontkit": "^1.1.1",
+    "firebase-admin": "^14.1.0"
+  }
+}
