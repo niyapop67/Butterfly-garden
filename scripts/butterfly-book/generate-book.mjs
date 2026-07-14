@@ -180,8 +180,11 @@ async function main() {
   sectionOutline.push({ title: "Prologue", pageIndex: pdfDoc.getPageCount() });
   drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans });
 
+  const TOC_ENTRIES_PER_PAGE = Math.floor((PAGE_H - 130 - 70) / 22); // matches renderToc's layout math
+  const tocPageCount = Math.max(1, Math.ceil(chronological.length / TOC_ENTRIES_PER_PAGE));
   sectionOutline.push({ title: "Contents", pageIndex: pdfDoc.getPageCount() });
-  const tocPage = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  const tocPages = [];
+  for (let i = 0; i < tocPageCount; i++) tocPages.push(pdfDoc.addPage([PAGE_W, PAGE_H]));
 
   // ==== Letter pages ====
   const outlineTargets = []; // { title, pageIndex }
@@ -200,8 +203,8 @@ async function main() {
     outlineTargets.push({ title: `${i + 1}. ${entry.nickname || "（名前未設定）"}`, pageIndex: startPageIndex });
   }
 
-  // ---- Fill in TOC now that we know final page numbers ----
-  renderToc(tocPage, chronological, outlineTargets, notoSans, cormorantItalic, kleeSemi);
+  // ---- Fill in TOC (across as many pages as needed) now that we know final page numbers ----
+  renderToc(tocPages, chronological, outlineTargets, notoSans, cormorantItalic, kleeSemi, TOC_ENTRIES_PER_PAGE);
 
   // ---- Add PDF outline (bookmarks): section markers + a "Letters" group ----
   const lettersNode = { title: "Letters", pageIndex: outlineTargets[0]?.pageIndex, children: outlineTargets };
@@ -317,22 +320,11 @@ function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count }) 
   });
 }
 
-/** Prologue — the narrative hinge between the movie's last frame and the
- * first letter. Deliberately short: one screen, no page break mid-thought.
- * Edit PROLOGUE_LINES below to change the wording; keep it under ~10
- * short lines so it reads like a held breath, not another chapter. */
-const PROLOGUE_LINES = [
-  "映画の羽ばたきが、静かに止んだあと。",
-  "",
-  "散らばった光のかけらは、",
-  "一枚ずつ、ここに舞い降りていた。",
-  "",
-  "それぞれの蝶が運んできたのは、",
-  "誰かがあなたのために書いた、小さな手紙。",
-  "",
-  "ページをめくるたび、",
-  "ガーデンのつづきが始まります。",
-];
+/** Prologue — the quiet afterglow just after the movie ends, before the
+ * first letter. Deliberately minimal: no explanation of what came before,
+ * just the image the movie's last shot leaves behind. Edit
+ * PROLOGUE_LINES below to change the wording. */
+const PROLOGUE_LINES = ["最後の蝶が、", "静かに降りた場所。"];
 
 function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
@@ -370,50 +362,56 @@ function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
   }
 }
 
-function renderToc(page, entries, outlineTargets, notoSans, cormorantItalic, kleeSemi) {
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
-  const headTitle = "Contents";
-  const headSize = 22;
-  page.drawText(headTitle, {
-    x: CARD_MARGIN_X,
-    y: PAGE_H - 90,
-    size: headSize,
-    font: cormorantItalic,
-    color: COVER_ACCENT,
-  });
-
-  let y = PAGE_H - 130;
-  const lineH = 22;
-  const perPageLimit = Math.floor((y - 60) / lineH);
-
-  entries.forEach((entry, i) => {
-    if (y < 70) return; // simple single-page TOC; overflow entries still get bookmarks
-    const label = `${i + 1}.  ${entry.nickname || "（名前未設定）"}`;
-    // +2 because cover=page1, toc=page2, first letter page = page3 (1-indexed for humans)
-    const humanPage = outlineTargets[i].pageIndex + 1;
-    page.drawText(label, { x: CARD_MARGIN_X, y, size: 11, font: notoSans, color: rgb(0.9, 0.9, 0.95) });
-    const pageLabel = String(humanPage);
-    const pageLabelW = notoSans.widthOfTextAtSize(pageLabel, 11);
-    page.drawText(pageLabel, {
-      x: PAGE_W - CARD_MARGIN_X - pageLabelW,
-      y,
-      size: 11,
-      font: notoSans,
-      color: rgb(0.7, 0.7, 0.8),
+/** Renders the Contents across as many pages as needed — `pages` is the
+ * array of blank TOC pages already reserved in main(). Splitting by
+ * entriesPerPage keeps every participant listed and linked, no matter
+ * how many submissions there are. */
+function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kleeSemi, entriesPerPage) {
+  pages.forEach((page, pageNum) => {
+    page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+    const headTitle = pages.length > 1 ? `Contents ${pageNum + 1}/${pages.length}` : "Contents";
+    const headSize = 22;
+    page.drawText(headTitle, {
+      x: CARD_MARGIN_X,
+      y: PAGE_H - 90,
+      size: headSize,
+      font: cormorantItalic,
+      color: COVER_ACCENT,
     });
-    // dotted leader
-    const dotsStart = CARD_MARGIN_X + notoSans.widthOfTextAtSize(label, 11) + 8;
-    const dotsEnd = PAGE_W - CARD_MARGIN_X - pageLabelW - 8;
-    if (dotsEnd > dotsStart) {
-      page.drawText(".".repeat(Math.max(0, Math.floor((dotsEnd - dotsStart) / 3))), {
-        x: dotsStart,
+
+    let y = PAGE_H - 130;
+    const lineH = 22;
+    const start = pageNum * entriesPerPage;
+    const end = Math.min(entries.length, start + entriesPerPage);
+
+    for (let i = start; i < end; i++) {
+      const entry = entries[i];
+      const label = `${i + 1}.  ${entry.nickname || "（名前未設定）"}`;
+      const humanPage = outlineTargets[i].pageIndex + 1;
+      page.drawText(label, { x: CARD_MARGIN_X, y, size: 11, font: notoSans, color: rgb(0.9, 0.9, 0.95) });
+      const pageLabel = String(humanPage);
+      const pageLabelW = notoSans.widthOfTextAtSize(pageLabel, 11);
+      page.drawText(pageLabel, {
+        x: PAGE_W - CARD_MARGIN_X - pageLabelW,
         y,
         size: 11,
         font: notoSans,
-        color: rgb(0.4, 0.4, 0.48),
+        color: rgb(0.7, 0.7, 0.8),
       });
+      // dotted leader
+      const dotsStart = CARD_MARGIN_X + notoSans.widthOfTextAtSize(label, 11) + 8;
+      const dotsEnd = PAGE_W - CARD_MARGIN_X - pageLabelW - 8;
+      if (dotsEnd > dotsStart) {
+        page.drawText(".".repeat(Math.max(0, Math.floor((dotsEnd - dotsStart) / 3))), {
+          x: dotsStart,
+          y,
+          size: 11,
+          font: notoSans,
+          color: rgb(0.4, 0.4, 0.48),
+        });
+      }
+      y -= lineH;
     }
-    y -= lineH;
   });
 }
 
@@ -500,7 +498,7 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
       // Voice note
       let footerY = CARD_BOTTOM + 40;
       if (entry.voiceUrl) {
-        const note = "🎤 ボイスメッセージあり（Voice Collection に収録）";
+        const note = "♪ ボイスメッセージあり（Voice Collection に収録）";
         const nSize = 9;
         const nWidth = notoSans.widthOfTextAtSize(note, nSize);
         page.drawText(note, {
