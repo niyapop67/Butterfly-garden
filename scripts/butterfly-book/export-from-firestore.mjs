@@ -12,7 +12,8 @@
 // - createdAt (Firestore Timestamp) is converted to createdAtMs so the
 //   book generator can sort chronologically without needing firebase-admin.
 
-import admin from "firebase-admin";
+import { initializeApp, applicationDefault, getApps } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
 import fs from "fs";
 
 const [, , outPath, ...flags] = process.argv;
@@ -23,11 +24,11 @@ if (!outPath) {
   process.exit(1);
 }
 
-if (!admin.apps.length) {
-  admin.initializeApp({ credential: admin.credential.applicationDefault() });
+if (!getApps().length) {
+  initializeApp({ credential: applicationDefault() });
 }
 
-const db = admin.firestore();
+const db = getFirestore();
 
 async function main() {
   const snap = await db.collection("submissions").get();
