@@ -16,6 +16,7 @@
 import { PDFDocument, rgb, degrees, PDFName, PDFHexString, PDFNumber, PDFRef, PDFArray, PDFDict } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import emojiRegexFactory from "emoji-regex";
+import subsetFont from "subset-font";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -352,6 +353,41 @@ function wrapMixedText(text, font, size, emojiSize, maxWidth, glyphFilter) {
   return lines;
 }
 
+/** Builds the exact set of characters that need a Klee One glyph: every
+ * character in every nickname/message (across all entries, not just the
+ * ones that end up on a given page — simplest to keep correct), plus the
+ * static strings actually drawn with Klee One outside of user content
+ * (must stay in sync with drawLetterEntry / drawProloguePage / renderToc
+ * if those literal strings change, or a subsetted font will be missing a
+ * glyph it needs). Computed lazily (not as a module-level constant)
+ * because PROLOGUE_LINES is declared further down in this file. */
+function collectKleeCharSet(entries) {
+  const staticStrings = ["（名前未設定）", ...PROLOGUE_LINES];
+  const chars = new Set();
+  for (const s of staticStrings) for (const ch of s) chars.add(ch);
+  for (const entry of entries) {
+    for (const ch of entry.nickname || "") chars.add(ch);
+    for (const ch of entry.message || "") chars.add(ch);
+  }
+  return [...chars].join("");
+}
+
+/** Subsets a font to only the given characters using hb-subset (via the
+ * subset-font package — WASM, no Python dependency). Falls back to the
+ * original, full font bytes if subsetting fails for any reason (missing
+ * chars, an unexpected font structure, etc.) — a larger file is a much
+ * better failure mode than a broken build. */
+async function safeSubsetFont(fontBytes, chars, label) {
+  try {
+    const subset = await subsetFont(fontBytes, chars, { targetFormat: "sfnt" });
+    console.log(`  ${label}: ${fontBytes.length} -> ${subset.length} bytes (subset)`);
+    return subset;
+  } catch (e) {
+    console.warn(`  ${label}: subsetting failed (${e.message}), embedding full font instead`);
+    return fontBytes;
+  }
+}
+
 async function main() {
   const [, , entriesPath, outPath] = process.argv;
   if (!entriesPath || !outPath) {
@@ -367,30 +403,36 @@ async function main() {
   setMetadata(pdfDoc);
 
   // ---- Fonts ----
-  // subset:true embeds only the glyphs actually drawn, not the entire
-  // font file. Klee One and Noto Sans JP are full CJK fonts (~8-9MB each
-  // unsubset, since they cover thousands of kanji) — without subsetting,
-  // a 9-entry book was ballooning to 23MB from font data alone, which
-  // matters a lot given this is opened on phones, not printed.
-  const kleeRegular = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-Regular.ttf")),
-    { subset: true }
-  );
-  const kleeSemi = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf")),
-    { subset: true }
-  );
-  const notoSans = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "noto-sans-jp/NotoSansJP-Variable.ttf")),
-    { subset: true }
-  );
+  // Font subsetting history (read before changing this section):
+  // pdf-lib's built-in `{ subset: true }` looked like an easy file-size
+  // win but corrupts glyph outlines — confirmed with MuPDF (a strict,
+  // FreeType-based renderer much closer to real phone PDF viewers than
+  // Poppler, which stayed silent about the corruption and is why this
+  // wasn't caught earlier). This affected Noto Sans JP, both Cormorant
+  // Garamond weights (variable fonts), AND Klee One (a static font) — so
+  // it's not just a variable-font problem, pdf-lib's subsetter just isn't
+  // reliable here.
+  //
+  // subset-font (hb-subset compiled to WASM — the same subsetter behind
+  // Google Fonts, pure JS/no Python needed) IS safe for Klee One (verified
+  // via MuPDF: zero errors). It crashes fontkit on the variable fonts
+  // though, so those stay fully embedded — their combined size is modest
+  // next to Klee One's ~17MB (both weights, full CJK coverage), so this
+  // still keeps most of the win without the risk. If you touch this
+  // again: change it, then run `mutool draw -r 150 -o /dev/null out.pdf`
+  // and grep for "invalid"/"cannot render" — Poppler alone will not
+  // catch a regression here.
+  const kleeUsedChars = collectKleeCharSet(chronological);
+  const kleeRegularBytes = fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-Regular.ttf"));
+  const kleeSemiBytes = fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf"));
+  const kleeRegular = await pdfDoc.embedFont(await safeSubsetFont(kleeRegularBytes, kleeUsedChars, "KleeOne-Regular"));
+  const kleeSemi = await pdfDoc.embedFont(await safeSubsetFont(kleeSemiBytes, kleeUsedChars, "KleeOne-SemiBold"));
+  const notoSans = await pdfDoc.embedFont(fs.readFileSync(path.join(REPO_FONTS, "noto-sans-jp/NotoSansJP-Variable.ttf")));
   const cormorantItalic = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Italic-Variable.ttf")),
-    { subset: true }
+    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Italic-Variable.ttf"))
   );
   const cormorant = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Variable.ttf")),
-    { subset: true }
+    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Variable.ttf"))
   );
 
   // ---- Emoji handling: MIKA's fan symbols (🦋 / 💕) mean most nicknames
