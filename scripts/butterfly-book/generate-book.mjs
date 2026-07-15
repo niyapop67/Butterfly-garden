@@ -15,6 +15,7 @@
 
 import { PDFDocument, rgb, degrees, PDFName, PDFHexString, PDFNumber, PDFRef, PDFArray, PDFDict } from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
+import emojiRegexFactory from "emoji-regex";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -22,8 +23,13 @@ import { fileURLToPath } from "url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // This script lives at <repo>/scripts/butterfly-book/generate-book.mjs
 const REPO_ROOT = path.resolve(__dirname, "../..");
-const REPO_PUBLIC = path.join(REPO_ROOT, "public");
 const REPO_FONTS = path.join(REPO_ROOT, "src/fonts");
+// Downloaded Twemoji PNGs are cached here so repeat runs (and repeated
+// emoji across entries) don't re-fetch. Safe to delete; it will just
+// re-download on next run. Not committed to git (see .gitignore note in
+// README) since it's a rebuildable cache, not source content.
+const EMOJI_CACHE_DIR = path.join(__dirname, ".emoji-cache");
+const EMOJI_RE = emojiRegexFactory();
 
 const PAGE_W = 595.28; // A4 pt
 const PAGE_H = 841.89;
@@ -135,6 +141,217 @@ function escapeXml(str) {
     .replace(/'/g, "&apos;");
 }
 
+/** Klee One / Noto Sans JP have no emoji glyphs, and MIKA's fan symbols
+ * (🦋 / 💕) mean nearly every nickname will contain one. Stripping them
+ * would remove content people specifically chose to include, so instead
+ * each emoji is rendered as a small embedded Twemoji PNG positioned
+ * inline with the surrounding text — not dropped, not a font glyph.
+ *
+ * A non-emoji character with no glyph in the rendering font (true
+ * .notdef case — extremely rare, e.g. an obscure symbol) is still
+ * silently dropped as a last-resort safety net so generation never
+ * breaks or shows a visible tofu box; this filter is intentionally
+ * narrow now that emoji are handled separately. */
+function makeGlyphFilter(fontBuffer) {
+  const rawFont = fontkit.create(fontBuffer);
+  return function filterUnsupported(text) {
+    if (!text) return text;
+    let out = "";
+    for (const char of text) {
+      const cp = char.codePointAt(0);
+      let glyph;
+      try {
+        glyph = rawFont.glyphForCodePoint(cp);
+      } catch {
+        continue;
+      }
+      if (!glyph || glyph.id === 0) continue; // true .notdef — drop silently
+      out += char;
+    }
+    return out;
+  };
+}
+
+/** Splits text into alternating {type:'text'} / {type:'emoji'} tokens.
+ * emoji-regex correctly handles multi-codepoint sequences (ZWJ joins,
+ * skin-tone modifiers, variation selectors) as one grapheme, so 👨‍👩‍👧
+ * or ❤️ stay intact as a single emoji token instead of splitting. */
+function tokenizeEmoji(text) {
+  const tokens = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(EMOJI_RE)) {
+    if (match.index > lastIndex) tokens.push({ type: "text", value: text.slice(lastIndex, match.index) });
+    tokens.push({ type: "emoji", value: match[0] });
+    lastIndex = match.index + match[0].length;
+  }
+  if (lastIndex < text.length) tokens.push({ type: "text", value: text.slice(lastIndex) });
+  return tokens;
+}
+
+function emojiCodepointsHex(str, stripVariationSelectors) {
+  let codes = [...str].map((c) => c.codePointAt(0));
+  if (stripVariationSelectors) codes = codes.filter((cp) => cp !== 0xfe0f && cp !== 0xfe0e);
+  return codes.map((cp) => cp.toString(16)).join("-");
+}
+
+/** Downloads (or reads from local cache) the Twemoji 72x72 PNG for one
+ * emoji grapheme. Tries the exact codepoint sequence first, then retries
+ * with variation selectors stripped (Twemoji's own filenames often omit
+ * FE0F — e.g. ❤️ ships as 2764.png, not 2764-fe0f.png). Returns null if
+ * no variant is found in either source (caller should skip that one
+ * emoji rather than fail the whole run).
+ *
+ * Source priority: jdecked/twemoji first — twitter/twemoji was archived
+ * in 2023 and is frozen at an older Unicode emoji set, missing anything
+ * added since (including 🩷 pink heart, Unicode 15.0 — one of MIKA's two
+ * core fan symbols, so this isn't optional). jdecked/twemoji is the
+ * actively-maintained community continuation. The original repo is kept
+ * as a fallback mirror in case jdecked ever becomes unavailable. */
+const TWEMOJI_SOURCES = [
+  "https://raw.githubusercontent.com/jdecked/twemoji/main/assets/72x72",
+  "https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72",
+];
+
+async function fetchTwemojiPng(emojiStr) {
+  const primaryKey = emojiCodepointsHex(emojiStr, false);
+  const cachePath = path.join(EMOJI_CACHE_DIR, `${primaryKey}.png`);
+  if (fs.existsSync(cachePath)) return fs.readFileSync(cachePath);
+
+  const candidates = [...new Set([primaryKey, emojiCodepointsHex(emojiStr, true)])];
+  for (const base of TWEMOJI_SOURCES) {
+    for (const hex of candidates) {
+      const url = `${base}/${hex}.png`;
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          const buf = Buffer.from(await res.arrayBuffer());
+          fs.mkdirSync(EMOJI_CACHE_DIR, { recursive: true });
+          fs.writeFileSync(cachePath, buf);
+          return buf;
+        }
+      } catch {
+        // network hiccup — try next candidate/source, treat like not-found
+      }
+    }
+  }
+  return null;
+}
+
+/** Scans every nickname/message for unique emoji, fetches+embeds each
+ * exactly once (regardless of how many entries reuse it — 🦋 and 💕 will
+ * appear dozens of times), and returns a Map from the emoji string to its
+ * embedded pdf-lib image, ready for synchronous lookup during page
+ * drawing. Entries whose emoji can't be fetched (offline, or truly not
+ * in Twemoji) are logged and simply omitted from the map; the drawing
+ * code skips any emoji with no map entry rather than failing. */
+async function buildEmojiImageMap(pdfDoc, entries) {
+  const unique = new Set();
+  for (const entry of entries) {
+    for (const t of tokenizeEmoji(entry.nickname || "")) if (t.type === "emoji") unique.add(t.value);
+    for (const t of tokenizeEmoji(entry.message || "")) if (t.type === "emoji") unique.add(t.value);
+  }
+
+  const map = new Map();
+  for (const emoji of unique) {
+    const bytes = await fetchTwemojiPng(emoji);
+    if (!bytes) {
+      console.warn(`  (emoji not found in Twemoji, will be omitted: ${JSON.stringify(emoji)})`);
+      continue;
+    }
+    try {
+      map.set(emoji, await pdfDoc.embedPng(bytes));
+    } catch (e) {
+      console.warn(`  (failed to embed emoji image ${JSON.stringify(emoji)}: ${e.message})`);
+    }
+  }
+  return map;
+}
+
+/** Measures the rendered width of a run list (mix of {type:'text'} and
+ * {type:'emoji'} entries) at a given font size. Emoji are drawn as
+ * square images sized to `emojiSize`. */
+function measureRunsWidth(runs, font, size, emojiSize) {
+  let w = 0;
+  for (const run of runs) {
+    w += run.type === "emoji" ? emojiSize : font.widthOfTextAtSize(run.value, size);
+  }
+  return w;
+}
+
+/** Draws a run list left-to-right starting at (x, y), where y is the text
+ * baseline. Emoji images are nudged down slightly so their visual center
+ * sits closer to the surrounding text's optical center (square images
+ * anchored at their bottom-left by pdf-lib would otherwise sit too high
+ * relative to a baseline-anchored font). Returns the ending x. */
+function drawMixedRuns(page, runs, x, y, { font, size, color, emojiMap, emojiSize }) {
+  let cursor = x;
+  for (const run of runs) {
+    if (run.type === "emoji") {
+      const img = emojiMap.get(run.value);
+      if (img) {
+        page.drawImage(img, { x: cursor, y: y - emojiSize * 0.12, width: emojiSize, height: emojiSize });
+      }
+      cursor += emojiSize; // reserve the slot even if the image was missing
+    } else {
+      page.drawText(run.value, { x: cursor, y, size, font, color });
+      cursor += font.widthOfTextAtSize(run.value, size);
+    }
+  }
+  return cursor;
+}
+
+/** Tokenizes text into emoji + text runs, filters each text run through
+ * the font's real glyph coverage (safety net for the rare truly-unusable
+ * character), then greedily wraps the combined run stream into lines no
+ * wider than maxWidth — treating each emoji as one atomic unit (never
+ * split across a line break) and each character as a candidate break
+ * point (matches how Japanese wraps without spaces). Returns an array of
+ * lines, each an array of merged runs ready for measureRunsWidth /
+ * drawMixedRuns. */
+function wrapMixedText(text, font, size, emojiSize, maxWidth, glyphFilter) {
+  const atoms = [];
+  for (const token of tokenizeEmoji(text)) {
+    if (token.type === "emoji") {
+      atoms.push({ type: "emoji", value: token.value });
+    } else {
+      for (const ch of glyphFilter(token.value)) atoms.push({ type: "char", value: ch });
+    }
+  }
+  if (atoms.length === 0) return [[]];
+
+  const lines = [];
+  let runs = [];
+  let textBuf = "";
+  let width = 0;
+
+  const flushText = () => {
+    if (textBuf) {
+      runs.push({ type: "text", value: textBuf });
+      textBuf = "";
+    }
+  };
+  const flushLine = () => {
+    flushText();
+    lines.push(runs);
+    runs = [];
+    width = 0;
+  };
+
+  for (const atom of atoms) {
+    const w = atom.type === "emoji" ? emojiSize : font.widthOfTextAtSize(atom.value, size);
+    if (width + w > maxWidth && width > 0) flushLine();
+    if (atom.type === "emoji") {
+      flushText();
+      runs.push({ type: "emoji", value: atom.value });
+    } else {
+      textBuf += atom.value;
+    }
+    width += w;
+  }
+  flushLine();
+  return lines;
+}
+
 async function main() {
   const [, , entriesPath, outPath] = process.argv;
   if (!entriesPath || !outPath) {
@@ -150,20 +367,61 @@ async function main() {
   setMetadata(pdfDoc);
 
   // ---- Fonts ----
-  const kleeRegular = await pdfDoc.embedFont(fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-Regular.ttf")));
-  const kleeSemi = await pdfDoc.embedFont(fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf")));
-  const notoSans = await pdfDoc.embedFont(fs.readFileSync(path.join(REPO_FONTS, "noto-sans-jp/NotoSansJP-Variable.ttf")));
+  // subset:true embeds only the glyphs actually drawn, not the entire
+  // font file. Klee One and Noto Sans JP are full CJK fonts (~8-9MB each
+  // unsubset, since they cover thousands of kanji) — without subsetting,
+  // a 9-entry book was ballooning to 23MB from font data alone, which
+  // matters a lot given this is opened on phones, not printed.
+  const kleeRegular = await pdfDoc.embedFont(
+    fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-Regular.ttf")),
+    { subset: true }
+  );
+  const kleeSemi = await pdfDoc.embedFont(
+    fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf")),
+    { subset: true }
+  );
+  const notoSans = await pdfDoc.embedFont(
+    fs.readFileSync(path.join(REPO_FONTS, "noto-sans-jp/NotoSansJP-Variable.ttf")),
+    { subset: true }
+  );
   const cormorantItalic = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Italic-Variable.ttf"))
+    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Italic-Variable.ttf")),
+    { subset: true }
   );
   const cormorant = await pdfDoc.embedFont(
-    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Variable.ttf"))
+    fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Variable.ttf")),
+    { subset: true }
   );
 
+  // ---- Emoji handling: MIKA's fan symbols (🦋 / 💕) mean most nicknames
+  // will contain emoji, and people write them into messages too. Klee One
+  // has no emoji glyphs, so fetch+embed each unique emoji once as a small
+  // Twemoji image; drawLetterEntry/renderToc render them inline with the
+  // surrounding text instead of dropping them. Requires network access
+  // (raw.githubusercontent.com) — falls back to omitting just that one
+  // emoji (not the whole entry) if a fetch fails. ----
+  console.log("Fetching emoji images (Twemoji)...");
+  const emojiMap = await buildEmojiImageMap(pdfDoc, chronological);
+  console.log(`  embedded ${emojiMap.size} unique emoji`);
+
+  // Safety net for any remaining non-emoji character with no glyph in the
+  // rendering font (true .notdef edge case) — applied per text-run inside
+  // wrapMixedText, not to the raw strings, so emoji tokens are untouched.
+  const kleeGlyphFilter = makeGlyphFilter(fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf")));
+
   // ---- Decoration images ----
-  const cornerImg = await pdfDoc.embedPng(fs.readFileSync(path.join(REPO_PUBLIC, "images/decor/corner_tl_new.png")));
-  const roseImg = await pdfDoc.embedPng(fs.readFileSync(path.join(REPO_PUBLIC, "images/decor/rose_top.png")));
-  const crystalImg = await pdfDoc.embedPng(fs.readFileSync(path.join(REPO_PUBLIC, "images/decor/crystal_bottom.png")));
+  // ---- Decoration images ----
+  // Use downscaled copies (scripts/butterfly-book/assets/) rather than the
+  // site's full-resolution originals (public/images/decor/). Those are
+  // sized for the responsive web LetterModal; here they're drawn at a
+  // fixed ~110-215pt on the page, so embedding the 1536x1024 web originals
+  // was pure waste (roughly 5.5MB of the file for artwork rendered at a
+  // few hundred pixels). See assets/README or generate-book.mjs history
+  // for how these were produced (Lanczos downscale, same aspect ratio).
+  const ASSETS_DIR = path.join(__dirname, "assets");
+  const cornerImg = await pdfDoc.embedPng(fs.readFileSync(path.join(ASSETS_DIR, "corner_tl_new.png")));
+  const roseImg = await pdfDoc.embedPng(fs.readFileSync(path.join(ASSETS_DIR, "rose_top.png")));
+  const crystalImg = await pdfDoc.embedPng(fs.readFileSync(path.join(ASSETS_DIR, "crystal_bottom.png")));
 
   // ==== Page flow: Movie ends → this Book opens ====
   // Cover (closing-curtain feel, minimal) → Title Page (formal) →
@@ -180,7 +438,7 @@ async function main() {
   sectionOutline.push({ title: "Prologue", pageIndex: pdfDoc.getPageCount() });
   drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans });
 
-  const TOC_ENTRIES_PER_PAGE = Math.floor((PAGE_H - 130 - 70) / 22); // matches renderToc's layout math
+  const TOC_ENTRIES_PER_PAGE = Math.floor((PAGE_H - 130 - 70) / 25); // matches renderToc's layout math
   const tocPageCount = Math.max(1, Math.ceil(chronological.length / TOC_ENTRIES_PER_PAGE));
   sectionOutline.push({ title: "Contents", pageIndex: pdfDoc.getPageCount() });
   const tocPages = [];
@@ -199,12 +457,14 @@ async function main() {
       cornerImg,
       roseImg,
       crystalImg,
+      emojiMap,
+      glyphFilter: kleeGlyphFilter,
     });
     outlineTargets.push({ title: `${i + 1}. ${entry.nickname || "（名前未設定）"}`, pageIndex: startPageIndex });
   }
 
   // ---- Fill in TOC (across as many pages as needed) now that we know final page numbers ----
-  renderToc(tocPages, chronological, outlineTargets, notoSans, cormorantItalic, kleeSemi, TOC_ENTRIES_PER_PAGE);
+  renderToc(tocPages, chronological, outlineTargets, notoSans, cormorantItalic, kleeSemi, TOC_ENTRIES_PER_PAGE, emojiMap);
 
   // ---- Add PDF outline (bookmarks): section markers + a "Letters" group ----
   const lettersNode = { title: "Letters", pageIndex: outlineTargets[0]?.pageIndex, children: outlineTargets };
@@ -341,7 +601,7 @@ function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
     color: COVER_ACCENT,
   });
 
-  const bodySize = 13;
+  const bodySize = 17; // bumped for phone-screen legibility
   const lineHeight = bodySize * 2.1;
   let y = PAGE_H / 2 + (PROLOGUE_LINES.length * lineHeight) / 2 - lineHeight;
 
@@ -366,7 +626,10 @@ function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
  * array of blank TOC pages already reserved in main(). Splitting by
  * entriesPerPage keeps every participant listed and linked, no matter
  * how many submissions there are. */
-function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kleeSemi, entriesPerPage) {
+function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kleeSemi, entriesPerPage, emojiMap) {
+  const TOC_FONT_SIZE = 13;
+  const TOC_EMOJI_SIZE = 14;
+
   pages.forEach((page, pageNum) => {
     page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
     const headTitle = pages.length > 1 ? `Contents ${pageNum + 1}/${pages.length}` : "Contents";
@@ -380,32 +643,41 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kl
     });
 
     let y = PAGE_H - 130;
-    const lineH = 22;
+    const lineH = 25;
     const start = pageNum * entriesPerPage;
     const end = Math.min(entries.length, start + entriesPerPage);
 
     for (let i = start; i < end; i++) {
       const entry = entries[i];
-      const label = `${i + 1}.  ${entry.nickname || "（名前未設定）"}`;
+      const nickname = entry.nickname || "（名前未設定）";
+      const nameRuns = [{ type: "text", value: `${i + 1}.  ` }, ...tokenizeEmoji(nickname)];
+      const nameWidth = measureRunsWidth(nameRuns, notoSans, TOC_FONT_SIZE, TOC_EMOJI_SIZE);
+      drawMixedRuns(page, nameRuns, CARD_MARGIN_X, y, {
+        font: notoSans,
+        size: TOC_FONT_SIZE,
+        color: rgb(0.9, 0.9, 0.95),
+        emojiMap,
+        emojiSize: TOC_EMOJI_SIZE,
+      });
+
       const humanPage = outlineTargets[i].pageIndex + 1;
-      page.drawText(label, { x: CARD_MARGIN_X, y, size: 11, font: notoSans, color: rgb(0.9, 0.9, 0.95) });
       const pageLabel = String(humanPage);
-      const pageLabelW = notoSans.widthOfTextAtSize(pageLabel, 11);
+      const pageLabelW = notoSans.widthOfTextAtSize(pageLabel, TOC_FONT_SIZE);
       page.drawText(pageLabel, {
         x: PAGE_W - CARD_MARGIN_X - pageLabelW,
         y,
-        size: 11,
+        size: TOC_FONT_SIZE,
         font: notoSans,
         color: rgb(0.7, 0.7, 0.8),
       });
       // dotted leader
-      const dotsStart = CARD_MARGIN_X + notoSans.widthOfTextAtSize(label, 11) + 8;
+      const dotsStart = CARD_MARGIN_X + nameWidth + 8;
       const dotsEnd = PAGE_W - CARD_MARGIN_X - pageLabelW - 8;
       if (dotsEnd > dotsStart) {
         page.drawText(".".repeat(Math.max(0, Math.floor((dotsEnd - dotsStart) / 3))), {
           x: dotsStart,
           y,
-          size: 11,
+          size: TOC_FONT_SIZE,
           font: notoSans,
           color: rgb(0.4, 0.4, 0.48),
         });
@@ -419,11 +691,13 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kl
  * message is long. Every page gets the full decorative frame so the
  * "book" feels consistent no matter where you open it. */
 function drawLetterEntry(pdfDoc, entry, index, assets) {
-  const { kleeRegular, kleeSemi, notoSans, cormorantItalic, cornerImg, roseImg, crystalImg } = assets;
+  const { kleeRegular, kleeSemi, notoSans, cormorantItalic, cornerImg, roseImg, crystalImg, emojiMap, glyphFilter } =
+    assets;
   const message = entry.message || "（メッセージなし）";
   const isShort = message.length <= 30 && !message.includes("\n");
 
   const bodySize = messageFontSize(message.length);
+  const emojiSize = bodySize * 1.05; // emoji sit slightly larger than the surrounding CJK text
   const lineGap = 1.9;
   const lineHeight = bodySize * lineGap;
   const textWidth = CARD_W - 2 * 44; // inner padding ~44pt each side
@@ -432,11 +706,14 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
   const allLines = [];
   for (const para of paragraphs) {
     if (para === "") {
-      allLines.push({ text: "", isBlank: true });
+      allLines.push({ runs: [], isBlank: true });
       continue;
     }
-    const wrapped = wrapText(para, kleeRegular, bodySize, textWidth);
-    for (const line of wrapped) allLines.push({ text: line, isBlank: false });
+    // Measure and draw with the same font (kleeSemi) — a previous version
+    // measured with kleeRegular here but drew with kleeSemi, which could
+    // silently mis-wrap since the two weights aren't the same width.
+    const wrapped = wrapMixedText(para, kleeSemi, bodySize, emojiSize, textWidth, glyphFilter);
+    for (const runs of wrapped) allLines.push({ runs, isBlank: false });
   }
 
   let lineCursor = 0;
@@ -483,10 +760,15 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
       if (line.isBlank) {
         y -= lineHeight * 0.5;
       } else {
-        const font = kleeSemi;
-        const lw = font.widthOfTextAtSize(line.text, bodySize);
+        const lw = measureRunsWidth(line.runs, kleeSemi, bodySize, emojiSize);
         const x = isShort ? (PAGE_W - lw) / 2 : CARD_LEFT + 44;
-        page.drawText(line.text, { x, y, size: bodySize, font, color: INK });
+        drawMixedRuns(page, line.runs, x, y, {
+          font: kleeSemi,
+          size: bodySize,
+          color: INK,
+          emojiMap,
+          emojiSize,
+        });
         y -= lineHeight;
       }
       lineCursor++;
@@ -513,21 +795,22 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
 
       // Sender
       const fromLabel = "From";
-      const name = entry.nickname || "（名前未設定）";
-      const fromSize = 9;
-      const nameSize = 13;
-      const nameWidth = notoSans.widthOfTextAtSize(name, nameSize);
+      const nameSize = 16;
+      const nameEmojiSize = nameSize * 1.05;
+      const resolvedNameRuns = entry.nickname ? tokenizeEmoji(entry.nickname) : tokenizeEmoji("（名前未設定）");
+      const fromSize = 11;
+      const nameWidth = measureRunsWidth(resolvedNameRuns, kleeSemi, nameSize, nameEmojiSize);
       const fromWidth = notoSans.widthOfTextAtSize(fromLabel, fromSize);
       const gap = 6;
       const totalW = fromWidth + gap + nameWidth;
       const startX = CARD_RIGHT - 44 - totalW;
       page.drawText(fromLabel, { x: startX, y: CARD_BOTTOM + 24, size: fromSize, font: notoSans, color: SENDER_LABEL });
-      page.drawText(name, {
-        x: startX + fromWidth + gap,
-        y: CARD_BOTTOM + 22,
-        size: nameSize,
+      drawMixedRuns(page, resolvedNameRuns, startX + fromWidth + gap, CARD_BOTTOM + 22, {
         font: kleeSemi,
+        size: nameSize,
         color: SENDER_NAME,
+        emojiMap,
+        emojiSize: nameEmojiSize,
       });
     } else {
       const moreLabel = "つづく →";
@@ -620,29 +903,15 @@ function drawPageFrame(page, cornerImg, roseImg, crystalImg) {
 }
 
 function messageFontSize(length) {
-  if (length <= 40) return 20;
-  if (length <= 80) return 17;
-  if (length <= 150) return 15;
-  if (length <= 260) return 13;
-  if (length <= 380) return 13;
-  return 12;
-}
-
-function wrapText(text, font, size, maxWidth) {
-  if (text.length === 0) return [""];
-  const lines = [];
-  let current = "";
-  for (const char of text) {
-    const candidate = current + char;
-    if (font.widthOfTextAtSize(candidate, size) > maxWidth && current.length > 0) {
-      lines.push(current);
-      current = char;
-    } else {
-      current = candidate;
-    }
-  }
-  if (current.length > 0) lines.push(current);
-  return lines;
+  // Sized for phone-screen reading (the primary viewing context — this
+  // is opened in a PDF viewer on a phone, not printed), not print-page
+  // legibility. Bumped up from the original print-oriented scale.
+  if (length <= 40) return 24;
+  if (length <= 80) return 21;
+  if (length <= 150) return 18;
+  if (length <= 260) return 16;
+  if (length <= 380) return 15;
+  return 14;
 }
 
 /** Low-level PDF outline (bookmarks) so viewers show a jump-to-entry
