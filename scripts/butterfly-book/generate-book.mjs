@@ -148,28 +148,26 @@ function escapeXml(str) {
  * each emoji is rendered as a small embedded Twemoji PNG positioned
  * inline with the surrounding text — not dropped, not a font glyph.
  *
- * A non-emoji character with no glyph in the rendering font (true
- * .notdef case — extremely rare, e.g. an obscure symbol) is still
- * silently dropped as a last-resort safety net so generation never
- * breaks or shows a visible tofu box; this filter is intentionally
- * narrow now that emoji are handled separately. */
-function makeGlyphFilter(fontBuffer) {
+ * Separately, Klee One / Noto Sans JP don't cover every script either —
+ * a Thai fan's nickname needs Noto Sans Thai instead. makeCoverageChecker
+ * builds a synchronous hasGlyph(char) test against a font's real glyph
+ * table (via fontkit directly, independent of pdf-lib); resolveFontChain
+ * below uses one of these per font to pick which embedded font renders
+ * each character, falling through in priority order. A character with no
+ * glyph in ANY font in the chain (true .notdef case — extremely rare) is
+ * silently dropped as a last-resort safety net so generation never breaks
+ * or shows a visible tofu box. */
+function makeCoverageChecker(fontBuffer) {
   const rawFont = fontkit.create(fontBuffer);
-  return function filterUnsupported(text) {
-    if (!text) return text;
-    let out = "";
-    for (const char of text) {
-      const cp = char.codePointAt(0);
-      let glyph;
-      try {
-        glyph = rawFont.glyphForCodePoint(cp);
-      } catch {
-        continue;
-      }
-      if (!glyph || glyph.id === 0) continue; // true .notdef — drop silently
-      out += char;
+  return function hasGlyph(char) {
+    const cp = char.codePointAt(0);
+    let glyph;
+    try {
+      glyph = rawFont.glyphForCodePoint(cp);
+    } catch {
+      return false;
     }
-    return out;
+    return !!glyph && glyph.id !== 0;
   };
 }
 
@@ -268,23 +266,26 @@ async function buildEmojiImageMap(pdfDoc, entries) {
   return map;
 }
 
-/** Measures the rendered width of a run list (mix of {type:'text'} and
- * {type:'emoji'} entries) at a given font size. Emoji are drawn as
+/** Measures the rendered width of a run list (mix of {type:'text', font}
+ * and {type:'emoji'} entries) at a given font size. Emoji are drawn as
  * square images sized to `emojiSize`. */
-function measureRunsWidth(runs, font, size, emojiSize) {
+function measureRunsWidth(runs, size, emojiSize) {
   let w = 0;
   for (const run of runs) {
-    w += run.type === "emoji" ? emojiSize : font.widthOfTextAtSize(run.value, size);
+    w += run.type === "emoji" ? emojiSize : run.font.widthOfTextAtSize(run.value, size);
   }
   return w;
 }
 
 /** Draws a run list left-to-right starting at (x, y), where y is the text
- * baseline. Emoji images are nudged down slightly so their visual center
- * sits closer to the surrounding text's optical center (square images
- * anchored at their bottom-left by pdf-lib would otherwise sit too high
- * relative to a baseline-anchored font). Returns the ending x. */
-function drawMixedRuns(page, runs, x, y, { font, size, color, emojiMap, emojiSize }) {
+ * baseline. Each text run carries its own resolved font (from the
+ * fallback chain), so mixed-script strings like "🦋前田chie" or a Thai
+ * nickname render correctly in one call. Emoji images are nudged down
+ * slightly so their visual center sits closer to the surrounding text's
+ * optical center (square images anchored at their bottom-left by pdf-lib
+ * would otherwise sit too high relative to a baseline-anchored font).
+ * Returns the ending x. */
+function drawMixedRuns(page, runs, x, y, { size, color, emojiMap, emojiSize }) {
   let cursor = x;
   for (const run of runs) {
     if (run.type === "emoji") {
@@ -294,28 +295,45 @@ function drawMixedRuns(page, runs, x, y, { font, size, color, emojiMap, emojiSiz
       }
       cursor += emojiSize; // reserve the slot even if the image was missing
     } else {
-      page.drawText(run.value, { x: cursor, y, size, font, color });
-      cursor += font.widthOfTextAtSize(run.value, size);
+      page.drawText(run.value, { x: cursor, y, size, font: run.font, color });
+      cursor += run.font.widthOfTextAtSize(run.value, size);
     }
   }
   return cursor;
 }
 
-/** Tokenizes text into emoji + text runs, filters each text run through
- * the font's real glyph coverage (safety net for the rare truly-unusable
- * character), then greedily wraps the combined run stream into lines no
- * wider than maxWidth — treating each emoji as one atomic unit (never
- * split across a line break) and each character as a candidate break
- * point (matches how Japanese wraps without spaces). Returns an array of
- * lines, each an array of merged runs ready for measureRunsWidth /
- * drawMixedRuns. */
-function wrapMixedText(text, font, size, emojiSize, maxWidth, glyphFilter) {
+/** Picks the first font in `fontChain` (an array of { font, hasGlyph })
+ * that has a glyph for `char`. Returns null if none do (safety-net drop
+ * case). */
+function pickFontForChar(char, fontChain) {
+  for (const entry of fontChain) {
+    if (entry.hasGlyph(char)) return entry.font;
+  }
+  return null;
+}
+
+/** Tokenizes text into emoji + text runs, resolves each non-emoji
+ * character against `fontChain` in priority order (e.g. Klee One first,
+ * Noto Sans Thai as fallback for a Thai nickname — a character with no
+ * glyph anywhere in the chain is silently dropped), then greedily wraps
+ * the combined run stream into lines no wider than maxWidth — treating
+ * each emoji as one atomic unit (never split across a line break) and
+ * each character as a candidate break point (matches how Japanese wraps
+ * without spaces). A font change mid-line (e.g. Japanese text followed by
+ * a Thai name) starts a new run so drawMixedRuns can switch fonts at the
+ * right spot. Returns an array of lines, each an array of runs ready for
+ * measureRunsWidth / drawMixedRuns. */
+function wrapMixedText(text, fontChain, size, emojiSize, maxWidth) {
   const atoms = [];
   for (const token of tokenizeEmoji(text)) {
     if (token.type === "emoji") {
       atoms.push({ type: "emoji", value: token.value });
     } else {
-      for (const ch of glyphFilter(token.value)) atoms.push({ type: "char", value: ch });
+      for (const ch of token.value) {
+        const font = pickFontForChar(ch, fontChain);
+        if (!font) continue; // no font in the chain covers this char — drop
+        atoms.push({ type: "char", value: ch, font });
+      }
     }
   }
   if (atoms.length === 0) return [[]];
@@ -323,12 +341,14 @@ function wrapMixedText(text, font, size, emojiSize, maxWidth, glyphFilter) {
   const lines = [];
   let runs = [];
   let textBuf = "";
+  let textBufFont = null;
   let width = 0;
 
   const flushText = () => {
     if (textBuf) {
-      runs.push({ type: "text", value: textBuf });
+      runs.push({ type: "text", value: textBuf, font: textBufFont });
       textBuf = "";
+      textBufFont = null;
     }
   };
   const flushLine = () => {
@@ -339,18 +359,139 @@ function wrapMixedText(text, font, size, emojiSize, maxWidth, glyphFilter) {
   };
 
   for (const atom of atoms) {
-    const w = atom.type === "emoji" ? emojiSize : font.widthOfTextAtSize(atom.value, size);
+    const w = atom.type === "emoji" ? emojiSize : atom.font.widthOfTextAtSize(atom.value, size);
     if (width + w > maxWidth && width > 0) flushLine();
     if (atom.type === "emoji") {
       flushText();
       runs.push({ type: "emoji", value: atom.value });
     } else {
+      if (textBufFont && textBufFont !== atom.font) flushText(); // font changed — start a new run
       textBuf += atom.value;
+      textBufFont = atom.font;
     }
     width += w;
   }
   flushLine();
   return lines;
+}
+
+/** Same font-chain + emoji resolution as wrapMixedText, but for text that
+ * should never wrap (sender names, TOC entries) — returns one run list
+ * instead of an array of lines. */
+function resolveMixedRuns(text, fontChain) {
+  const lines = wrapMixedText(text, fontChain, 1, 1, Infinity);
+  return lines[0] || [];
+}
+
+/** Greedy romaji→hiragana table, longest match first. Covers the common
+ * Hepburn patterns (digraphs like "kya", the sokuon doubled-consonant
+ * "kk" → っk, "shi"/"chi"/"tsu" irregulars, n-row). Good enough to turn
+ * "maeda" into "まえだ" so it sorts under ま like a Japanese reader would
+ * expect — not a full romaji parser, but real nicknames are short and
+ * simple enough that this covers the common cases. */
+const ROMAJI_TABLE = (() => {
+  const rows = {
+    a: "あ", i: "い", u: "う", e: "え", o: "お",
+    ka: "か", ki: "き", ku: "く", ke: "け", ko: "こ",
+    sa: "さ", shi: "し", su: "す", se: "せ", so: "そ",
+    ta: "た", chi: "ち", tsu: "つ", te: "て", to: "と",
+    na: "な", ni: "に", nu: "ぬ", ne: "ね", no: "の",
+    ha: "は", hi: "ひ", fu: "ふ", he: "へ", ho: "ほ",
+    ma: "ま", mi: "み", mu: "む", me: "め", mo: "も",
+    ya: "や", yu: "ゆ", yo: "よ",
+    ra: "ら", ri: "り", ru: "る", re: "れ", ro: "ろ",
+    wa: "わ", wo: "を", wi: "うぃ", we: "うぇ",
+    ga: "が", gi: "ぎ", gu: "ぐ", ge: "げ", go: "ご",
+    za: "ざ", ji: "じ", zu: "ず", ze: "ぜ", zo: "ぞ",
+    da: "だ", di: "ぢ", du: "づ", de: "で", do: "ど",
+    ba: "ば", bi: "び", bu: "ぶ", be: "べ", bo: "ぼ",
+    pa: "ぱ", pi: "ぴ", pu: "ぷ", pe: "ぺ", po: "ぽ",
+    kya: "きゃ", kyu: "きゅ", kyo: "きょ",
+    sha: "しゃ", shu: "しゅ", sho: "しょ",
+    cha: "ちゃ", chu: "ちゅ", cho: "ちょ",
+    nya: "にゃ", nyu: "にゅ", nyo: "にょ",
+    hya: "ひゃ", hyu: "ひゅ", hyo: "ひょ",
+    mya: "みゃ", myu: "みゅ", myo: "みょ",
+    rya: "りゃ", ryu: "りゅ", ryo: "りょ",
+    gya: "ぎゃ", gyu: "ぎゅ", gyo: "ぎょ",
+    ja: "じゃ", ju: "じゅ", jo: "じょ",
+    bya: "びゃ", byu: "びゅ", byo: "びょ",
+    pya: "ぴゃ", pyu: "ぴゅ", pyo: "ぴょ",
+    fa: "ふぁ", fi: "ふぃ", fe: "ふぇ", fo: "ふぉ",
+    n: "ん",
+  };
+  // Longest keys first so greedy matching prefers "kya" over "ka"+"ya".
+  return Object.entries(rows).sort((a, b) => b[0].length - a[0].length);
+})();
+
+function romajiWordToHiragana(word) {
+  const lower = word.toLowerCase();
+  let out = "";
+  let i = 0;
+  while (i < lower.length) {
+    // Sokuon: doubled consonant (not n) → っ + rest, e.g. "kko" → っこ
+    if (
+      i + 1 < lower.length &&
+      lower[i] === lower[i + 1] &&
+      "bcdfghjklmpqrstvwxyz".includes(lower[i])
+    ) {
+      out += "っ";
+      i += 1;
+      continue;
+    }
+    let matched = false;
+    for (const [key, kana] of ROMAJI_TABLE) {
+      if (lower.startsWith(key, i)) {
+        out += kana;
+        i += key.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      out += lower[i]; // unrecognized letter — keep literally, still sorts stably
+      i += 1;
+    }
+  }
+  return out;
+}
+
+/** Builds a sort key that approximates gojuon (五十音) order for a mixed
+ * nickname: strips emoji/decorative symbols, normalizes half-width
+ * katakana to full-width and then to hiragana (NFKC + a code-point
+ * shift), and converts runs of ASCII letters via the romaji table above
+ * so "maeda" sorts under ま like "前田" would if we had its reading.
+ * Kanji (and any other untranslated script, e.g. Thai) pass through
+ * literally — there's no reading dictionary here, so those fall back to
+ * plain Unicode order, which is a reasonable degradation but not truly
+ * gojuon-correct. Compare the results with `.localeCompare(other, "ja")`
+ * for proper Japanese collation. */
+function kanaSortKey(nickname) {
+  const noEmoji = tokenizeEmoji(nickname || "")
+    .filter((t) => t.type === "text")
+    .map((t) => t.value)
+    .join("");
+  const normalized = noEmoji.normalize("NFKC"); // half-width katakana -> full-width
+  let out = "";
+  let i = 0;
+  while (i < normalized.length) {
+    const ch = normalized[i];
+    const cp = ch.codePointAt(0);
+    if (cp >= 0x30a1 && cp <= 0x30f6) {
+      // Full-width katakana -> hiragana (same relative layout, -0x60)
+      out += String.fromCodePoint(cp - 0x60);
+      i += 1;
+    } else if (/[a-zA-Z]/.test(ch)) {
+      let j = i;
+      while (j < normalized.length && /[a-zA-Z]/.test(normalized[j])) j += 1;
+      out += romajiWordToHiragana(normalized.slice(i, j));
+      i = j;
+    } else {
+      out += ch; // hiragana, kanji, digits, Thai, symbols — pass through
+      i += 1;
+    }
+  }
+  return out.trim();
 }
 
 /** Builds the exact set of characters that need a Klee One glyph: every
@@ -388,6 +529,46 @@ async function safeSubsetFont(fontBytes, chars, label) {
   }
 }
 
+/** Groups entries by butterfly type (in BUTTERFLY_THEME_LABELS' key
+ * order — treated as the site's own type ordering, since there's no
+ * other defined ranking), then sorts each group in gojuon order via
+ * kanaSortKey (createdAtMs as a stable tiebreaker for identical/near-
+ * identical keys). Returns the flattened, ordered entry list plus the
+ * group boundaries (type, label, start index, count) needed to insert a
+ * section-divider page and a nested outline entry per group. Any entry
+ * with a butterflyType not in BUTTERFLY_THEME_LABELS is grouped last
+ * under a plain "その他" label rather than dropped. */
+function groupAndSortEntries(entries) {
+  const orderedTypes = Object.keys(BUTTERFLY_THEME_LABELS);
+  const byType = new Map(orderedTypes.map((t) => [t, []]));
+  const other = [];
+  for (const entry of entries) {
+    if (byType.has(entry.butterflyType)) byType.get(entry.butterflyType).push(entry);
+    else other.push(entry);
+  }
+
+  const sortGroup = (group) =>
+    [...group].sort((a, b) => {
+      const cmp = kanaSortKey(a.nickname || "").localeCompare(kanaSortKey(b.nickname || ""), "ja");
+      return cmp !== 0 ? cmp : (a.createdAtMs ?? 0) - (b.createdAtMs ?? 0);
+    });
+
+  const ordered = [];
+  const groups = [];
+  for (const type of orderedTypes) {
+    const sorted = sortGroup(byType.get(type));
+    if (sorted.length === 0) continue;
+    groups.push({ type, label: BUTTERFLY_THEME_LABELS[type], startIndex: ordered.length, count: sorted.length });
+    ordered.push(...sorted);
+  }
+  if (other.length > 0) {
+    const sorted = sortGroup(other);
+    groups.push({ type: null, label: "その他", startIndex: ordered.length, count: sorted.length });
+    ordered.push(...sorted);
+  }
+  return { ordered, groups };
+}
+
 async function main() {
   const [, , entriesPath, outPath] = process.argv;
   if (!entriesPath || !outPath) {
@@ -396,7 +577,7 @@ async function main() {
   }
 
   const entries = JSON.parse(fs.readFileSync(entriesPath, "utf-8"));
-  const chronological = [...entries].sort((a, b) => (a.createdAtMs ?? 0) - (b.createdAtMs ?? 0));
+  const { ordered: orderedEntries, groups: butterflyGroups } = groupAndSortEntries(entries);
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
@@ -422,7 +603,7 @@ async function main() {
   // again: change it, then run `mutool draw -r 150 -o /dev/null out.pdf`
   // and grep for "invalid"/"cannot render" — Poppler alone will not
   // catch a regression here.
-  const kleeUsedChars = collectKleeCharSet(chronological);
+  const kleeUsedChars = collectKleeCharSet(orderedEntries);
   const kleeRegularBytes = fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-Regular.ttf"));
   const kleeSemiBytes = fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf"));
   const kleeRegular = await pdfDoc.embedFont(await safeSubsetFont(kleeRegularBytes, kleeUsedChars, "KleeOne-Regular"));
@@ -434,6 +615,26 @@ async function main() {
   const cormorant = await pdfDoc.embedFont(
     fs.readFileSync(path.join(REPO_FONTS, "cormorant-garamond/CormorantGaramond-Variable.ttf"))
   );
+  // Fallback for scripts Klee One / Noto Sans JP don't cover (e.g. a Thai
+  // fan's nickname — 92026-07-17 real-world case). Variable font, so it
+  // stays fully embedded (unsubset) per the note above.
+  const notoSansThaiBytes = fs.readFileSync(path.join(REPO_FONTS, "noto-sans-thai/NotoSansThai-Variable.ttf"));
+  const notoSansThai = await pdfDoc.embedFont(notoSansThaiBytes);
+
+  // Font-fallback chains: try the primary font first, fall through to
+  // Thai for any character the primary font doesn't cover. A character
+  // covered by neither is dropped (see makeCoverageChecker).
+  const kleeCoverage = makeCoverageChecker(kleeSemiBytes);
+  const notoCoverage = makeCoverageChecker(fs.readFileSync(path.join(REPO_FONTS, "noto-sans-jp/NotoSansJP-Variable.ttf")));
+  const thaiCoverage = makeCoverageChecker(notoSansThaiBytes);
+  const kleeFontChain = [
+    { font: kleeSemi, hasGlyph: kleeCoverage },
+    { font: notoSansThai, hasGlyph: thaiCoverage },
+  ];
+  const tocFontChain = [
+    { font: notoSans, hasGlyph: notoCoverage },
+    { font: notoSansThai, hasGlyph: thaiCoverage },
+  ];
 
   // ---- Emoji handling: MIKA's fan symbols (🦋 / 💕) mean most nicknames
   // will contain emoji, and people write them into messages too. Klee One
@@ -443,15 +644,9 @@ async function main() {
   // (raw.githubusercontent.com) — falls back to omitting just that one
   // emoji (not the whole entry) if a fetch fails. ----
   console.log("Fetching emoji images (Twemoji)...");
-  const emojiMap = await buildEmojiImageMap(pdfDoc, chronological);
+  const emojiMap = await buildEmojiImageMap(pdfDoc, orderedEntries);
   console.log(`  embedded ${emojiMap.size} unique emoji`);
 
-  // Safety net for any remaining non-emoji character with no glyph in the
-  // rendering font (true .notdef edge case) — applied per text-run inside
-  // wrapMixedText, not to the raw strings, so emoji tokens are untouched.
-  const kleeGlyphFilter = makeGlyphFilter(fs.readFileSync(path.join(REPO_FONTS, "klee-one/KleeOne-SemiBold.ttf")));
-
-  // ---- Decoration images ----
   // ---- Decoration images ----
   // Use downscaled copies (scripts/butterfly-book/assets/) rather than the
   // site's full-resolution originals (public/images/decor/). Those are
@@ -464,6 +659,23 @@ async function main() {
   const cornerImg = await pdfDoc.embedPng(fs.readFileSync(path.join(ASSETS_DIR, "corner_tl_new.png")));
   const roseImg = await pdfDoc.embedPng(fs.readFileSync(path.join(ASSETS_DIR, "rose_top.png")));
   const crystalImg = await pdfDoc.embedPng(fs.readFileSync(path.join(ASSETS_DIR, "crystal_bottom.png")));
+  // The site's real Moon Garden photo (mobile crop — closest orientation
+  // match to our portrait page), used as the background everywhere the
+  // book previously had a flat NIGHT_BG fill.
+  const bgImage = await pdfDoc.embedJpg(fs.readFileSync(path.join(ASSETS_DIR, "night-bg.jpg")));
+
+  // Butterfly-type icons for the section dividers between groups (①/⑧
+  // request: split letters by butterfly type). Only load icons for types
+  // actually present, in case an icon file is ever missing — a divider
+  // with no icon still works, it just draws label + count.
+  const butterflyIcons = new Map();
+  for (const group of butterflyGroups) {
+    if (!group.type) continue; // "その他" fallback group has no icon
+    const iconPath = path.join(ASSETS_DIR, "butterflies", `${group.type}.png`);
+    if (fs.existsSync(iconPath)) {
+      butterflyIcons.set(group.type, await pdfDoc.embedPng(fs.readFileSync(iconPath)));
+    }
+  }
 
   // ==== Page flow: Movie ends → this Book opens ====
   // Cover (closing-curtain feel, minimal) → Title Page (formal) →
@@ -472,49 +684,72 @@ async function main() {
   const sectionOutline = [];
 
   sectionOutline.push({ title: "Cover", pageIndex: pdfDoc.getPageCount() });
-  drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant });
+  drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant, bgImage });
 
   sectionOutline.push({ title: "Title Page", pageIndex: pdfDoc.getPageCount() });
-  drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count: chronological.length });
+  drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count: orderedEntries.length, bgImage });
 
   sectionOutline.push({ title: "Prologue", pageIndex: pdfDoc.getPageCount() });
-  drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans });
+  drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans, bgImage });
 
   const TOC_ENTRIES_PER_PAGE = Math.floor((PAGE_H - 130 - 70) / 25); // matches renderToc's layout math
-  const tocPageCount = Math.max(1, Math.ceil(chronological.length / TOC_ENTRIES_PER_PAGE));
+  const tocPageCount = Math.max(1, Math.ceil(orderedEntries.length / TOC_ENTRIES_PER_PAGE));
   sectionOutline.push({ title: "Contents", pageIndex: pdfDoc.getPageCount() });
   const tocPages = [];
   for (let i = 0; i < tocPageCount; i++) tocPages.push(pdfDoc.addPage([PAGE_W, PAGE_H]));
 
-  // ==== Letter pages ====
-  const outlineTargets = []; // { title, pageIndex }
-  for (let i = 0; i < chronological.length; i++) {
-    const entry = chronological[i];
-    const startPageIndex = pdfDoc.getPageCount();
-    drawLetterEntry(pdfDoc, entry, i + 1, {
-      kleeRegular,
-      kleeSemi,
-      notoSans,
+  // ==== Letter pages (grouped by butterfly type, gojuon order within
+  // each group — see groupAndSortEntries) ====
+  const outlineTargets = []; // flat list, still used by TOC page numbers
+  const letterGroupNodes = []; // nested outline: one node per butterfly type
+  let cursor = 0;
+  for (const group of butterflyGroups) {
+    // Section divider page for this butterfly type.
+    const dividerPageIndex = pdfDoc.getPageCount();
+    drawGroupDividerPage(pdfDoc, {
       cormorantItalic,
-      cornerImg,
-      roseImg,
-      crystalImg,
-      emojiMap,
-      glyphFilter: kleeGlyphFilter,
+      notoSans,
+      bgImage,
+      label: group.label,
+      count: group.count,
+      icon: group.type ? butterflyIcons.get(group.type) : null,
     });
-    outlineTargets.push({ title: `${i + 1}. ${entry.nickname || "（名前未設定）"}`, pageIndex: startPageIndex });
+
+    const groupOutlineChildren = [];
+    for (let j = 0; j < group.count; j++) {
+      const globalIndex = cursor + j; // 0-based position in orderedEntries
+      const entry = orderedEntries[globalIndex];
+      const startPageIndex = pdfDoc.getPageCount();
+      drawLetterEntry(pdfDoc, entry, globalIndex + 1, {
+        kleeRegular,
+        kleeSemi,
+        notoSans,
+        cormorantItalic,
+        cornerImg,
+        roseImg,
+        crystalImg,
+        emojiMap,
+        kleeFontChain,
+        bgImage,
+      });
+      const target = { title: `${globalIndex + 1}. ${entry.nickname || "（名前未設定）"}`, pageIndex: startPageIndex };
+      outlineTargets.push(target);
+      groupOutlineChildren.push(target);
+    }
+    letterGroupNodes.push({ title: group.label, pageIndex: dividerPageIndex, children: groupOutlineChildren });
+    cursor += group.count;
   }
 
   // ---- Fill in TOC (across as many pages as needed) now that we know final page numbers ----
-  renderToc(tocPages, chronological, outlineTargets, notoSans, cormorantItalic, kleeSemi, TOC_ENTRIES_PER_PAGE, emojiMap);
+  renderToc(tocPages, orderedEntries, outlineTargets, notoSans, cormorantItalic, TOC_ENTRIES_PER_PAGE, emojiMap, bgImage, tocFontChain);
 
-  // ---- Add PDF outline (bookmarks): section markers + a "Letters" group ----
-  const lettersNode = { title: "Letters", pageIndex: outlineTargets[0]?.pageIndex, children: outlineTargets };
+  // ---- Add PDF outline (bookmarks): section markers + a "Letters" group nested by butterfly type ----
+  const lettersNode = { title: "Letters", pageIndex: letterGroupNodes[0]?.pageIndex, children: letterGroupNodes };
   addOutline(pdfDoc, [...sectionOutline, lettersNode]);
 
   const pdfBytes = await pdfDoc.save();
   fs.writeFileSync(outPath, pdfBytes);
-  console.log(`Wrote ${outPath} (${pdfDoc.getPageCount()} pages, ${chronological.length} entries)`);
+  console.log(`Wrote ${outPath} (${pdfDoc.getPageCount()} pages, ${orderedEntries.length} entries)`);
 }
 
 /** Cover: the last frame of the movie, held on screen — just the mark,
@@ -522,14 +757,66 @@ async function main() {
  * introduces itself. Keeping the cover this quiet is what makes the
  * "movie ends, book begins" hand-off feel intentional rather than
  * abrupt. */
-function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant }) {
+/** pdf-lib draws text via simple cmap → glyph → hmtx-advance placement;
+ * it has no OpenType shaping engine, so it never applies GSUB ligature
+ * substitution ('liga'). Cormorant Garamond (like many display serifs)
+ * designs its standalone 'f' with a short hook on the assumption it will
+ * either ligate with a following 'l' or get pulled in by GPOS kerning —
+ * neither happens here, so "Butterfly" shows a visible gap right where
+ * the 'f' hook should meet the 'l'. Confirmed via HarfBuzz shaping
+ * (proper ligature substitution changes the total word width by under
+ * 0.3pt — so this is a glyph-design/visual gap, not a wrong advance
+ * width — manual kerning is the pragmatic fix without a full shaper).
+ *
+ * Draws `text` left-to-right, pulling the draw cursor back by
+ * `size * FL_KERN_EM` right before any "fl" pair. Centering math
+ * elsewhere can keep using the unadjusted widthOfTextAtSize — the pull-in
+ * is a few points out of a 250+pt title, not worth re-deriving centering
+ * for. */
+const FL_KERN_EM = -0.1;
+
+function drawTitleTextWithFlFix(page, text, { x, y, size, font, color }) {
+  let cursor = x;
+  let i = 0;
+  while (i < text.length) {
+    const isFl = text[i] === "f" && text[i + 1] === "l";
+    const segEnd = isFl ? i + 2 : (text.indexOf("f", i + 1) === -1 ? text.length : text.indexOf("f", i + 1));
+    const segment = text.slice(i, segEnd);
+    if (isFl) cursor += size * FL_KERN_EM;
+    page.drawText(segment, { x: cursor, y, size, font, color });
+    cursor += font.widthOfTextAtSize(segment, size);
+    i = segEnd;
+  }
+}
+
+/** Draws the site's real Moon Garden background photo full-bleed on the
+ * page (cover-fit: scaled so it fills both dimensions, overflow clipped
+ * by the page's own boundaries — standard PDF behavior, no explicit clip
+ * needed), then a translucent dark overlay on top so the existing text
+ * colors (gold, pink, white) stay legible regardless of what's brightest
+ * in that particular crop of the photo. Replaces the old flat NIGHT_BG
+ * fill everywhere it was used. */
+function drawNightBackground(page, bgImage) {
+  const scale = Math.max(PAGE_W / bgImage.width, PAGE_H / bgImage.height);
+  const drawW = bgImage.width * scale;
+  const drawH = bgImage.height * scale;
+  page.drawImage(bgImage, {
+    x: (PAGE_W - drawW) / 2,
+    y: (PAGE_H - drawH) / 2,
+    width: drawW,
+    height: drawH,
+  });
+  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG, opacity: 0.45 });
+}
+
+function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant, bgImage }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+  drawNightBackground(page, bgImage);
 
   const title = "Butterfly Garden";
   const titleSize = 34;
   const titleWidth = cormorant.widthOfTextAtSize(title, titleSize);
-  page.drawText(title, {
+  drawTitleTextWithFlFix(page, title, {
     x: (PAGE_W - titleWidth) / 2,
     y: PAGE_H / 2 + 10,
     size: titleSize,
@@ -547,13 +834,24 @@ function drawCoverPage(pdfDoc, { cormorantItalic, notoSans, cormorant }) {
     font: cormorantItalic,
     color: rgb(0.9, 0.9, 0.95),
   });
+
+  const dateLabel = "2026.8.23";
+  const dateSize = 13;
+  const dateWidth = cormorantItalic.widthOfTextAtSize(dateLabel, dateSize);
+  page.drawText(dateLabel, {
+    x: (PAGE_W - dateWidth) / 2,
+    y: PAGE_H / 2 - 50,
+    size: dateSize,
+    font: cormorantItalic,
+    color: rgb(0.75, 0.75, 0.85),
+  });
 }
 
 /** Formal title page — where the book properly states what it is,
  * separate from the quiet cover mark. */
-function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count }) {
+function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count, bgImage }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+  drawNightBackground(page, bgImage);
 
   const edition = "Collector's Edition";
   const editionSize = 10;
@@ -569,7 +867,7 @@ function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count }) 
   const title = "Butterfly Garden";
   const titleSize = 38;
   const titleWidth = cormorant.widthOfTextAtSize(title, titleSize);
-  page.drawText(title, {
+  drawTitleTextWithFlFix(page, title, {
     x: (PAGE_W - titleWidth) / 2,
     y: PAGE_H / 2 + 80,
     size: titleSize,
@@ -628,9 +926,9 @@ function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count }) 
  * PROLOGUE_LINES below to change the wording. */
 const PROLOGUE_LINES = ["最後の蝶が、", "静かに降りた場所。"];
 
-function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
+function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans, bgImage }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+  drawNightBackground(page, bgImage);
 
   const label = "Prologue";
   const labelSize = 16;
@@ -664,16 +962,61 @@ function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans }) {
   }
 }
 
+/** A section divider between butterfly-type groups: the type's icon
+ * (from the site's own butterfly artwork, see assets/butterflies/),
+ * its Japanese label, and a small count. Uses the same night-background
+ * + Cormorant Garamond Italic label styling as Prologue/Contents so it
+ * reads as part of the same book, not an inserted afterthought. */
+function drawGroupDividerPage(pdfDoc, { cormorantItalic, notoSans, bgImage, label, count, icon }) {
+  const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+  drawNightBackground(page, bgImage);
+
+  if (icon) {
+    const iconDrawW = 130;
+    const iconDrawH = iconDrawW * (icon.height / icon.width);
+    page.drawImage(icon, {
+      x: (PAGE_W - iconDrawW) / 2,
+      y: PAGE_H / 2 - 10,
+      width: iconDrawW,
+      height: iconDrawH,
+    });
+  }
+
+  const labelSize = 24;
+  const labelWidth = cormorantItalic.widthOfTextAtSize(label, labelSize);
+  page.drawText(label, {
+    x: (PAGE_W - labelWidth) / 2,
+    y: PAGE_H / 2 - 60,
+    size: labelSize,
+    font: cormorantItalic,
+    color: COVER_ACCENT,
+  });
+
+  const countLabel = `${count}通`;
+  const countSize = 12;
+  const countWidth = notoSans.widthOfTextAtSize(countLabel, countSize);
+  page.drawText(countLabel, {
+    x: (PAGE_W - countWidth) / 2,
+    y: PAGE_H / 2 - 84,
+    size: countSize,
+    font: notoSans,
+    color: rgb(0.75, 0.75, 0.85),
+  });
+}
+
 /** Renders the Contents across as many pages as needed — `pages` is the
  * array of blank TOC pages already reserved in main(). Splitting by
  * entriesPerPage keeps every participant listed and linked, no matter
- * how many submissions there are. */
-function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kleeSemi, entriesPerPage, emojiMap) {
+ * how many submissions there are. Entries are listed in whatever order
+ * `entries` already is (grouped by butterfly type, gojuon order within
+ * each group — see groupAndSortEntries); the divider pages carry the
+ * visible grouping, this list stays a simple continuous numbering. */
+function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, entriesPerPage, emojiMap, bgImage, tocFontChain) {
   const TOC_FONT_SIZE = 13;
   const TOC_EMOJI_SIZE = 14;
 
   pages.forEach((page, pageNum) => {
-    page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+    drawNightBackground(page, bgImage);
     const headTitle = pages.length > 1 ? `Contents ${pageNum + 1}/${pages.length}` : "Contents";
     const headSize = 22;
     page.drawText(headTitle, {
@@ -692,10 +1035,12 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kl
     for (let i = start; i < end; i++) {
       const entry = entries[i];
       const nickname = entry.nickname || "（名前未設定）";
-      const nameRuns = [{ type: "text", value: `${i + 1}.  ` }, ...tokenizeEmoji(nickname)];
-      const nameWidth = measureRunsWidth(nameRuns, notoSans, TOC_FONT_SIZE, TOC_EMOJI_SIZE);
+      const nameRuns = [
+        { type: "text", value: `${i + 1}.  `, font: notoSans },
+        ...resolveMixedRuns(nickname, tocFontChain),
+      ];
+      const nameWidth = measureRunsWidth(nameRuns, TOC_FONT_SIZE, TOC_EMOJI_SIZE);
       drawMixedRuns(page, nameRuns, CARD_MARGIN_X, y, {
-        font: notoSans,
         size: TOC_FONT_SIZE,
         color: rgb(0.9, 0.9, 0.95),
         emojiMap,
@@ -733,7 +1078,18 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, kl
  * message is long. Every page gets the full decorative frame so the
  * "book" feels consistent no matter where you open it. */
 function drawLetterEntry(pdfDoc, entry, index, assets) {
-  const { kleeRegular, kleeSemi, notoSans, cormorantItalic, cornerImg, roseImg, crystalImg, emojiMap, glyphFilter } =
+  const {
+    kleeRegular,
+    kleeSemi,
+    notoSans,
+    cormorantItalic,
+    cornerImg,
+    roseImg,
+    crystalImg,
+    emojiMap,
+    kleeFontChain,
+    bgImage,
+  } =
     assets;
   const message = entry.message || "（メッセージなし）";
   const isShort = message.length <= 30 && !message.includes("\n");
@@ -751,10 +1107,7 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
       allLines.push({ runs: [], isBlank: true });
       continue;
     }
-    // Measure and draw with the same font (kleeSemi) — a previous version
-    // measured with kleeRegular here but drew with kleeSemi, which could
-    // silently mis-wrap since the two weights aren't the same width.
-    const wrapped = wrapMixedText(para, kleeSemi, bodySize, emojiSize, textWidth, glyphFilter);
+    const wrapped = wrapMixedText(para, kleeFontChain, bodySize, emojiSize, textWidth);
     for (const runs of wrapped) allLines.push({ runs, isBlank: false });
   }
 
@@ -763,7 +1116,7 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
 
   while (lineCursor < allLines.length || pageInSeries === 0) {
     const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
-    drawPageFrame(page, cornerImg, roseImg, crystalImg);
+    drawPageFrame(page, cornerImg, roseImg, crystalImg, bgImage);
 
     let y = CARD_TOP - 56;
 
@@ -802,10 +1155,9 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
       if (line.isBlank) {
         y -= lineHeight * 0.5;
       } else {
-        const lw = measureRunsWidth(line.runs, kleeSemi, bodySize, emojiSize);
+        const lw = measureRunsWidth(line.runs, bodySize, emojiSize);
         const x = isShort ? (PAGE_W - lw) / 2 : CARD_LEFT + 44;
         drawMixedRuns(page, line.runs, x, y, {
-          font: kleeSemi,
           size: bodySize,
           color: INK,
           emojiMap,
@@ -839,16 +1191,15 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
       const fromLabel = "From";
       const nameSize = 16;
       const nameEmojiSize = nameSize * 1.05;
-      const resolvedNameRuns = entry.nickname ? tokenizeEmoji(entry.nickname) : tokenizeEmoji("（名前未設定）");
+      const resolvedNameRuns = resolveMixedRuns(entry.nickname || "（名前未設定）", kleeFontChain);
       const fromSize = 11;
-      const nameWidth = measureRunsWidth(resolvedNameRuns, kleeSemi, nameSize, nameEmojiSize);
+      const nameWidth = measureRunsWidth(resolvedNameRuns, nameSize, nameEmojiSize);
       const fromWidth = notoSans.widthOfTextAtSize(fromLabel, fromSize);
       const gap = 6;
       const totalW = fromWidth + gap + nameWidth;
       const startX = CARD_RIGHT - 44 - totalW;
       page.drawText(fromLabel, { x: startX, y: CARD_BOTTOM + 24, size: fromSize, font: notoSans, color: SENDER_LABEL });
       drawMixedRuns(page, resolvedNameRuns, startX + fromWidth + gap, CARD_BOTTOM + 22, {
-        font: kleeSemi,
         size: nameSize,
         color: SENDER_NAME,
         emojiMap,
@@ -872,9 +1223,9 @@ function drawLetterEntry(pdfDoc, entry, index, assets) {
   }
 }
 
-function drawPageFrame(page, cornerImg, roseImg, crystalImg) {
-  // Night background behind everything (matches site's near-black tone)
-  page.drawRectangle({ x: 0, y: 0, width: PAGE_W, height: PAGE_H, color: NIGHT_BG });
+function drawPageFrame(page, cornerImg, roseImg, crystalImg, bgImage) {
+  // Night background behind everything (the site's real Moon Garden photo, not a flat fill)
+  drawNightBackground(page, bgImage);
 
   // Paper card — approximate the diagonal gradient with three stacked bands
   const cardH = CARD_TOP - CARD_BOTTOM;
