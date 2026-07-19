@@ -641,16 +641,21 @@ async function main() {
   // Thai for any character the primary font doesn't cover. A character
   // covered by neither is dropped (see makeCoverageChecker).
   const kleeCoverage = makeCoverageChecker(kleeSemiBytes);
-  const notoCoverage = makeCoverageChecker(fs.readFileSync(path.join(REPO_FONTS, "noto-sans-jp/NotoSansJP-Variable.ttf")));
   const thaiCoverage = makeCoverageChecker(notoSansThaiBytes);
   const kleeFontChain = [
     { font: kleeSemi, hasGlyph: kleeCoverage },
     { font: notoSansThai, hasGlyph: thaiCoverage },
   ];
-  const tocFontChain = [
-    { font: notoSans, hasGlyph: notoCoverage },
-    { font: notoSansThai, hasGlyph: thaiCoverage },
-  ];
+  // NOTE: intentionally NOT a NotoSans-first chain — NotoSansJP-Variable's
+  // default script auto-detection silently substitutes the wrong glyph for
+  // a digit like '2' when it sits in an otherwise-Latin-lettered run (e.g.
+  // a Thai nickname's parenthetical "(2 M)" — fontkit's layout() detects
+  // "latn" from the surrounding letters and some GSUB lookup in this
+  // particular variable font swaps the digit for an unrelated CJK glyph).
+  // Klee One doesn't have this bug and, via collectKleeCharSet, already
+  // covers every character in every nickname — so the TOC reuses the same
+  // Klee-first chain the letter pages use rather than a separate one.
+  const tocFontChain = kleeFontChain;
 
   // ---- Emoji handling: MIKA's fan symbols (🦋 / 💕) mean most nicknames
   // will contain emoji, and people write them into messages too. Klee One
