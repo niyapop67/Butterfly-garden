@@ -64,6 +64,22 @@ const BUTTERFLY_THEME_LABELS = {
   "golden-sunshine": "ゴールデンサンシャイン",
 };
 
+// English chapter titles for the Contents page (2026-07-19 request: list
+// each butterfly type as a "chapter" — English title, nicknames indented
+// underneath — rather than one flat numbered list). Deliberately separate
+// from BUTTERFLY_THEME_LABELS (Japanese, used on the divider pages) since
+// the desired chapter wording is shorter/simpler than labelEn in
+// src/types/submission.ts (e.g. "Pink Butterfly" not "Pink Heart / Love").
+const TOC_CHAPTER_LABELS_EN = {
+  "pink-heart": "Pink Butterfly",
+  "tiffany-sky": "Blue Butterfly",
+  "crystal-white": "White Butterfly",
+  "aurora-dream": "Rainbow Butterfly",
+  "emerald-garden": "Green Butterfly",
+  "golden-sunshine": "Gold Butterfly",
+};
+const TOC_CHAPTER_LABEL_OTHER = "Other";
+
 /** Sets both the classic PDF /Info dictionary (Title/Author/Subject/
  * Keywords — what Finder/Explorer "Get Info" panels read) and a proper
  * XMP metadata stream (what archival tools and modern DAM software read).
@@ -692,8 +708,14 @@ async function main() {
   sectionOutline.push({ title: "Prologue", pageIndex: pdfDoc.getPageCount() });
   drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans, bgImage });
 
-  const TOC_ENTRIES_PER_PAGE = Math.floor((PAGE_H - 130 - 70) / 25); // matches renderToc's layout math
-  const tocPageCount = Math.max(1, Math.ceil(orderedEntries.length / TOC_ENTRIES_PER_PAGE));
+  // ---- Contents layout: one "chapter" per butterfly type, nicknames
+  // indented underneath (2026-07-19 request) instead of one flat numbered
+  // list. Build the full row list first (headers + entries), then paginate
+  // by actual row height so a header never gets stranded as the last line
+  // on a page with none of its entries following it. ----
+  const tocRows = buildTocRows(butterflyGroups);
+  const tocRowPages = paginateTocRows(tocRows);
+  const tocPageCount = tocRowPages.length;
   sectionOutline.push({ title: "Contents", pageIndex: pdfDoc.getPageCount() });
   const tocPages = [];
   for (let i = 0; i < tocPageCount; i++) tocPages.push(pdfDoc.addPage([PAGE_W, PAGE_H]));
@@ -741,7 +763,7 @@ async function main() {
   }
 
   // ---- Fill in TOC (across as many pages as needed) now that we know final page numbers ----
-  renderToc(tocPages, orderedEntries, outlineTargets, notoSans, cormorantItalic, TOC_ENTRIES_PER_PAGE, emojiMap, bgImage, tocFontChain);
+  renderToc(tocPages, tocRowPages, orderedEntries, outlineTargets, notoSans, cormorantItalic, emojiMap, bgImage, tocFontChain);
 
   // ---- Add PDF outline (bookmarks): section markers + a "Letters" group nested by butterfly type ----
   const lettersNode = { title: "Letters", pageIndex: letterGroupNodes[0]?.pageIndex, children: letterGroupNodes };
@@ -1004,14 +1026,69 @@ function drawGroupDividerPage(pdfDoc, { cormorantItalic, notoSans, bgImage, labe
   });
 }
 
+// ---- Contents (TOC) row layout constants ----
+// Two row kinds share one flow so pagination can treat them uniformly:
+//   { kind: "header", label }               — chapter title (butterfly type)
+//   { kind: "entry", globalIndex }           — one participant, indented under its chapter
+const TOC_ENTRY_LINE_H = 25;
+const TOC_HEADER_LINE_H = 34; // header + the gap before its first entry
+const TOC_TOP_Y = PAGE_H - 130;
+const TOC_BOTTOM_MARGIN = 70;
+const TOC_ENTRY_INDENT = 20; // nicknames sit indented under their chapter header
+const TOC_CHAPTER_FONT_SIZE = 15;
+
+/** Flattens butterflyGroups (from groupAndSortEntries) into an ordered row
+ * list: one header row per group, followed by one entry row per member,
+ * in the same order the letters themselves appear. */
+function buildTocRows(butterflyGroups) {
+  const rows = [];
+  for (const group of butterflyGroups) {
+    const label = group.type ? (TOC_CHAPTER_LABELS_EN[group.type] ?? group.label) : TOC_CHAPTER_LABEL_OTHER;
+    rows.push({ kind: "header", label });
+    for (let j = 0; j < group.count; j++) {
+      rows.push({ kind: "entry", globalIndex: group.startIndex + j });
+    }
+  }
+  return rows;
+}
+
+/** Paginates TOC rows by actual height instead of a fixed entries-per-page
+ * count, so a chapter header is never stranded alone at the bottom of a
+ * page with none of its entries following (a widowed header would look
+ * broken — a chapter title with nothing under it until the next page). */
+function paginateTocRows(rows) {
+  const usableH = TOC_TOP_Y - TOC_BOTTOM_MARGIN;
+  const pages = [];
+  let current = [];
+  let y = usableH;
+
+  for (let i = 0; i < rows.length; i++) {
+    const row = rows[i];
+    const rowH = row.kind === "header" ? TOC_HEADER_LINE_H : TOC_ENTRY_LINE_H;
+    // Widow control: if this is a header, make sure at least one entry
+    // row also fits below it on this page — otherwise start the chapter
+    // on the next page instead.
+    const nextRowH = row.kind === "header" && rows[i + 1] ? TOC_ENTRY_LINE_H : 0;
+    if (current.length > 0 && y - rowH - nextRowH < 0) {
+      pages.push(current);
+      current = [];
+      y = usableH;
+    }
+    current.push(row);
+    y -= rowH;
+  }
+  if (current.length > 0) pages.push(current);
+  return pages.length > 0 ? pages : [[]];
+}
+
 /** Renders the Contents across as many pages as needed — `pages` is the
- * array of blank TOC pages already reserved in main(). Splitting by
- * entriesPerPage keeps every participant listed and linked, no matter
- * how many submissions there are. Entries are listed in whatever order
- * `entries` already is (grouped by butterfly type, gojuon order within
- * each group — see groupAndSortEntries); the divider pages carry the
- * visible grouping, this list stays a simple continuous numbering. */
-function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, entriesPerPage, emojiMap, bgImage, tocFontChain) {
+ * array of blank TOC pages already reserved in main(), `rowPages` is the
+ * matching array of row arrays from paginateTocRows. Each butterfly-type
+ * group reads as its own chapter: an English title, then its members'
+ * nicknames indented underneath, gojuon-ordered within the chapter (see
+ * groupAndSortEntries) — mirroring the grouping the divider pages already
+ * show, instead of one continuous flat numbered list. */
+function renderToc(pages, rowPages, entries, outlineTargets, notoSans, cormorantItalic, emojiMap, bgImage, tocFontChain) {
   const TOC_FONT_SIZE = 13;
   const TOC_EMOJI_SIZE = 14;
 
@@ -1027,20 +1104,28 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, en
       color: COVER_ACCENT,
     });
 
-    let y = PAGE_H - 130;
-    const lineH = 25;
-    const start = pageNum * entriesPerPage;
-    const end = Math.min(entries.length, start + entriesPerPage);
+    let y = TOC_TOP_Y;
 
-    for (let i = start; i < end; i++) {
+    for (const row of rowPages[pageNum] ?? []) {
+      if (row.kind === "header") {
+        page.drawText(row.label, {
+          x: CARD_MARGIN_X,
+          y,
+          size: TOC_CHAPTER_FONT_SIZE,
+          font: cormorantItalic,
+          color: COVER_ACCENT,
+        });
+        y -= TOC_HEADER_LINE_H;
+        continue;
+      }
+
+      const i = row.globalIndex;
       const entry = entries[i];
       const nickname = entry.nickname || "（名前未設定）";
-      const nameRuns = [
-        { type: "text", value: `${i + 1}.  `, font: notoSans },
-        ...resolveMixedRuns(nickname, tocFontChain),
-      ];
+      const nameRuns = resolveMixedRuns(nickname, tocFontChain);
+      const nameX = CARD_MARGIN_X + TOC_ENTRY_INDENT;
       const nameWidth = measureRunsWidth(nameRuns, TOC_FONT_SIZE, TOC_EMOJI_SIZE);
-      drawMixedRuns(page, nameRuns, CARD_MARGIN_X, y, {
+      drawMixedRuns(page, nameRuns, nameX, y, {
         size: TOC_FONT_SIZE,
         color: rgb(0.9, 0.9, 0.95),
         emojiMap,
@@ -1058,7 +1143,7 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, en
         color: rgb(0.7, 0.7, 0.8),
       });
       // dotted leader
-      const dotsStart = CARD_MARGIN_X + nameWidth + 8;
+      const dotsStart = nameX + nameWidth + 8;
       const dotsEnd = PAGE_W - CARD_MARGIN_X - pageLabelW - 8;
       if (dotsEnd > dotsStart) {
         page.drawText(".".repeat(Math.max(0, Math.floor((dotsEnd - dotsStart) / 3))), {
@@ -1069,7 +1154,7 @@ function renderToc(pages, entries, outlineTargets, notoSans, cormorantItalic, en
           color: rgb(0.4, 0.4, 0.48),
         });
       }
-      y -= lineH;
+      y -= TOC_ENTRY_LINE_H;
     }
   });
 }

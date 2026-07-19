@@ -9,7 +9,7 @@ interface StatCounterProps {
   colorClass: string;
 }
 
-function StatItem({ iconSrc, iconWidth, iconHeight, label, value, colorClass }: StatCounterProps) {
+function StatItem({ iconSrc, iconWidth, iconHeight, value, colorClass }: StatCounterProps) {
   return (
     <div className="flex flex-1 flex-col items-center gap-1.5">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/85 shadow-sm">
@@ -23,11 +23,7 @@ function StatItem({ iconSrc, iconWidth, iconHeight, label, value, colorClass }: 
           className="h-9 w-9 object-contain drop-shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
         />
       </div>
-      <span className="font-body text-xs text-[#8b8398]">{label}</span>
-      <span className={`font-display-jp text-lg font-semibold ${colorClass}`}>
-        {value}
-        <span className="ml-0.5 text-xs font-body">{label === "Voices" ? "件" : "匹"}</span>
-      </span>
+      <span className={`font-display-jp text-lg font-semibold ${colorClass}`}>{value}</span>
     </div>
   );
 }
