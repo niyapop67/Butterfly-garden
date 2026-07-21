@@ -59,7 +59,7 @@ const BUTTERFLY_THEME_LABELS = {
   "pink-heart": "ピンクハート",
   "tiffany-sky": "ティファニースカイ",
   "crystal-white": "クリスタルホワイト",
-  "aurora-dream": "レインボーバタフライ",
+  "aurora-dream": "オーロラバタフライ",
   "emerald-garden": "エメラルドガーデン",
   "golden-sunshine": "ゴールデンサンシャイン",
 };
@@ -74,7 +74,7 @@ const TOC_CHAPTER_LABELS_EN = {
   "pink-heart": "Pink Butterfly",
   "tiffany-sky": "Blue Butterfly",
   "crystal-white": "White Butterfly",
-  "aurora-dream": "Rainbow Butterfly",
+  "aurora-dream": "Aurora Butterfly",
   "emerald-garden": "Green Butterfly",
   "golden-sunshine": "Gold Butterfly",
 };

@@ -7,14 +7,12 @@
  * (its generated art kept coming out indistinguishable from crystal-white's
  * pale/iridescent look, so rather than ship two near-identical pale types,
  * crystal-white's asset was replaced with the better of the two attempts
- * and twinkle-premium was removed as a separate type entirely). All 6
- * remaining types are being redone in a single consistent "crystal/gem"
- * illustration style (see docs prompts) rather than mixing the earlier
- * assorted styles. 5 are done (pink-heart, tiffany-sky, crystal-white,
- * emerald-garden, golden-sunshine); aurora-dream is still pending — its
- * first redo attempt came out visually identical to pink-heart and needs
- * another pass emphasizing shifting multi-colour/holographic hues (a
- * "rainbow butterfly" direction is being considered).
+ * and twinkle-premium was removed as a separate type entirely).
+ *
+ * 2026-07-21: all 6 types replaced again with a final consistent crystal
+ * gem-cut illustration set (heart-faceted wings, same cropping/padding
+ * across all six) — aurora-dream's art (stem "rainbow") settled on the
+ * shifting-hue "aurora" direction discussed in the 07-05 note.
  *
  * Rather than block the submit-page build on missing art, every component
  * that renders a butterfly (ButterflyImage, ButterflySelector, garden tiles,
@@ -41,36 +39,26 @@ interface AssetDims {
 
 /** Natural pixel dimensions of each cropped source file, keyed by file stem. */
 const SOURCE_SIZE: Record<string, AssetDims> = {
-  // 2026-07-05: redone in the new crystal/gem style (replaces the earlier
-  // pink_*/tiffany_* art).
-  pink_large: { w: 350, h: 358 },
-  pink_medium: { w: 250, h: 256 },
-  pink_small: { w: 180, h: 184 },
-  tiffany_large: { w: 350, h: 366 },
-  tiffany_medium: { w: 250, h: 261 },
-  tiffany_small: { w: 180, h: 188 },
-  emerald_large: { w: 350, h: 356 },
-  emerald_medium: { w: 250, h: 254 },
-  emerald_small: { w: 180, h: 183 },
-  golden_large: { w: 350, h: 324 },
-  golden_medium: { w: 250, h: 231 },
-  golden_small: { w: 180, h: 167 },
-  // 2026-07-05: replaced (was a paler, less distinct crop — see the
-  // twinkle-premium note at the top of this file).
-  crystal_large: { w: 350, h: 377 },
-  crystal_medium: { w: 250, h: 269 },
-  crystal_small: { w: 180, h: 194 },
-  // 2026-07-05: aurora-dream's redo, going the "rainbow butterfly"
-  // direction instead of another pale/holographic attempt.
-  rainbow_large: { w: 350, h: 339 },
-  rainbow_medium: { w: 250, h: 242 },
-  rainbow_small: { w: 180, h: 175 },
-
-  // No longer referenced by any type as of 2026-07-05 (aurora-dream now
-  // points at rainbow_*) — left here in case of a future revert.
-  purple_large: { w: 248, h: 288 },
-  purple_medium: { w: 248, h: 288 },
-  purple_small: { w: 248, h: 288 },
+  // 2026-07-21: all 6 types replaced with a new matching crystal/gem-cut
+  // illustration set (heart-faceted wings, consistent style across colors).
+  pink_large: { w: 350, h: 295 },
+  pink_medium: { w: 250, h: 210 },
+  pink_small: { w: 180, h: 152 },
+  tiffany_large: { w: 350, h: 269 },
+  tiffany_medium: { w: 250, h: 192 },
+  tiffany_small: { w: 180, h: 138 },
+  emerald_large: { w: 350, h: 261 },
+  emerald_medium: { w: 250, h: 187 },
+  emerald_small: { w: 180, h: 134 },
+  golden_large: { w: 350, h: 284 },
+  golden_medium: { w: 250, h: 203 },
+  golden_small: { w: 180, h: 146 },
+  crystal_large: { w: 350, h: 302 },
+  crystal_medium: { w: 250, h: 216 },
+  crystal_small: { w: 180, h: 155 },
+  rainbow_large: { w: 350, h: 268 },
+  rainbow_medium: { w: 250, h: 192 },
+  rainbow_small: { w: 180, h: 138 },
 };
 
 /**
@@ -102,12 +90,12 @@ interface ButterflyAssetEntry {
 }
 
 const BUTTERFLY_ASSET_MAP: Record<ButterflyType, ButterflyAssetEntry> = {
-  "pink-heart": { stem: "pink", isPlaceholder: false, visualScale: 0.9 }, // 2026-07-05: redone
-  "tiffany-sky": { stem: "tiffany", isPlaceholder: false, visualScale: 0.85 }, // 2026-07-05: redone
-  "crystal-white": { stem: "crystal", isPlaceholder: false, visualScale: 1.03 }, // 2026-07-05: new
-  "emerald-garden": { stem: "emerald", isPlaceholder: false, visualScale: 1.07 }, // 2026-07-05: new
-  "golden-sunshine": { stem: "golden", isPlaceholder: false, visualScale: 1.05 }, // 2026-07-05: new
-  "aurora-dream": { stem: "rainbow", isPlaceholder: false, visualScale: 1.11 }, // 2026-07-05: redone as "rainbow butterfly"
+  "pink-heart": { stem: "pink", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
+  "tiffany-sky": { stem: "tiffany", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
+  "crystal-white": { stem: "crystal", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
+  "emerald-garden": { stem: "emerald", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
+  "golden-sunshine": { stem: "golden", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
+  "aurora-dream": { stem: "rainbow", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set ("aurora" direction)
 };
 
 export interface ButterflyAsset {
