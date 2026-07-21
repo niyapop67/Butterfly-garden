@@ -734,11 +734,7 @@ async function main() {
     // Section divider page for this butterfly type.
     const dividerPageIndex = pdfDoc.getPageCount();
     drawGroupDividerPage(pdfDoc, {
-      cormorantItalic,
-      notoSans,
       bgImage,
-      label: group.label,
-      count: group.count,
       icon: group.type ? butterflyIcons.get(group.type) : null,
     });
 
@@ -994,7 +990,7 @@ function drawProloguePage(pdfDoc, { cormorantItalic, kleeRegular, notoSans, bgIm
  * its Japanese label, and a small count. Uses the same night-background
  * + Cormorant Garamond Italic label styling as Prologue/Contents so it
  * reads as part of the same book, not an inserted afterthought. */
-function drawGroupDividerPage(pdfDoc, { cormorantItalic, notoSans, bgImage, label, count, icon }) {
+function drawGroupDividerPage(pdfDoc, { bgImage, icon }) {
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   drawNightBackground(page, bgImage);
 
@@ -1008,27 +1004,6 @@ function drawGroupDividerPage(pdfDoc, { cormorantItalic, notoSans, bgImage, labe
       height: iconDrawH,
     });
   }
-
-  const labelSize = 24;
-  const labelWidth = cormorantItalic.widthOfTextAtSize(label, labelSize);
-  page.drawText(label, {
-    x: (PAGE_W - labelWidth) / 2,
-    y: PAGE_H / 2 - 60,
-    size: labelSize,
-    font: cormorantItalic,
-    color: COVER_ACCENT,
-  });
-
-  const countLabel = `${count}通`;
-  const countSize = 12;
-  const countWidth = notoSans.widthOfTextAtSize(countLabel, countSize);
-  page.drawText(countLabel, {
-    x: (PAGE_W - countWidth) / 2,
-    y: PAGE_H / 2 - 84,
-    size: countSize,
-    font: notoSans,
-    color: rgb(0.75, 0.75, 0.85),
-  });
 }
 
 // ---- Contents (TOC) row layout constants ----
@@ -1349,17 +1324,21 @@ function drawPageFrame(page, cornerImg, roseImg, crystalImg, bgImage) {
     width: -cornerDrawW,
     height: cornerDrawH,
   });
-  // bottom-left (mirrored vertically)
+  // bottom-left (mirrored vertically) — mirrors the top corners' proportions:
+  // a small 4pt peek past the border, with the rest of the flourish
+  // overlapping inside the card. (Previously anchored from CARD_BOTTOM - 4
+  // extending further down, which put the whole flourish below the card
+  // instead of overlapping it.)
   page.drawImage(cornerImg, {
     x: CARD_LEFT - 4,
-    y: CARD_BOTTOM - 4,
+    y: CARD_BOTTOM - 4 + cornerDrawH,
     width: cornerDrawW,
     height: -cornerDrawH,
   });
   // bottom-right (mirrored both)
   page.drawImage(cornerImg, {
     x: CARD_RIGHT + 4,
-    y: CARD_BOTTOM - 4,
+    y: CARD_BOTTOM - 4 + cornerDrawH,
     width: -cornerDrawW,
     height: -cornerDrawH,
   });
