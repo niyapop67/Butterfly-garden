@@ -53,9 +53,9 @@ const SOURCE_SIZE: Record<string, AssetDims> = {
   golden_large: { w: 350, h: 284 },
   golden_medium: { w: 250, h: 203 },
   golden_small: { w: 180, h: 146 },
-  crystal_large: { w: 350, h: 377 },
-  crystal_medium: { w: 250, h: 269 },
-  crystal_small: { w: 180, h: 194 },
+  crystal_large: { w: 350, h: 287 },
+  crystal_medium: { w: 250, h: 205 },
+  crystal_small: { w: 180, h: 148 },
   rainbow_large: { w: 350, h: 268 },
   rainbow_medium: { w: 250, h: 192 },
   rainbow_small: { w: 180, h: 138 },
@@ -92,7 +92,7 @@ interface ButterflyAssetEntry {
 const BUTTERFLY_ASSET_MAP: Record<ButterflyType, ButterflyAssetEntry> = {
   "pink-heart": { stem: "pink", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
   "tiffany-sky": { stem: "tiffany", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
-  "crystal-white": { stem: "crystal", isPlaceholder: false, visualScale: 1.03 }, // reverted to pre-2026-07-21 art (site only — the new gem art looked frayed at small sizes); Book still uses the new gem-set icon
+  "crystal-white": { stem: "crystal", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-22: re-exported with real transparency (previous 07-21 attempt had a baked-in checkerboard bg that fragmented badly on removal)
   "emerald-garden": { stem: "emerald", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
   "golden-sunshine": { stem: "golden", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set
   "aurora-dream": { stem: "rainbow", isPlaceholder: false, visualScale: 1.0 }, // 2026-07-21: new crystal-gem set ("aurora" direction)
