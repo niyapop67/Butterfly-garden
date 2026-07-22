@@ -1,7 +1,6 @@
 "use client";
 
 import Image from "next/image";
-import type { CSSProperties } from "react";
 import type { ButterflyType } from "@/types/submission";
 import { getButterflyAsset, type ButterflySize } from "@/lib/butterflyAssets";
 
@@ -42,18 +41,6 @@ export default function ButterflyImage({
   const asset = getButterflyAsset(type, size);
   const resolvedHeight = displayHeight ?? displayWidth * (asset.height / asset.width);
 
-  // crystal-white's art is a near-white/silver diamond butterfly (see
-  // /home/claude notes: ~43% of its visible pixels are >230 on every
-  // channel). Against the daytime garden's bright sky/clouds background
-  // this nearly disappears, leaving only sparse fragments of its thin gold
-  // wire outline visible — which reads as a broken dotted shape rather
-  // than a butterfly. A soft dark drop-shadow keeps its silhouette legible
-  // without changing its actual pale/icy coloring.
-  const style: CSSProperties = { width: displayWidth, height: resolvedHeight };
-  if (type === "crystal-white") {
-    style.filter = "drop-shadow(0 1px 3px rgba(20, 20, 40, 0.35))";
-  }
-
   return (
     <Image
       src={asset.src}
@@ -61,7 +48,7 @@ export default function ButterflyImage({
       width={asset.width}
       height={asset.height}
       sizes={`${displayWidth}px`}
-      style={style}
+      style={{ width: displayWidth, height: resolvedHeight }}
       className={`object-contain ${className}`}
     />
   );

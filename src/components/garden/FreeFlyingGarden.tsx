@@ -160,10 +160,7 @@ function FreeButterfly({
           style={{
             width: size,
             height: "auto",
-            filter:
-              type === "crystal-white"
-                ? "contrast(1.12) drop-shadow(0 2px 5px rgba(30,30,50,0.45))"
-                : "saturate(1.4) contrast(1.12) drop-shadow(0 2px 6px rgba(255,158,199,0.5))",
+            filter: "saturate(1.4) contrast(1.12) drop-shadow(0 2px 6px rgba(255,158,199,0.5))",
           }}
           priority={false}
           unoptimized
