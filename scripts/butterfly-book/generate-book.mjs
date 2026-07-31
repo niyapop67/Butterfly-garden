@@ -876,70 +876,37 @@ function drawTitlePage(pdfDoc, { cormorant, cormorantItalic, notoSans, count, bg
   const page = pdfDoc.addPage([PAGE_W, PAGE_H]);
   drawNightBackground(page, bgImage);
 
-  const edition = "Collector's Edition";
-  const editionSize = 10;
-  const editionWidth = notoSans.widthOfTextAtSize(edition, editionSize);
-  page.drawText(edition, {
-    x: (PAGE_W - editionWidth) / 2,
-    y: PAGE_H / 2 + 130,
-    size: editionSize,
-    font: notoSans,
-    color: rgb(0.75, 0.75, 0.85),
-  });
-
-  const title = "Butterfly Garden";
-  const titleSize = 38;
-  const titleWidth = cormorant.widthOfTextAtSize(title, titleSize);
-  drawTitleTextWithFlFix(page, title, {
-    x: (PAGE_W - titleWidth) / 2,
-    y: PAGE_H / 2 + 80,
-    size: titleSize,
-    font: cormorant,
-    color: COVER_ACCENT,
-  });
-
-  const sub = "for MIKA";
-  const subSize = 22;
-  const subWidth = cormorantItalic.widthOfTextAtSize(sub, subSize);
-  page.drawText(sub, {
-    x: (PAGE_W - subWidth) / 2,
-    y: PAGE_H / 2 + 44,
-    size: subSize,
+  const line1 = "Happy Birthday";
+  const line1Size = 36;
+  const line1Width = cormorantItalic.widthOfTextAtSize(line1, line1Size);
+  page.drawText(line1, {
+    x: (PAGE_W - line1Width) / 2,
+    y: PAGE_H / 2 + 60,
+    size: line1Size,
     font: cormorantItalic,
     color: rgb(1, 1, 1),
   });
 
-  const bookLabel = "— Butterfly Garden Book —";
-  const bookSize = 13;
-  const bookWidth = notoSans.widthOfTextAtSize(bookLabel, bookSize);
-  page.drawText(bookLabel, {
-    x: (PAGE_W - bookWidth) / 2,
-    y: PAGE_H / 2 - 4,
-    size: bookSize,
+  const line2 = "MIKA";
+  const line2Size = 72;
+  const line2Width = cormorant.widthOfTextAtSize(line2, line2Size);
+  page.drawText(line2, {
+    x: (PAGE_W - line2Width) / 2,
+    y: PAGE_H / 2 - 30,
+    size: line2Size,
+    font: cormorant,
+    color: COVER_ACCENT,
+  });
+
+  const line3 = "2026.8.23";
+  const line3Size = 24;
+  const line3Width = notoSans.widthOfTextAtSize(line3, line3Size);
+  page.drawText(line3, {
+    x: (PAGE_W - line3Width) / 2,
+    y: PAGE_H / 2 - 90,
+    size: line3Size,
     font: notoSans,
     color: rgb(0.85, 0.85, 0.9),
-  });
-
-  const countLabel = `全${count}通のメッセージ`;
-  const countSize = 11;
-  const countWidth = notoSans.widthOfTextAtSize(countLabel, countSize);
-  page.drawText(countLabel, {
-    x: (PAGE_W - countWidth) / 2,
-    y: PAGE_H / 2 - 26,
-    size: countSize,
-    font: notoSans,
-    color: rgb(0.7, 0.7, 0.78),
-  });
-
-  const dateStr = new Intl.DateTimeFormat("ja-JP", { dateStyle: "long" }).format(new Date());
-  const dateSize = 9;
-  const dateWidth = notoSans.widthOfTextAtSize(dateStr, dateSize);
-  page.drawText(dateStr, {
-    x: (PAGE_W - dateWidth) / 2,
-    y: PAGE_H / 2 - 60,
-    size: dateSize,
-    font: notoSans,
-    color: rgb(0.55, 0.55, 0.65),
   });
 }
 
