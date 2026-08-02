@@ -1,60 +1,94 @@
-import Image from "next/image";
 import Link from "next/link";
 import CrystalButton from "@/components/ui/CrystalButton";
 import CrystalIcon from "@/components/ui/CrystalIcon";
+import TopPageButterflyDecor from "@/components/butterfly/TopPageButterflyDecor";
+import TopPageCornerFlowers from "@/components/butterfly/TopPageCornerFlowers";
 
 /**
- * MIKA's dedicated landing page (2026-07-24 request) — separate from
- * /private/list (the name-list itself). This page is just a hero banner
- * (the "Butterfly Garden for MIKA" artwork) with buttons overlaid directly
- * on the image (2026-07-24 follow-up: moved from a section below the image
- * to sit on top of it, near the bottom over the garden path), linking out
- * to the existing name list and the public garden page.
- *
- * 2026-07-24 follow-up: made responsive for both phone and desktop — on
- * mobile the hero runs full-bleed near the top of the viewport; on wider
- * screens it's capped at max-w-2xl and vertically centered instead of
- * stretching edge-to-edge, with a soft shadow/rounded frame so it reads as
- * a deliberate card rather than an oversized banner.
- *
- * Below/around the hero, the page still uses the existing .bg-night-garden
- * CSS background rather than the busy night-sky photo — Niya flagged that
- * would hurt legibility if this page grows more content later.
+ * MIKA's dedicated landing page (2026-07-24 request), rebuilt 2026-07-25
+ * to match the structure of the public TOP page (src/app/page.tsx) rather
+ * than a single flattened hero image: a real photo background (Moon
+ * Garden crops — portrait for mobile, landscape for desktop, mirroring
+ * TOP/SUBMIT's own mobile/desktop split), the same floating-butterfly and
+ * corner-flower decor components, real HTML title text (not baked into an
+ * image), a small header pill link (ガーデンを見る, same treatment as
+ * TOP's), and one big CrystalButton CTA at the bottom (メッセージ一覧を見る,
+ * playing the role TOP's 蝶を届ける button plays).
  *
  * Book (PDF) and Voice are sent directly rather than linked from here, so
  * there's no download button for either — just navigation.
  */
 export default function MikaLandingPage() {
   return (
-    <main className="bg-night-garden flex min-h-screen items-center justify-center overflow-hidden p-0 sm:p-8">
-      <div className="relative w-full sm:max-w-2xl sm:overflow-hidden sm:rounded-[28px] sm:shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
-        <Image
-          src="/images/decor/mika_hero.jpg"
-          alt="Butterfly Garden for MIKA"
-          width={1536}
-          height={1024}
-          priority
-          sizes="(min-width: 640px) 42rem, 100vw"
-          className="w-full h-auto"
-        />
+    <main className="bg-night-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 md:hidden"
+        style={{
+          backgroundImage: "url(/images/garden-bg-moon-garden.jpg)",
+          backgroundSize: "cover",
+          backgroundPosition: "top center",
+        }}
+      />
+      <div
+        aria-hidden
+        className="fixed inset-0 -z-10 hidden md:block"
+        style={{
+          backgroundImage: "url(/images/top-bg-moon-garden.jpg)",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
 
-        <div className="absolute inset-x-0 bottom-[6%] z-10 flex flex-col items-center gap-2.5 px-6 sm:bottom-[8%] sm:gap-3">
-          <Link href="/private/list" className="w-full max-w-[15rem] sm:max-w-xs">
-            <CrystalButton className="w-full text-sm sm:text-base">
-              <CrystalIcon size={18} className="sm:hidden" />
-              <CrystalIcon size={20} className="hidden sm:block" />
-              メッセージ一覧を見る
-            </CrystalButton>
-          </Link>
-          <Link href="/garden" className="w-full max-w-[15rem] sm:max-w-xs">
-            <CrystalButton variant="ghost" className="w-full text-sm sm:text-base">
-              <CrystalIcon size={18} className="sm:hidden" />
-              <CrystalIcon size={20} className="hidden sm:block" />
-              ガーデンページへ
-            </CrystalButton>
-          </Link>
+      <TopPageCornerFlowers />
+      <TopPageButterflyDecor />
+
+      <header className="relative z-10 mb-10 flex items-center justify-end">
+        <Link
+          href="/garden"
+          className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 font-body text-xs font-bold text-[#f0c869] backdrop-blur-md transition-all hover:bg-white/20"
+          style={{ border: "1px solid rgba(232,193,112,0.35)" }}
+        >
+          ガーデンを見る <CrystalIcon size={16} />
+        </Link>
+      </header>
+
+      <section className="relative z-10 mb-10 text-center">
+        <div className="relative mx-auto max-w-xs pb-6 pt-4 md:max-w-md">
+          <h1
+            className="font-display text-5xl font-semibold italic leading-tight md:text-7xl"
+            style={{ color: "#f0c869", textShadow: "0 2px 20px rgba(0,0,0,0.55), 0 1px 6px rgba(0,0,0,0.5)" }}
+          >
+            Butterfly Garden
+          </h1>
+          <p
+            className="mt-1 font-display text-2xl italic md:text-4xl"
+            style={{ color: "#ff9ec7", textShadow: "0 1px 14px rgba(0,0,0,0.55)" }}
+          >
+            for MIKA
+          </p>
         </div>
-      </div>
+
+        <p
+          className="mx-auto mt-2 max-w-xs text-center font-display-jp text-base font-medium leading-relaxed md:max-w-md md:text-lg"
+          style={{ color: "#e8e2f0", textShadow: "0 1px 10px rgba(0,0,0,0.55), 0 1px 3px rgba(0,0,0,0.5)" }}
+        >
+          みんなの想いが蝶になった
+          <br />
+          MIKAのための
+          <br />
+          特別なガーデンです
+        </p>
+      </section>
+
+      <section className="relative z-10 mb-8 flex justify-center">
+        <Link href="/private/list" className="w-full max-w-xs">
+          <CrystalButton className="w-full">
+            <CrystalIcon size={20} />
+            メッセージ一覧を見る
+          </CrystalButton>
+        </Link>
+      </section>
     </main>
   );
 }
