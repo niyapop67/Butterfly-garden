@@ -54,9 +54,18 @@ export default function PrivateListPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PrivateEntry | null>(null);
 
+  // 五十音順ソート: 先頭の絵文字・記号を無視した上で、日本語コレーターで
+  // 比較する（かな・カナはこれでほぼ正確に並ぶ。ふりがなデータがない
+  // 漢字の並び順まではICUの既定ルール依存になるが、実用上はこれで十分）。
+  const collator = useMemo(
+    () => new Intl.Collator("ja", { usage: "sort", sensitivity: "base" }),
+    []
+  );
+  const sortKey = (name: string) => name.replace(/^[^\p{L}\p{N}]+/u, "");
+
   const sorted = useMemo(
-    () => [...entries].sort((a, b) => a.nickname.localeCompare(b.nickname, "ja")),
-    [entries]
+    () => [...entries].sort((a, b) => collator.compare(sortKey(a.nickname), sortKey(b.nickname))),
+    [entries, collator]
   );
 
   const filtered = useMemo(() => {
@@ -67,7 +76,7 @@ export default function PrivateListPage() {
 
   return (
     <main
-      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:px-8"
+      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:px-6"
       style={{ backgroundColor: "#08060f" }}
     >
       <div
@@ -111,7 +120,7 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-2xl md:grid-cols-6 md:gap-3">
+      <section className="relative z-10 grid grid-cols-4 gap-2.5 md:grid-cols-6 md:gap-3.5">
         {!loading && filtered.length === 0 && (
           <div className="col-span-4 md:col-span-6">
             <GlassCard className="px-5 py-6 text-center">
