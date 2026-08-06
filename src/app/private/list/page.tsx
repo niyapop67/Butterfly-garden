@@ -111,9 +111,9 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 grid grid-cols-3 gap-3 md:mx-auto md:max-w-2xl md:grid-cols-5 md:gap-4">
+      <section className="relative z-10 grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-2xl md:grid-cols-6 md:gap-3">
         {!loading && filtered.length === 0 && (
-          <div className="col-span-3 md:col-span-5">
+          <div className="col-span-4 md:col-span-6">
             <GlassCard className="px-5 py-6 text-center">
               <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
                 該当する蝶が見つかりませんでした。
@@ -146,20 +146,20 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
         boxShadow: "0 3px 8px rgba(60,30,50,0.16), inset 0 0 0 1px rgba(255,255,255,0.6)",
       }}
     >
-      <span style={{ color: "#e0a0c0", fontSize: 11 }} aria-hidden>
+      <span style={{ color: "#e0a0c0", fontSize: 9 }} aria-hidden>
         ◆
       </span>
       <div className="w-full overflow-hidden">
         {needsScroll ? (
           <div className="flex w-max animate-marquee">
             <p
-              className="whitespace-nowrap px-1 font-display-jp text-base font-bold leading-tight md:text-lg"
+              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight md:text-base"
               style={{ color: "#8a6d3f" }}
             >
               {name}
             </p>
             <p
-              className="whitespace-nowrap px-1 font-display-jp text-base font-bold leading-tight md:text-lg"
+              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight md:text-base"
               style={{ color: "#8a6d3f" }}
               aria-hidden
             >
@@ -168,7 +168,7 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
           </div>
         ) : (
           <p
-            className="whitespace-nowrap text-center font-display-jp text-base font-bold leading-tight md:text-lg"
+            className="whitespace-nowrap text-center font-display-jp text-sm font-bold leading-tight md:text-base"
             style={{ color: "#8a6d3f" }}
           >
             {name}
