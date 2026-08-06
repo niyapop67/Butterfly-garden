@@ -130,9 +130,23 @@ function romajiWordToHiragana(word: string) {
   return out;
 }
 
+/** Manual reading overrides for kanji this app has no dictionary for.
+ * "maeda" / "まえだ" / "前田" are all the same reading — the romaji and
+ * katakana/hiragana forms already convert correctly on their own, but a
+ * bare kanji spelling has no automatic reading, so it's listed here
+ * explicitly. Add more entries as new kanji names show up in the list.
+ * Applied as a substring replace (longest key first) before the main
+ * per-character loop in kanaSortKey. */
+const KANJI_READING_OVERRIDES: [string, string][] = [["前田", "まえだ"]].sort(
+  (a, b) => b[0].length - a[0].length
+);
+
 function kanaSortKey(nickname: string) {
   const noEmoji = nickname.replace(/\p{Extended_Pictographic}/gu, "").replace(/[\uFE0F\u200D]/g, "");
-  const normalized = noEmoji.normalize("NFKC");
+  let normalized = noEmoji.normalize("NFKC");
+  for (const [kanji, reading] of KANJI_READING_OVERRIDES) {
+    normalized = normalized.split(kanji).join(reading);
+  }
   let out = "";
   let i = 0;
   while (i < normalized.length) {
