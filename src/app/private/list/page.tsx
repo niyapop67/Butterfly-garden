@@ -26,6 +26,23 @@ import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
  * it gone rather than kept in sync. Full message text + voice URLs are
  * still fine to read here — this page is already behind GATE 2
  * (src/middleware.ts), same as before.
+ *
+ * 2026-08-06: replaced the flat .bg-night-garden fill with a dedicated
+ * "crystal palace fountain garden" illustration (private_list_bg.jpg).
+ * Reuses .bg-photo-layer (globals.css) rather than inventing new CSS: that
+ * class already handles the two things this needed — capped to one
+ * viewport (100dvh) on mobile so background-size:cover doesn't blow the
+ * image up against this page's full scrollable height (see that class's
+ * own comment for why), and position:fixed at the site's md:(768px)
+ * breakpoint to escape .mobile-frame so it fills the real desktop
+ * viewport instead of just the (still-narrow, max 640px) column — same
+ * technique /private/mika's desktop hero uses. Passing backgroundImage
+ * directly via inline style overrides the class's var(--bg-photo-mobile)
+ * hook (inline style wins over the class rule for that one property), so
+ * no CSS var wiring is needed for this single static image.
+ * Grid also widens on desktop (4 → 6 → 8 cols) with larger name text,
+ * since the crystal-card tiles read as cramped once the frame grows past
+ * phone width.
  */
 export default function PrivateListPage() {
   const { entries, loading, error } = usePrivateFeed();
@@ -44,7 +61,26 @@ export default function PrivateListPage() {
   }, [sorted, query]);
 
   return (
-    <main className="bg-night-garden relative min-h-screen overflow-hidden px-5 pb-12 pt-6">
+    <main
+      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:px-8"
+      style={{ backgroundColor: "#08060f" }}
+    >
+      <div
+        aria-hidden
+        className="bg-photo-layer"
+        style={{ backgroundImage: "url(/images/decor/private_list_bg.jpg)" }}
+      />
+      {/* readability wash over the bright illustration — same shape as
+          .bg-day-garden's wash (stronger top/bottom, lighter middle) */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-0"
+        style={{
+          background:
+            "linear-gradient(180deg, rgba(8,6,15,0.55) 0%, rgba(8,6,15,0.22) 18%, rgba(8,6,15,0.3) 68%, rgba(8,6,15,0.6) 100%)",
+        }}
+      />
+
       <header className="relative z-10 mb-6 text-center">
         <img
           src="/images/decor/birthday_banner_v2.png"
@@ -53,38 +89,38 @@ export default function PrivateListPage() {
         />
       </header>
 
-      <section className="relative z-10 mb-5">
+      <section className="relative z-10 mb-5 md:mx-auto md:max-w-2xl">
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="ニックネームで検索"
-          className="w-full rounded-full border border-white/40 bg-white/85 px-4 py-2.5 font-body text-sm outline-none placeholder:text-[#b3a6c9]"
+          className="w-full rounded-full border border-white/40 bg-white/85 px-4 py-2.5 font-body text-sm outline-none placeholder:text-[#b3a6c9] md:text-base"
           style={{ color: "var(--color-ink)" }}
         />
       </section>
 
       {error && (
-        <section className="relative z-10 mb-5">
+        <section className="relative z-10 mb-5 md:mx-auto md:max-w-2xl">
           <GlassCard className="px-5 py-4 text-center">
-            <p className="font-body text-xs" style={{ color: "var(--color-ink-soft)" }}>
+            <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
               {error}
             </p>
           </GlassCard>
         </section>
       )}
 
-      <section className="relative z-10 mb-4">
-        <p className="font-body text-xs" style={{ color: "#cbb9e0" }}>
+      <section className="relative z-10 mb-4 md:mx-auto md:max-w-2xl">
+        <p className="font-body text-xs md:text-sm" style={{ color: "#cbb9e0" }}>
           {loading ? "読み込み中…" : `${filtered.length}件`}
         </p>
       </section>
 
-      <section className="relative z-10 grid grid-cols-4 gap-2">
+      <section className="relative z-10 grid grid-cols-4 gap-2 md:mx-auto md:max-w-2xl md:grid-cols-6 md:gap-3 lg:grid-cols-8">
         {!loading && filtered.length === 0 && (
-          <div className="col-span-4">
+          <div className="col-span-4 md:col-span-6 lg:col-span-8">
             <GlassCard className="px-5 py-6 text-center">
-              <p className="font-body text-xs" style={{ color: "var(--color-ink-soft)" }}>
+              <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
                 該当する蝶が見つかりませんでした。
               </p>
             </GlassCard>
@@ -122,13 +158,13 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
         {needsScroll ? (
           <div className="flex w-max animate-marquee">
             <p
-              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight"
+              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight md:text-base"
               style={{ color: "#8a6d3f" }}
             >
               {name}
             </p>
             <p
-              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight"
+              className="whitespace-nowrap px-1 font-display-jp text-sm font-bold leading-tight md:text-base"
               style={{ color: "#8a6d3f" }}
               aria-hidden
             >
@@ -137,7 +173,7 @@ function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () =>
           </div>
         ) : (
           <p
-            className="whitespace-nowrap text-center font-display-jp text-sm font-bold leading-tight"
+            className="whitespace-nowrap text-center font-display-jp text-sm font-bold leading-tight md:text-base"
             style={{ color: "#8a6d3f" }}
           >
             {name}
