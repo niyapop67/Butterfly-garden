@@ -48,24 +48,131 @@ import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
  * lg:8-col step per feedback from the deployed screenshot — the
  * illustration read better unfiltered, and 8 columns made name tiles too
  * narrow; settled on a flat 6-col cap from md up.
+ *
+ * 2026-08-07 follow-up: three more fixes from a second screenshot —
+ * (1) grid still read as "narrow" on desktop because it inherited the
+ * search box's implicit ~640px cap via the site's global .mobile-frame
+ * column; broken out with the standard full-bleed trick (100vw width,
+ * negative side margins) so it's no longer tied to that column at all —
+ * see the wrapping <div> around the grid <section> below,
+ * (2) 7-character names were clipping instead of scrolling because the
+ * marquee only kicked in above 7 chars, not at exactly 7 — changed to
+ * `>= 7`, (3) sort order wasn't actually gojuon-correct — see kanaSortKey
+ * below.
  */
+
+/** Greedy romaji→hiragana table + kanaSortKey, ported as-is from
+ * scripts/butterfly-book/generate-book.mjs (same reasoning/limitations
+ * documented there) so the site list and the PDF book order names the
+ * same way. */
+const ROMAJI_TABLE = (() => {
+  const rows: Record<string, string> = {
+    a: "あ", i: "い", u: "う", e: "え", o: "お",
+    ka: "か", ki: "き", ku: "く", ke: "け", ko: "こ",
+    sa: "さ", shi: "し", su: "す", se: "せ", so: "そ",
+    ta: "た", chi: "ち", tsu: "つ", te: "て", to: "と",
+    na: "な", ni: "に", nu: "ぬ", ne: "ね", no: "の",
+    ha: "は", hi: "ひ", fu: "ふ", he: "へ", ho: "ほ",
+    ma: "ま", mi: "み", mu: "む", me: "め", mo: "も",
+    ya: "や", yu: "ゆ", yo: "よ",
+    ra: "ら", ri: "り", ru: "る", re: "れ", ro: "ろ",
+    wa: "わ", wo: "を", wi: "うぃ", we: "うぇ",
+    ga: "が", gi: "ぎ", gu: "ぐ", ge: "げ", go: "ご",
+    za: "ざ", ji: "じ", zu: "ず", ze: "ぜ", zo: "ぞ",
+    da: "だ", di: "ぢ", du: "づ", de: "で", do: "ど",
+    ba: "ば", bi: "び", bu: "ぶ", be: "べ", bo: "ぼ",
+    pa: "ぱ", pi: "ぴ", pu: "ぷ", pe: "ぺ", po: "ぽ",
+    kya: "きゃ", kyu: "きゅ", kyo: "きょ",
+    sha: "しゃ", shu: "しゅ", sho: "しょ",
+    cha: "ちゃ", chu: "ちゅ", cho: "ちょ",
+    nya: "にゃ", nyu: "にゅ", nyo: "にょ",
+    hya: "ひゃ", hyu: "ひゅ", hyo: "ひょ",
+    mya: "みゃ", myu: "みゅ", myo: "みょ",
+    rya: "りゃ", ryu: "りゅ", ryo: "りょ",
+    gya: "ぎゃ", gyu: "ぎゅ", gyo: "ぎょ",
+    ja: "じゃ", ju: "じゅ", jo: "じょ",
+    bya: "びゃ", byu: "びゅ", byo: "びょ",
+    pya: "ぴゃ", pyu: "ぴゅ", pyo: "ぴょ",
+    fa: "ふぁ", fi: "ふぃ", fe: "ふぇ", fo: "ふぉ",
+    n: "ん",
+  };
+  return Object.entries(rows).sort((a, b) => b[0].length - a[0].length);
+})();
+
+function romajiWordToHiragana(word: string) {
+  const lower = word.toLowerCase();
+  let out = "";
+  let i = 0;
+  while (i < lower.length) {
+    if (
+      i + 1 < lower.length &&
+      lower[i] === lower[i + 1] &&
+      "bcdfghjklmpqrstvwxyz".includes(lower[i])
+    ) {
+      out += "っ";
+      i += 1;
+      continue;
+    }
+    let matched = false;
+    for (const [key, kana] of ROMAJI_TABLE) {
+      if (lower.startsWith(key, i)) {
+        out += kana;
+        i += key.length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      out += lower[i];
+      i += 1;
+    }
+  }
+  return out;
+}
+
+function kanaSortKey(nickname: string) {
+  const noEmoji = nickname.replace(/\p{Extended_Pictographic}/gu, "").replace(/[\uFE0F\u200D]/g, "");
+  const normalized = noEmoji.normalize("NFKC");
+  let out = "";
+  let i = 0;
+  while (i < normalized.length) {
+    const ch = normalized[i];
+    const cp = ch.codePointAt(0) ?? 0;
+    if (cp >= 0x30a1 && cp <= 0x30f6) {
+      out += String.fromCodePoint(cp - 0x60);
+      i += 1;
+    } else if (/[a-zA-Z]/.test(ch)) {
+      let j = i;
+      while (j < normalized.length && /[a-zA-Z]/.test(normalized[j])) j += 1;
+      out += romajiWordToHiragana(normalized.slice(i, j));
+      i = j;
+    } else {
+      out += ch;
+      i += 1;
+    }
+  }
+  return out.trim();
+}
+
 export default function PrivateListPage() {
   const { entries, loading, error } = usePrivateFeed();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PrivateEntry | null>(null);
 
-  // 五十音順ソート: 先頭の絵文字・記号を無視した上で、日本語コレーターで
-  // 比較する（かな・カナはこれでほぼ正確に並ぶ。ふりがなデータがない
-  // 漢字の並び順まではICUの既定ルール依存になるが、実用上はこれで十分）。
-  const collator = useMemo(
-    () => new Intl.Collator("ja", { usage: "sort", sensitivity: "base" }),
-    []
-  );
-  const sortKey = (name: string) => name.replace(/^[^\p{L}\p{N}]+/u, "");
-
+  // 五十音順ソート: scripts/butterfly-book/generate-book.mjs の
+  // kanaSortKey をそのまま移植（絵文字除去 → NFKC で半角カナを全角化 →
+  // 全角カタカナをひらがな化 → アルファベット連続はローマ字テーブルで
+  // ひらがな化）。前回試した Intl.Collator("ja") 単体は、この環境の
+  // ICU実装がかな順を正しくタイブレークしないことが実機スクショで
+  // わかったので不採用。ひらがな化した文字列同士を localeCompare(ja) で
+  // 比較することで、濁音・半濁音・拗音の並びも安定する。漢字だけの名前は
+  // 読みデータがないのでUnicode順にフォールバック（Bookと同じ既知の制約）。
   const sorted = useMemo(
-    () => [...entries].sort((a, b) => collator.compare(sortKey(a.nickname), sortKey(b.nickname))),
-    [entries, collator]
+    () =>
+      [...entries].sort((a, b) =>
+        kanaSortKey(a.nickname || "").localeCompare(kanaSortKey(b.nickname || ""), "ja")
+      ),
+    [entries]
   );
 
   const filtered = useMemo(() => {
@@ -76,7 +183,7 @@ export default function PrivateListPage() {
 
   return (
     <main
-      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:px-6"
+      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:overflow-x-visible md:px-6"
       style={{ backgroundColor: "#08060f" }}
     >
       <div
@@ -120,20 +227,22 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 grid grid-cols-4 gap-2.5 md:grid-cols-6 md:gap-3.5">
-        {!loading && filtered.length === 0 && (
-          <div className="col-span-4 md:col-span-6">
-            <GlassCard className="px-5 py-6 text-center">
-              <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
-                該当する蝶が見つかりませんでした。
-              </p>
-            </GlassCard>
-          </div>
-        )}
-        {filtered.map((entry) => (
-          <PrivateListItem key={entry.id} entry={entry} onOpen={() => setSelected(entry)} />
-        ))}
-      </section>
+      <div className="relative z-10 md:w-screen md:ml-[calc(50%-50vw)] md:mr-[calc(50%-50vw)]">
+        <section className="grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-[920px] md:grid-cols-6 md:gap-4 md:px-8">
+          {!loading && filtered.length === 0 && (
+            <div className="col-span-4 md:col-span-6">
+              <GlassCard className="px-5 py-6 text-center">
+                <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
+                  該当する蝶が見つかりませんでした。
+                </p>
+              </GlassCard>
+            </div>
+          )}
+          {filtered.map((entry) => (
+            <PrivateListItem key={entry.id} entry={entry} onOpen={() => setSelected(entry)} />
+          ))}
+        </section>
+      </div>
 
       <LetterModal entry={selected} onClose={() => setSelected(null)} />
     </main>
@@ -142,7 +251,7 @@ export default function PrivateListPage() {
 
 function PrivateListItem({ entry, onOpen }: { entry: PrivateEntry; onOpen: () => void }) {
   const name = entry.nickname || "（名前未設定）";
-  const needsScroll = name.length > 7;
+  const needsScroll = name.length >= 7;
 
   return (
     <button
