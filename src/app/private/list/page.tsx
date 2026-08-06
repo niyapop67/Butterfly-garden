@@ -241,7 +241,7 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <div className="relative z-10 md:w-screen md:ml-[calc(50%-50vw)] md:mr-[calc(50%-50vw)]">
+      <div className="relative z-10 md:w-screen md:ml-[calc(50%_-_50vw)] md:mr-[calc(50%_-_50vw)]">
         <section className="grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-[920px] md:grid-cols-6 md:gap-4 md:px-8">
           {!loading && filtered.length === 0 && (
             <div className="col-span-4 md:col-span-6">
