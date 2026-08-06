@@ -40,9 +40,14 @@ import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
  * directly via inline style overrides the class's var(--bg-photo-mobile)
  * hook (inline style wins over the class rule for that one property), so
  * no CSS var wiring is needed for this single static image.
- * Grid also widens on desktop (4 → 6 → 8 cols) with larger name text,
- * since the crystal-card tiles read as cramped once the frame grows past
- * phone width.
+ * Grid also widens on desktop (4 → 6 cols) with larger name text, since
+ * the crystal-card tiles read as cramped once the frame grows past phone
+ * width.
+ *
+ * 2026-08-06 follow-up: dropped the readability-wash overlay and the
+ * lg:8-col step per feedback from the deployed screenshot — the
+ * illustration read better unfiltered, and 8 columns made name tiles too
+ * narrow; settled on a flat 6-col cap from md up.
  */
 export default function PrivateListPage() {
   const { entries, loading, error } = usePrivateFeed();
@@ -69,16 +74,6 @@ export default function PrivateListPage() {
         aria-hidden
         className="bg-photo-layer"
         style={{ backgroundImage: "url(/images/decor/private_list_bg.jpg)" }}
-      />
-      {/* readability wash over the bright illustration — same shape as
-          .bg-day-garden's wash (stronger top/bottom, lighter middle) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 z-0"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(8,6,15,0.55) 0%, rgba(8,6,15,0.22) 18%, rgba(8,6,15,0.3) 68%, rgba(8,6,15,0.6) 100%)",
-        }}
       />
 
       <header className="relative z-10 mb-6 text-center">
@@ -116,9 +111,9 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <section className="relative z-10 grid grid-cols-4 gap-2 md:mx-auto md:max-w-2xl md:grid-cols-6 md:gap-3 lg:grid-cols-8">
+      <section className="relative z-10 grid grid-cols-4 gap-2 md:mx-auto md:max-w-2xl md:grid-cols-6 md:gap-3">
         {!loading && filtered.length === 0 && (
-          <div className="col-span-4 md:col-span-6 lg:col-span-8">
+          <div className="col-span-4 md:col-span-6">
             <GlassCard className="px-5 py-6 text-center">
               <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
                 該当する蝶が見つかりませんでした。
