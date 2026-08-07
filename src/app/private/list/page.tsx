@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useMemo, useState } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import LetterModal from "@/components/private/LetterModal";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
@@ -52,9 +52,17 @@ import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
  * 2026-08-07 follow-up: three more fixes from a second screenshot —
  * (1) grid still read as "narrow" on desktop because it inherited the
  * search box's implicit ~640px cap via the site's global .mobile-frame
- * column; broken out with the standard full-bleed trick (100vw width,
- * negative side margins) so it's no longer tied to that column at all —
- * see the wrapping <div> around the grid <section> below,
+ * column — after two failed attempts at breaking out just the grid div
+ * (a calc()/vw CSS trick with an invalid-then-still-imprecise calc
+ * expression, then a translateX measurement that left a residual offset
+ * from not fully accounting for ancestor padding), settled on making
+ * `<main>` itself escape `.mobile-frame` at md+ via `position:fixed;
+ * inset:0` — the same technique already proven on this site for
+ * /private/mika's desktop hero and for `.bg-photo-layer`. Escaping the
+ * whole page container sidesteps needing any custom pixel math at all:
+ * everything inside (header, search, grid) just centers normally within
+ * what is now genuinely the real viewport, with `overflow-y-auto` on
+ * `<main>` handling the scroll that used to be normal document scroll,
  * (2) 7-character names were clipping instead of scrolling because the
  * marquee only kicked in above 7 chars, not at exactly 7 — changed to
  * `>= 7`, (3) sort order wasn't actually gojuon-correct — see kanaSortKey
@@ -173,39 +181,6 @@ export default function PrivateListPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PrivateEntry | null>(null);
 
-  // Desktop grid breakout, take 3. The previous version used
-  // `position:relative; left:50%; transform:translateX(-vw/2)`, reasoning
-  // that the percentage math would cancel out to land the left edge at
-  // real x=0 — but that reasoning silently assumed zero padding on
-  // ancestors between this div and .mobile-frame. <main> has md:px-6
-  // (24px), which doesn't cancel and left a 24px residual offset: a blank
-  // gap on the left and the grid pushed 24px past the right edge,
-  // clipping column 6. Rather than keep re-deriving percentage math by
-  // hand, this measures the real numbers directly: an invisible anchor
-  // <span> sits right where the grid would normally start (same parent,
-  // same position in flow, never transformed) — its getBoundingClientRect
-  // ().left is exactly the pixel x-offset we need to cancel, regardless
-  // of any ancestor's padding/margin, current or future.
-  const anchorRef = useRef<HTMLSpanElement>(null);
-  const [naturalLeft, setNaturalLeft] = useState<number | null>(null);
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
-  useEffect(() => {
-    const update = () => {
-      if (anchorRef.current) {
-        setNaturalLeft(anchorRef.current.getBoundingClientRect().left);
-      }
-      setViewportWidth(document.documentElement.clientWidth);
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-  const isDesktop = (viewportWidth ?? 0) >= 768;
-  const breakoutStyle: CSSProperties | undefined =
-    isDesktop && viewportWidth && naturalLeft !== null
-      ? { width: viewportWidth, transform: `translateX(${-naturalLeft}px)` }
-      : undefined;
-
   // 五十音順ソート: scripts/butterfly-book/generate-book.mjs の
   // kanaSortKey をそのまま移植（絵文字除去 → NFKC で半角カナを全角化 →
   // 全角カタカナをひらがな化 → アルファベット連続はローマ字テーブルで
@@ -230,7 +205,7 @@ export default function PrivateListPage() {
 
   return (
     <main
-      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:overflow-x-visible md:px-6"
+      className="relative z-0 min-h-screen overflow-hidden px-5 pb-12 pt-6 md:fixed md:inset-0 md:overflow-x-hidden md:overflow-y-auto md:px-6"
       style={{ backgroundColor: "#08060f" }}
     >
       <div
@@ -274,23 +249,20 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <span ref={anchorRef} aria-hidden className="block h-0 w-0" />
-      <div className="relative z-10" style={breakoutStyle}>
-        <section className="grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-[920px] md:grid-cols-6 md:gap-4 md:px-8">
-          {!loading && filtered.length === 0 && (
-            <div className="col-span-4 md:col-span-6">
-              <GlassCard className="px-5 py-6 text-center">
-                <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
-                  該当する蝶が見つかりませんでした。
-                </p>
-              </GlassCard>
-            </div>
-          )}
-          {filtered.map((entry) => (
-            <PrivateListItem key={entry.id} entry={entry} onOpen={() => setSelected(entry)} />
-          ))}
-        </section>
-      </div>
+      <section className="relative z-10 grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-[920px] md:grid-cols-6 md:gap-4">
+        {!loading && filtered.length === 0 && (
+          <div className="col-span-4 md:col-span-6">
+            <GlassCard className="px-5 py-6 text-center">
+              <p className="font-body text-xs md:text-sm" style={{ color: "var(--color-ink-soft)" }}>
+                該当する蝶が見つかりませんでした。
+              </p>
+            </GlassCard>
+          </div>
+        )}
+        {filtered.map((entry) => (
+          <PrivateListItem key={entry.id} entry={entry} onOpen={() => setSelected(entry)} />
+        ))}
+      </section>
 
       <LetterModal entry={selected} onClose={() => setSelected(null)} />
     </main>
