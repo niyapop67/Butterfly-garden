@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import LetterModal from "@/components/private/LetterModal";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
@@ -173,33 +173,37 @@ export default function PrivateListPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PrivateEntry | null>(null);
 
-  // Desktop grid breakout: previously used the classic CSS-only
-  // "100vw + margin-left: calc(50% - 50vw)" full-bleed trick, but that
-  // depends on getting calc() whitespace exactly right (already bit us
-  // once — calc(50%-50vw) is invalid and gets silently dropped) and is
-  // still sensitive to vw-vs-scrollbar-width mismatches even when the
-  // syntax is correct (second screenshot still showed edge columns
-  // clipped). Measuring the real viewport width in JS and applying it as
-  // a plain pixel width + translateX sidesteps both problems entirely —
-  // no calc(), no vw unit, just numbers. document.documentElement.
-  // clientWidth (not window.innerWidth) is used because it excludes the
-  // vertical scrollbar, which is the actual visible content width.
+  // Desktop grid breakout, take 3. The previous version used
+  // `position:relative; left:50%; transform:translateX(-vw/2)`, reasoning
+  // that the percentage math would cancel out to land the left edge at
+  // real x=0 — but that reasoning silently assumed zero padding on
+  // ancestors between this div and .mobile-frame. <main> has md:px-6
+  // (24px), which doesn't cancel and left a 24px residual offset: a blank
+  // gap on the left and the grid pushed 24px past the right edge,
+  // clipping column 6. Rather than keep re-deriving percentage math by
+  // hand, this measures the real numbers directly: an invisible anchor
+  // <span> sits right where the grid would normally start (same parent,
+  // same position in flow, never transformed) — its getBoundingClientRect
+  // ().left is exactly the pixel x-offset we need to cancel, regardless
+  // of any ancestor's padding/margin, current or future.
+  const anchorRef = useRef<HTMLSpanElement>(null);
+  const [naturalLeft, setNaturalLeft] = useState<number | null>(null);
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   useEffect(() => {
-    const update = () => setViewportWidth(document.documentElement.clientWidth);
+    const update = () => {
+      if (anchorRef.current) {
+        setNaturalLeft(anchorRef.current.getBoundingClientRect().left);
+      }
+      setViewportWidth(document.documentElement.clientWidth);
+    };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
   const isDesktop = (viewportWidth ?? 0) >= 768;
   const breakoutStyle: CSSProperties | undefined =
-    isDesktop && viewportWidth
-      ? {
-          position: "relative",
-          left: "50%",
-          width: viewportWidth,
-          transform: `translateX(-${viewportWidth / 2}px)`,
-        }
+    isDesktop && viewportWidth && naturalLeft !== null
+      ? { width: viewportWidth, transform: `translateX(${-naturalLeft}px)` }
       : undefined;
 
   // 五十音順ソート: scripts/butterfly-book/generate-book.mjs の
@@ -270,6 +274,7 @@ export default function PrivateListPage() {
         </p>
       </section>
 
+      <span ref={anchorRef} aria-hidden className="block h-0 w-0" />
       <div className="relative z-10" style={breakoutStyle}>
         <section className="grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-[920px] md:grid-cols-6 md:gap-4 md:px-8">
           {!loading && filtered.length === 0 && (
