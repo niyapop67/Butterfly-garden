@@ -137,7 +137,7 @@ function romajiWordToHiragana(word: string) {
  * explicitly. Add more entries as new kanji names show up in the list.
  * Applied as a substring replace (longest key first) before the main
  * per-character loop in kanaSortKey. */
-const KANJI_READING_OVERRIDES: [string, string][] = [["前田", "まえだ"]].sort(
+const KANJI_READING_OVERRIDES: [string, string][] = [["前田", "まえだ"] as [string, string]].sort(
   (a, b) => b[0].length - a[0].length
 );
 
