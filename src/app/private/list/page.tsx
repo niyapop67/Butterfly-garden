@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import GlassCard from "@/components/ui/GlassCard";
 import LetterModal from "@/components/private/LetterModal";
 import { usePrivateFeed, type PrivateEntry } from "@/lib/usePrivateFeed";
@@ -173,6 +173,35 @@ export default function PrivateListPage() {
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<PrivateEntry | null>(null);
 
+  // Desktop grid breakout: previously used the classic CSS-only
+  // "100vw + margin-left: calc(50% - 50vw)" full-bleed trick, but that
+  // depends on getting calc() whitespace exactly right (already bit us
+  // once — calc(50%-50vw) is invalid and gets silently dropped) and is
+  // still sensitive to vw-vs-scrollbar-width mismatches even when the
+  // syntax is correct (second screenshot still showed edge columns
+  // clipped). Measuring the real viewport width in JS and applying it as
+  // a plain pixel width + translateX sidesteps both problems entirely —
+  // no calc(), no vw unit, just numbers. document.documentElement.
+  // clientWidth (not window.innerWidth) is used because it excludes the
+  // vertical scrollbar, which is the actual visible content width.
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  useEffect(() => {
+    const update = () => setViewportWidth(document.documentElement.clientWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  const isDesktop = (viewportWidth ?? 0) >= 768;
+  const breakoutStyle: CSSProperties | undefined =
+    isDesktop && viewportWidth
+      ? {
+          position: "relative",
+          left: "50%",
+          width: viewportWidth,
+          transform: `translateX(-${viewportWidth / 2}px)`,
+        }
+      : undefined;
+
   // 五十音順ソート: scripts/butterfly-book/generate-book.mjs の
   // kanaSortKey をそのまま移植（絵文字除去 → NFKC で半角カナを全角化 →
   // 全角カタカナをひらがな化 → アルファベット連続はローマ字テーブルで
@@ -241,7 +270,7 @@ export default function PrivateListPage() {
         </p>
       </section>
 
-      <div className="relative z-10 md:w-screen md:ml-[calc(50%_-_50vw)] md:mr-[calc(50%_-_50vw)]">
+      <div className="relative z-10" style={breakoutStyle}>
         <section className="grid grid-cols-4 gap-2.5 md:mx-auto md:max-w-[920px] md:grid-cols-6 md:gap-4 md:px-8">
           {!loading && filtered.length === 0 && (
             <div className="col-span-4 md:col-span-6">
