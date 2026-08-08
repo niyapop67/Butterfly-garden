@@ -177,17 +177,23 @@ body {
   (3:2) PC background set instead of stretching the portrait mobile crop
   (which, at cover-fit against a wide viewport, showed only a thin vertical
   slice). background-image switches to --bg-photo-desktop (set inline per
-  time-of-day in garden/page.tsx); contain guarantees the full illustration
-  is always visible, letterboxed with the page's cream background-color
-  rather than cropped. Scoped to .bg-garden-page so TOP/SUBMIT (still on the
-  portrait mobile set, correctly cover-fit) are unaffected.
+  time-of-day in garden/page.tsx). Scoped to .bg-garden-page so TOP/SUBMIT
+  (still on the portrait mobile set, correctly cover-fit) are unaffected.
+
+  2026-08-08: switched background-size from contain to cover per explicit
+  request ("画面いっぱいにしたい") — contain's letterboxing (cream bars on
+  the sides on wide screens) was the actual visible reason the page still
+  read as "not full screen" even after the container itself was already
+  escaping .mobile-frame. Trades the original contain rationale (never
+  crop the illustration) for filling the viewport edge-to-edge; on very
+  wide/short windows this can crop the top or bottom of the composition,
+  which is an accepted tradeoff here since it was asked for explicitly.
 */
 @media (min-width: 768px) {
   .bg-garden-page .bg-photo-layer {
     background-image: var(--bg-photo-desktop);
-    background-size: contain;
+    background-size: cover;
     background-position: center;
-    background-color: #fffdf8;
   }
 }
 
