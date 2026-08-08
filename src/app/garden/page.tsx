@@ -47,7 +47,7 @@ export default function GardenPage() {
 
   return (
     <main
-      className="bg-garden-page relative min-h-screen overflow-hidden"
+      className="bg-garden-page page-frame-escape relative min-h-screen overflow-hidden"
       style={{
         "--time-bg-filter": time.bgFilter,
         "--time-ambient": time.ambientColor,

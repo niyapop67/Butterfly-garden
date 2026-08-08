@@ -230,6 +230,28 @@ body {
 }
 
 /*
+  2026-08-07: Garden page content (header, filter chips, CTA — the
+  background and free-flying butterflies were already full-viewport via
+  .bg-photo-layer/fixed inset:0) still sat inside .mobile-frame's ~640px
+  desktop column, so the header's back-button/submit-icon looked stranded
+  near screen-center instead of hugging the real edges. Reuses the same
+  position:fixed;inset:0 escape as .bg-photo-layer above. Written as its
+  own class (not a Tailwind md:fixed utility on the element) deliberately:
+  .bg-garden-page itself sets position:relative with no media query, and
+  since it's a hand-written rule it can land later than Tailwind's
+  generated utility layer in the compiled CSS — same specificity, later
+  source order wins, silently overriding a md:fixed utility. Defining the
+  override here, after .bg-garden-page in this same file, guarantees it
+  wins regardless of Tailwind's own internal ordering.
+*/
+@media (min-width: 768px) {
+  .bg-garden-page.page-frame-escape {
+    position: fixed;
+    inset: 0;
+  }
+}
+
+/*
   2026-07-06: removed for the Garden page specifically — this whitish wash
   was read as an unwanted "filter" dulling the photo (user feedback: 薄い
   フィルターみたいなのは取れない？). Header text (Butterfly Garden / time
